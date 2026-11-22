@@ -57,46 +57,57 @@ function grammarHTML(g) {
 // ---- views -----------------------------------------------------------------
 
 async function viewHome() {
-  const [o, allErrors] = await Promise.all([api("/overview"), api("/errors?limit=5")]);
-  const errors = allErrors.filter((e) => e.grammar_code);
+  const [o, p] = await Promise.all([api("/overview"), api("/progress")]);
+  const errors = p.top_errors.filter((e) => e.grammar_code);
   const l = o.current_lesson;
+  const d = p.done_today;
+  const steps = [["warmup", "Aufwärmen"], ["review", "Wortschatz"], ["text", "Lesen"], ["drill", "Grammatik"], ["write", "Schreiben"]];
+  const allDone = steps.every(([k]) => d[k] || (k === "warmup"));
   $app.innerHTML = `
     <p class="eyebrow">Momente A2.1 · Deutsch-Trainer</p>
     <h1>Hallo! 👋</h1>
     <div class="stats">
-      <div class="stat"><b>${o.known_words}</b><span>Wörter bekannt</span></div>
+      <div class="stat"><b>${o.known_words}</b><span>Wörter sicher</span></div>
       <div class="stat"><b>${o.cards_due}</b><span>heute fällig</span></div>
-      <div class="stat"><b>${pct(l.mastery)}</b><span>Lektion ${l.number}</span></div>
+      <div class="stat"><b>${p.streak}${p.streak ? " 🔥" : ""}</b><span>Tage Serie</span></div>
     </div>
-    <a class="card hero" href="#/lesson/${l.number}" style="display:block;text-decoration:none;color:inherit">
+    <div class="card hero session-card">
+      <p class="eyebrow">Heute · ca. 20 Minuten</p>
+      <h2>${allDone ? "Heute schon geschafft! 🎉" : "Deine Session"}</h2>
+      <ul class="checklist">${steps.map(([k, label]) => `<li class="${d[k] ? "done" : ""}">${d[k] ? "✓" : "○"} ${label}</li>`).join("")}</ul>
+      <a class="btn big" href="#/session/full">${allDone ? "Noch eine Session" : "Heutige Session starten"}</a>
+      <a class="btn secondary" href="#/session/quick">Quick 5 · nur Karten + 3 Übungen</a>
+    </div>
+    ${p.ready_for_next ? `<a class="card" href="#/progress" style="display:block;text-decoration:none;color:inherit">
+      <h3>Bereit für Lektion ${l.number + 1}! 🚀</h3>
+      <p class="small muted">${pct(l.mastery)} der Wörter aus Lektion ${l.number} sitzen. Im Fortschritt kannst du wechseln.</p></a>` : ""}
+    <a class="card" href="#/lesson/${l.number}" style="display:block;text-decoration:none;color:inherit">
       <p class="eyebrow">Aktuelle Lektion ${l.number} · ${esc(l.theme)}</p>
-      <h2>${esc(l.title)}</h2>
+      <h3>${esc(l.title)}</h3>
       <div class="progress" aria-label="Fortschritt"><i style="width:${pct(l.mastery)}"></i></div>
       <p class="small muted">${l.known_count} von ${l.word_count} Lektionswörtern sicher · Ziel 80 %</p>
     </a>
-    <div class="card">
-      <h3>Wortschatz wiederholen</h3>
-      <p class="small muted">${o.cards_due ? `${o.cards_due} Karten fällig` : "Keine Karten fällig"} ·
-        bis zu ${o.settings.daily_new_word_cap} neue Wörter aus Lektion ${l.number} pro Tag</p>
-      <a class="btn" href="#/review">Jetzt wiederholen</a>
-    </div>
-    <div class="card">
-      <h3>Grammatik üben</h3>
-      <p class="small muted">8 kurze Übungen, mehr davon, wo du Fehler machst.</p>
-      ${errors.length ? `<p class="small"><strong>Häufige Fehler:</strong> ${errors.map((e) =>
-        `<a href="#/drill/${esc(e.grammar_code)}">${esc(e.name)}</a> (${e.count}×)`).join(" · ")}</p>` : ""}
-      <a class="btn secondary" href="#/drill">Grammatik üben</a>
-    </div>
-    <div class="card">
-      <h3>Schreiben</h3>
-      <p class="small muted">Eine kurze Aufgabe zur Lektion. Claude korrigiert die 3 wichtigsten Punkte.</p>
-      <a class="btn secondary" href="#/write">Schreiben</a>
-    </div>
-    <div class="card">
-      <h3>Lesen</h3>
-      <p class="small muted">Kurze Texte über dein Leben in Berlin, fast nur mit Wörtern, die du kennst.</p>
-      <a class="btn secondary" href="#/read">Zum Lesen</a>
+    ${errors.length ? `<div class="card"><h3>Häufige Fehler</h3><p class="small">${errors.map((e) =>
+      `<a href="#/drill/${esc(e.grammar_code)}">${esc(e.name)}</a> (${e.count}×)`).join(" · ")}</p></div>` : ""}
+    <h2 style="margin-top:20px">Einzeln üben</h2>
+    <div class="tile-grid">
+      <a class="tile" href="#/review"><span>🃏</span>Karten</a>
+      <a class="tile" href="#/read"><span>📖</span>Lesen</a>
+      <a class="tile" href="#/drill"><span>🧩</span>Grammatik</a>
+      <a class="tile" href="#/write"><span>✍️</span>Schreiben</a>
+      <a class="tile" href="#/listen"><span>🎧</span>Hören</a>
+      <a class="tile" href="#/progress"><span>📈</span>Fortschritt</a>
     </div>`;
+}
+
+// ---- session plumbing: views accept { onDone } and show "Weiter" instead of their exit link ----
+
+function doneButton(opts, fallback = `<a class="btn" href="#/">Zur Übersicht</a>`) {
+  return opts && opts.onDone ? `<button class="btn session-next">Weiter →</button>` : fallback;
+}
+function wireDone(opts) {
+  if (!opts || !opts.onDone) return;
+  $app.querySelectorAll(".session-next").forEach((b) => b.addEventListener("click", () => opts.onDone()));
 }
 
 // ---- review (FSRS) ---------------------------------------------------------
@@ -119,9 +130,10 @@ function formsHTML(c) {
 const POS_HINT = { NOUN: "Nomen · mit Artikel", VERB: "Verb · Infinitiv", ADJ: "Adjektiv", ADV: "Adverb",
   PHRASE: "Ausdruck", CONJ: "Konjunktion", PRON: "Pronomen", ADP: "Präposition", DET: "Artikel/Begleiter", INTJ: "Ausruf" };
 
-async function viewReview() {
+async function viewReview(opts = {}) {
   $app.innerHTML = `<p class="empty">Karten werden geladen…</p>`;
-  const start = await api("/review/start", { method: "POST", body: { new_words: true } });
+  const limit = opts.limit || 40;
+  const start = await api("/review/start", { method: "POST", body: { new_words: opts.newWords ?? true, limit } });
   let queue = start.queue;
   let done = 0, correct = 0;
 
@@ -131,15 +143,17 @@ async function viewReview() {
         <p class="eyebrow">Fertig für jetzt</p>
         <h1>Gut gemacht! 🎉</h1>
         <p>${done} Karten wiederholt${done ? ` · ${Math.round((correct / done) * 100)} % richtig` : ""}.</p>
-        <p class="small muted">Neue Wörter heute: ${start.new_today}. Die nächsten Karten plant FSRS für dich.</p>
-        <a class="btn" href="#/">Zur Übersicht</a>
+        <p class="small muted">${done ? `Neue Wörter heute: ${start.new_today}. Die nächsten Karten plant FSRS für dich.` : "Gerade ist keine Karte fällig."}</p>
+        ${doneButton(opts)}
       </div>`;
+    wireDone(opts);
   };
 
   const next = async () => {
     if (!queue.length) {
       // Learning steps may have brought cards back into the window.
-      queue = (await api("/review/queue")).queue;
+      if (done >= limit) return finish();
+      queue = (await api(`/review/queue?limit=${limit - done}`)).queue;
       if (!queue.length) return finish();
     }
     const c = queue.shift();
@@ -443,6 +457,7 @@ async function viewReadList() {
         : `<p class="small warning-box">${esc(status.message)}</p>`}
       <p class="small muted" id="gen-status" hidden></p>
     </div>
+    ${texts.length ? `<a class="btn secondary" href="#/listen" style="margin-bottom:14px">🎧 Als Playlist hören</a>` : ""}
     <h2>Lektion ${n}</h2>
     ${mine.length ? `<ul class="lesson-list">${mine.map(row).join("")}</ul>` : `<p class="empty">Noch keine Texte für diese Lektion.</p>`}
     ${older.length ? `<h2>Frühere Lektionen</h2><ul class="lesson-list">${older.map(row).join("")}</ul>` : ""}`;
@@ -477,7 +492,7 @@ function speak(text, onEnd) {
   speechSynthesis.speak(u);
 }
 
-async function viewText(id) {
+async function viewText(id, opts = {}) {
   const d = await api(`/texts/${id}`);
   const { text: t, tokens, lemmas, questions } = d;
   const started = Date.now();
@@ -495,6 +510,7 @@ async function viewText(id) {
     <article class="reading">${paragraphs.filter((p) => p.length).map((p) => `<p>${p.map(([tok, i]) =>
       tok.id ? `<span class="tok${tok.target ? " target" : ""}" data-i="${i}" role="button" tabindex="0">${esc(tok.t)}</span>${esc(tok.ws)}`
              : `${esc(tok.t)}${esc(tok.ws)}`).join("")}</p>`).join("")}</article>
+    ${opts.reread ? `<p class="small muted">⏱ Lies den Text noch einmal, ruhig und flüssig. Die Zeit läuft: <strong id="timer">0:00</strong></p>` : ""}
     <button class="btn" id="done-reading">Fertig gelesen</button>
     <section id="questions" hidden></section>
     <div class="sheet" id="sheet" hidden></div>`;
@@ -533,11 +549,27 @@ async function viewText(id) {
 
   // comprehension
   const $q = $app.querySelector("#questions");
-  $app.querySelector("#done-reading").addEventListener("click", (ev) => {
+  const $timer = $app.querySelector("#timer");
+  const tick = $timer && setInterval(() => {
+    if (!document.body.contains($timer)) return clearInterval(tick);
+    const s = Math.floor((Date.now() - started) / 1000);
+    $timer.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  }, 1000);
+  $app.querySelector("#done-reading").addEventListener("click", async (ev) => {
     ev.target.hidden = true;
     $sheet.hidden = true;
     if ("speechSynthesis" in window) speechSynthesis.cancel();
     const seconds = (Date.now() - started) / 1000;
+    if (opts.reread) {
+      clearInterval(tick);
+      const r = await api(`/texts/${id}/finish`, { method: "POST", body: { seconds, reread: true } });
+      $q.hidden = false;
+      $q.innerHTML = `<div class="card hero"><h3>Aufgewärmt! 🔥</h3>
+        <p class="small">${r.wpm ? `Lesetempo: <strong>${r.wpm} Wörter/Minute</strong>.` : "Zu kurz für eine Messung."}</p>
+        ${doneButton(opts)}</div>`;
+      wireDone(opts);
+      return;
+    }
     $q.hidden = false;
     $q.innerHTML = `<h2>Verstanden?</h2>${questions.map((q, n) => `
       <div class="card question" data-q="${q.id}">
@@ -573,7 +605,8 @@ async function viewText(id) {
         <h3>Super! 🎉</h3>
         <p class="small">${r.introduced ? `${r.introduced} neue Wörter sind jetzt in deinen Karten.` : "Alle Wörter sind schon in deinen Karten."}
           ${r.wpm ? ` Lesetempo: ${r.wpm} Wörter/Minute.` : ""}</p>
-        <a class="btn" href="#/review">Neue Wörter üben</a></div>`);
+        ${doneButton(opts, `<a class="btn" href="#/review">Neue Wörter üben</a>`)}</div>`);
+      wireDone(opts);
     });
     $q.scrollIntoView({ behavior: "smooth" });
   });
@@ -583,9 +616,9 @@ async function viewText(id) {
 
 const UMLAUT_KEYS = ["ä", "ö", "ü", "ß"];
 
-async function viewDrill(code) {
+async function viewDrill(code, opts = {}) {
   $app.innerHTML = `<p class="empty">Übungen werden geladen…</p>`;
-  const { items } = await api(`/drills/session?n=8${code ? `&code=${encodeURIComponent(code)}` : ""}`);
+  const { items } = await api(`/drills/session?n=${opts.n || 8}${code ? `&code=${encodeURIComponent(code)}` : ""}`);
   let idx = 0, right = 0;
   const missed = {};
 
@@ -609,8 +642,9 @@ async function viewDrill(code) {
   if (!items.length) {
     $app.innerHTML = `<h1>Grammatik üben</h1>
       <p class="empty">Für diesen Punkt gibt es gerade keine passenden Übungen mit deinen Wörtern.</p>
-      ${code ? generateBtn(code) : ""}`;
+      ${code ? generateBtn(code) : ""}${doneButton(opts, "")}`;
     wireGenerate();
+    wireDone(opts);
     return;
   }
 
@@ -628,8 +662,9 @@ async function viewDrill(code) {
           <span><a class="btn secondary" href="#/drill/${encodeURIComponent(c)}">Üben</a></span>
         </div>`).join("")}</div>` : ""}
       ${code ? `<div class="card"><h3>Mehr davon?</h3>${generateBtn(code)}</div>` : ""}
-      <a class="btn" href="#/">Zur Übersicht</a>`;
+      ${doneButton(opts)}`;
     wireGenerate();
+    wireDone(opts);
   };
 
   const header = () => `
@@ -786,7 +821,7 @@ function feedbackHTML(r) {
     ${r.more_errors ? `<p class="small muted">+ ${r.more_errors} kleinere Fehler im Text korrigiert.</p>` : ""}`;
 }
 
-async function viewWrite() {
+async function viewWrite(opts = {}) {
   const [task, hist] = await Promise.all([api("/writing/prompt"), api("/writing?limit=5")]);
   let current = task;
   const render = () => {
@@ -846,8 +881,9 @@ async function viewWrite() {
         $t.readOnly = true;
         $send.hidden = true;
         const $r = $app.querySelector("#result");
-        $r.innerHTML = feedbackHTML(r) + `<button class="btn" id="again">Neue Aufgabe</button>`;
-        $r.querySelector("#again").addEventListener("click", () => route());
+        $r.innerHTML = feedbackHTML(r) + doneButton(opts, `<button class="btn" id="again">Neue Aufgabe</button>`);
+        $r.querySelector("#again")?.addEventListener("click", () => route());
+        wireDone(opts);
         $r.scrollIntoView({ behavior: "smooth" });
       } catch (err) {
         $st.textContent = `Das hat nicht geklappt: ${err.message.replace(/^\d+ /, "")}`;
@@ -858,15 +894,259 @@ async function viewWrite() {
   render();
 }
 
+// ---- new words: quick in-session recall before they enter spaced review ------------------
+
+async function viewNewWords(textId, onDone) {
+  const d = await api(`/texts/${textId}`);
+  const words = d.text.target_lemma_ids.map((id) => d.lemmas[id]).filter(Boolean);
+  if (!words.length) return onDone();
+  const ROUNDS = 2;
+  let round = 1, queue = [...words], retry = [];
+  const sentence = (w) => {
+    // the sentence from the text, for context
+    const toks = d.tokens; let cur = [], hit = false;
+    for (const t of toks) {
+      if (t.br) { cur = []; continue; }
+      cur.push(t.t + t.ws); if (t.id === w.id) hit = true;
+      if (/[.!?]$/.test(t.t)) { if (hit) return cur.join("").trim(); cur = []; }
+    }
+    return "";
+  };
+  const show = () => {
+    if (!queue.length) {
+      if (retry.length) { queue = retry; retry = []; }
+      else if (round < ROUNDS) { round += 1; queue = [...words].sort(() => Math.random() - 0.5); }
+      else {
+        $app.innerHTML = `<div class="card hero review-done"><p class="eyebrow">Neue Wörter</p>
+          <h1>Sitzt! ✨</h1><p class="small">${words.length} Wörter sind jetzt in deinen Karten und kommen bald wieder.</p>
+          <button class="btn session-next">Weiter →</button></div>`;
+        $app.querySelector(".session-next").addEventListener("click", onDone);
+        return;
+      }
+    }
+    const w = queue.shift();
+    $app.innerHTML = `
+      <p class="eyebrow">Neue Wörter · Runde ${round} von ${ROUNDS}</p>
+      <div class="flash">
+        <div class="flash-word">${nounHTML(w)}</div>
+        <p class="flash-sentence">${esc(sentence(w))}</p>
+        <div class="flash-answer" hidden>
+          <div class="flash-gloss">${esc(w.gloss_es)}</div>
+          <div class="small muted">${esc(w.gloss_en || "")}${formsHTML(w) ? ` · ${formsHTML(w)}` : ""}</div>
+        </div>
+      </div>
+      <div class="review-actions">
+        <button class="btn reveal">Zeigen</button>
+        <div class="rate-row two" hidden>
+          <button class="rate again" data-ok="0">Nochmal</button><button class="rate good" data-ok="1">Gewusst</button>
+        </div>
+      </div>`;
+    $app.querySelector(".reveal").addEventListener("click", (e) => {
+      e.target.hidden = true;
+      $app.querySelector(".flash-answer").hidden = false;
+      $app.querySelector(".rate-row").hidden = false;
+    });
+    $app.querySelectorAll(".rate").forEach((b) => b.addEventListener("click", () => {
+      if (b.dataset.ok === "0") retry.push(w);
+      show();
+    }, { once: true }));
+  };
+  show();
+}
+
+// ---- daily session -----------------------------------------------------------------
+
+const $bar = document.getElementById("session-bar");
+
+async function viewSession(mode) {
+  const plan = await api(`/session/plan?mode=${mode}`);
+  if (mode === "full" && !plan.text_id) api("/session/prepare-text", { method: "POST" }).catch(() => {});
+  const steps = plan.steps;
+  let i = 0, textId = null;
+  const started = Date.now();
+
+  const renderBar = () => {
+    $bar.hidden = false;
+    $bar.innerHTML = `<div class="session-steps">${steps.map((st, n) =>
+      `<span class="step ${n < i ? "done" : n === i ? "on" : ""}">${n < i ? "✓ " : ""}${esc(st.label)}</span>`).join("")}</div>`;
+  };
+  const next = () => { i += 1; run(); };
+
+  const waitForText = async () => {
+    $app.innerHTML = `<div class="card hero"><p class="eyebrow">Neuer Text</p>
+      <h2>Dein Text wird geschrieben…</h2>
+      <p class="small muted" id="wait-msg">Claude schreibt einen Text mit deinen Wörtern und prüft ihn. Das dauert meist unter einer Minute.</p>
+      <div class="toolbar" id="wait-actions" hidden>
+        <button class="btn secondary" id="retry">Nochmal versuchen</button>
+        <button class="btn secondary" id="skip">Überspringen</button></div></div>`;
+    for (;;) {
+      if (!document.body.contains($app.querySelector("#wait-msg"))) return null; // user left
+      const st = await api("/session/text-status");
+      if (st.text_id) return st.text_id;
+      if (!st.generating) {
+        if (!st.error) { await api("/session/prepare-text", { method: "POST" }); continue; }
+        $app.querySelector("#wait-msg").textContent = `Das hat nicht geklappt: ${st.error}`;
+        $app.querySelector("#wait-actions").hidden = false;
+        return await new Promise((resolve) => {
+          $app.querySelector("#retry").onclick = async () => {
+            await api("/session/prepare-text", { method: "POST" }); resolve(waitForText());
+          };
+          $app.querySelector("#skip").onclick = () => resolve(null);
+        });
+      }
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+  };
+
+  const run = async () => {
+    if (i >= steps.length) return finish();
+    renderBar();
+    window.scrollTo(0, 0);
+    const st = steps[i];
+    if (st.kind === "warmup") return viewText(st.text_id, { reread: true, onDone: next });
+    if (st.kind === "review") return viewReview({ newWords: false, limit: st.limit, onDone: next });
+    if (st.kind === "text") {
+      textId = await waitForText();
+      if (!textId) { steps.splice(i, 2); return run(); } // skip text + new words
+      return viewText(textId, { onDone: next });
+    }
+    if (st.kind === "newwords") return textId ? viewNewWords(textId, next) : next();
+    if (st.kind === "drill") return viewDrill(null, { n: st.n, onDone: next });
+    if (st.kind === "write") return viewWrite({ onDone: next });
+    next();
+  };
+
+  const finish = async () => {
+    $bar.hidden = true;
+    const p = await api("/progress");
+    const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
+    $app.innerHTML = `<div class="card hero review-done">
+      <p class="eyebrow">${mode === "quick" ? "Quick 5" : "Heutige Session"}</p>
+      <h1>Geschafft! 🎉</h1>
+      <p>${mins} Minuten · Serie: <strong>${p.streak} ${p.streak === 1 ? "Tag" : "Tage"}</strong></p>
+      <a class="btn" href="#/progress">Fortschritt ansehen</a>
+      <a class="btn secondary" href="#/">Zur Übersicht</a></div>`;
+  };
+  run();
+}
+
+// ---- progress --------------------------------------------------------------------
+
+function activityChart(days) {
+  const max = Math.max(1, ...days.map((d) => d.count));
+  const label = (d) => new Date(d.day + "T12:00").toLocaleDateString("de-DE", { weekday: "short", day: "numeric" });
+  return `<div class="bars" role="img" aria-label="Aktivität der letzten 14 Tage">${days.map((d) => `
+    <div class="bar-col" tabindex="0" data-tip="${esc(label(d))}: ${d.count} Übungen">
+      <div class="bar" style="height:${d.count ? Math.max(6, (d.count / max) * 100) : 0}%"></div>
+      <span class="bar-label">${new Date(d.day + "T12:00").getDate()}</span>
+    </div>`).join("")}</div>
+    <table class="sr-only"><caption>Aktivität pro Tag</caption>${days.map((d) =>
+      `<tr><th>${esc(d.day)}</th><td>${d.count}</td></tr>`).join("")}</table>`;
+}
+
+async function viewProgress() {
+  const p = await api("/progress");
+  const cur = p.lessons.find((l) => l.number === p.current_lesson);
+  const speeds = p.reading_speed;
+  const lastWpm = speeds.length ? speeds.at(-1).wpm : null;
+  const firstWpm = speeds.length > 1 ? speeds[0].wpm : null;
+  $app.innerHTML = `
+    <h1>Fortschritt</h1>
+    <div class="stats four">
+      <div class="stat"><b>${p.known_words}</b><span>Wörter sicher</span></div>
+      <div class="stat"><b>${p.cards_due}</b><span>heute fällig</span></div>
+      <div class="stat"><b>${p.streak}</b><span>Tage Serie</span></div>
+      <div class="stat"><b>${lastWpm ?? "–"}</b><span>Wörter/Min.${firstWpm ? ` (vorher ${firstWpm})` : ""}</span></div>
+    </div>
+    ${p.ready_for_next ? `<div class="card hero"><h3>Bereit für Lektion ${p.current_lesson + 1}! 🚀</h3>
+      <p class="small">${pct(cur.mastery)} der Wörter aus Lektion ${p.current_lesson} sitzen. Wechsle, wenn dein Kurs so weit ist.</p>
+      <button class="btn" id="advance">Zu Lektion ${p.current_lesson + 1} wechseln</button></div>` : ""}
+    <div class="card"><h3>Aktivität · 14 Tage</h3>${activityChart(p.activity)}
+      <p class="small muted">${p.review_accuracy_7d != null ? `Karten richtig (7 Tage): ${pct(p.review_accuracy_7d)} · ` : ""}${p.texts_read} ${p.texts_read === 1 ? "Text" : "Texte"} gelesen · ${p.writings} ${p.writings === 1 ? "Text" : "Texte"} geschrieben</p></div>
+    <div class="card"><h3>Lektionen</h3>
+      <p class="small muted">Ziel vor der nächsten Lektion: 80 % der Wörter sicher.</p>
+      ${p.lessons.map((l) => `<a class="mastery-row ${l.number === p.current_lesson ? "current" : ""}" href="#/lesson/${l.number}">
+        <span class="m-num">${l.number}</span>
+        <span class="m-body"><span class="m-title">${esc(l.theme)}</span>
+          <span class="progress"><i style="width:${pct(l.mastery)}"></i></span>
+          <span class="small muted">${l.known}/${l.words} sicher${l.learning ? ` · ${l.learning} in Arbeit` : ""}</span></span>
+        <span class="m-pct">${pct(l.mastery)}</span></a>`).join("")}</div>
+    <div class="card"><h3>Häufigste Fehler</h3>
+      ${p.top_errors.length ? `<ol class="errors">${p.top_errors.map((e) => `<li>
+        <span>${e.grammar_code ? esc(e.name) : `${e.article ? `<span class="art ${e.article}">${e.article}</span> ` : ""}${esc(e.lemma || "")}`}
+          <span class="small muted">· ${e.count}×</span><br><span class="small muted">${esc(e.example || "")}</span></span>
+        ${e.grammar_code ? `<a class="btn secondary small-btn" href="#/drill/${esc(e.grammar_code)}">Üben</a>` : ""}</li>`).join("")}</ol>`
+        : `<p class="small muted">Noch keine Fehler gesammelt. Sie kommen aus Übungen und Texten, die du schreibst.</p>`}</div>
+    <a class="btn secondary" href="#/settings">⚙ Einstellungen</a>`;
+  $app.querySelector("#advance")?.addEventListener("click", async () => {
+    await api("/settings", { method: "PUT", body: { current_lesson: p.current_lesson + 1 } });
+    toast(`Lektion ${p.current_lesson + 1} ist jetzt aktiv`);
+    route();
+  });
+}
+
+// ---- listening playlist (narrow reading set as audio, e.g. for runs) ------------------
+
+async function viewListen() {
+  const texts = await api("/texts");
+  $app.innerHTML = `
+    <p class="eyebrow"><a href="#/read">← Lesen</a></p>
+    <h1>Hören</h1>
+    <p class="small muted">Deine Texte als Playlist, vorgelesen von der deutschen Stimme deines Geräts. Am besten mit Kopfhörern beim Laufen.
+      Hinweis: Auf dem iPhone stoppt die Wiedergabe meist, wenn der Bildschirm sperrt.</p>
+    ${texts.length ? `
+    <div class="card">
+      <div class="toolbar" style="align-items:center">
+        <button class="btn" id="play-all">▶ Alle abspielen</button>
+        <button class="btn secondary" id="stop" hidden>■ Stopp</button>
+        <label class="small">Tempo <select id="rate"><option value="0.8">langsam</option><option value="0.9" selected>normal</option><option value="1">schnell</option></select></label>
+      </div>
+      <p class="small muted" id="now"></p>
+    </div>
+    <ul class="lesson-list">${texts.map((t, n) => `<li><div class="lesson-row" data-n="${n}">
+      <span class="num">${t.lesson_number}</span>
+      <span class="body"><span class="title">${esc(t.title)}</span><span class="meta">${esc(t.summary || "")}</span></span>
+      <button class="btn secondary small-btn play-one" data-n="${n}" aria-label="${esc(t.title)} abspielen">▶</button></div></li>`).join("")}</ul>`
+    : `<p class="empty">Noch keine Texte. Erstelle zuerst einen unter „Lesen“.</p>`}`;
+  if (!texts.length) return;
+  let playing = false, idx = 0;
+  const $now = $app.querySelector("#now"), $stop = $app.querySelector("#stop"), $all = $app.querySelector("#play-all");
+  const plain = async (t) => {
+    const d = await api(`/texts/${t.id}`);
+    return `${t.title}.\n` + d.tokens.map((tk) => tk.br ? "\n" : tk.t + tk.ws).join("");
+  };
+  const stop = () => { playing = false; speechSynthesis.cancel(); $stop.hidden = true; $all.hidden = false; $now.textContent = "";
+    $app.querySelectorAll(".lesson-row.playing").forEach((r) => r.classList.remove("playing")); };
+  const play = async (n, continueAfter) => {
+    if (!("speechSynthesis" in window)) return toast("Vorlesen wird hier nicht unterstützt");
+    playing = true; idx = n; $stop.hidden = false; $all.hidden = true;
+    $app.querySelectorAll(".lesson-row").forEach((r) => r.classList.toggle("playing", +r.dataset.n === n));
+    $now.textContent = `Jetzt: ${texts[n].title}`;
+    const u = new SpeechSynthesisUtterance(await plain(texts[n]));
+    u.lang = "de-DE"; u.rate = +$app.querySelector("#rate").value;
+    const voice = speechSynthesis.getVoices().find((v) => v.lang.startsWith("de"));
+    if (voice) u.voice = voice;
+    u.onend = () => { if (playing && continueAfter && idx + 1 < texts.length) play(idx + 1, true); else stop(); };
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  };
+  $all.addEventListener("click", () => play(0, true));
+  $stop.addEventListener("click", stop);
+  $app.querySelectorAll(".play-one").forEach((b) => b.addEventListener("click", () => play(+b.dataset.n, false)));
+}
+
 // ---- router ----------------------------------------------------------------
 
 const routes = [
   [/^#?\/?$/, "home", viewHome],
   [/^#\/lessons$/, "lessons", viewLessons],
   [/^#\/lesson\/(\d+)$/, "lessons", (m) => viewLesson(m[1])],
-  [/^#\/review$/, "home", viewReview],
+  [/^#\/review$/, "home", () => viewReview()],
   [/^#\/read$/, "read", viewReadList],
-  [/^#\/write$/, "home", viewWrite],
+  [/^#\/write$/, "home", () => viewWrite()],
+  [/^#\/session\/(full|quick)$/, "home", (m) => viewSession(m[1])],
+  [/^#\/progress$/, "progress", viewProgress],
+  [/^#\/listen$/, "read", viewListen],
   [/^#\/drill$/, "home", () => viewDrill(null)],
   [/^#\/drill\/([A-Z0-9_]+)$/, "home", (m) => viewDrill(m[1])],
   [/^#\/text\/(\d+)$/, "read", (m) => viewText(m[1])],
@@ -877,6 +1157,8 @@ const routes = [
 async function route() {
   const hash = location.hash || "#/";
   keyHandler = null;
+  $bar.hidden = true;
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
   for (const [re, name, view] of routes) {
     const m = hash.match(re);
     if (!m) continue;

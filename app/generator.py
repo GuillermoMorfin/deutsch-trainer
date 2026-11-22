@@ -327,7 +327,8 @@ def first_sentence_with(doc_text: str, tokens: list[dict], lemma_id: int) -> str
     return "".join(sentence).strip() if found else None
 
 
-def finish_reading(conn: sqlite3.Connection, text_id: int, *, seconds: float | None = None) -> dict:
+def finish_reading(conn: sqlite3.Connection, text_id: int, *, seconds: float | None = None,
+                   reread: bool = False) -> dict:
     t = row_to_dict(conn.execute("SELECT * FROM text WHERE id = ?", (text_id,)).fetchone())
     if t is None:
         raise KeyError(text_id)
@@ -348,4 +349,6 @@ def finish_reading(conn: sqlite3.Connection, text_id: int, *, seconds: float | N
             log = (t["wpm_log"] or []) + [{"ts": srs.to_db(srs.now_utc()), "wpm": wpm}]
             conn.execute("UPDATE text SET wpm_log = ? WHERE id = ?", (json.dumps(log), text_id))
         conn.execute("UPDATE text SET read_count = read_count + 1 WHERE id = ?", (text_id,))
+        conn.execute("INSERT INTO reading_log (text_id, kind, seconds, wpm, ts) VALUES (?, ?, ?, ?, ?)",
+                     (text_id, "reread" if reread else "read", seconds, wpm, srs.to_db(srs.now_utc())))
     return {"introduced": len(introduced), "wpm": wpm}

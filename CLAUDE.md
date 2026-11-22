@@ -35,6 +35,9 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
   answers + error_log + missed Grammatik exercises from book_progress. Wrong answers write `error_log`.
 - `app/writing.py`: tasks in `app/seed/writing_prompts.json`; feedback capped at 3 corrections; codes are
   validated against grammar_point; a word error makes that word's produce card due now.
+- `app/session.py` plans the daily flow and writes the day's text in a background thread with its own
+  DB connection; `app/progress.py` computes streak (local days), mastery, errors, WPM.
+- `get_db` opens one sqlite connection per request; never share a connection across threads.
 - Seed text (Redemittel, drills, fixtures) must pass the verifier at its lesson; tests enforce this.
 - `static/` front end (hash router in `app.js`), served by FastAPI; `sw.js` at root scope.
 - Tests: `uv run pytest`. Each test gets its own DB via `TRAINER_DB`.

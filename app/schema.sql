@@ -179,3 +179,13 @@ CREATE TABLE IF NOT EXISTS drill_attempt (
     ts        TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_drill_attempt_item ON drill_attempt(item_id, ts);
+
+-- One row per finished reading (first read or timed re-read), for WPM trend and streak.
+CREATE TABLE IF NOT EXISTS reading_log (
+    id       INTEGER PRIMARY KEY,
+    text_id  INTEGER NOT NULL REFERENCES text(id) ON DELETE CASCADE,
+    kind     TEXT NOT NULL DEFAULT 'read' CHECK (kind IN ('read', 'reread')),
+    seconds  REAL,
+    wpm      INTEGER,
+    ts       TEXT NOT NULL DEFAULT (datetime('now'))
+);

@@ -17,31 +17,32 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from . import drills, generator, srs, writing  # noqa: E402
+from . import drills, generator, progress, session, srs, writing  # noqa: E402
 from .db import connect, row_to_dict, rows_to_dicts, transaction  # noqa: E402
 from .llm import GenerationError, LLMUnavailable, Writer, default_writer  # noqa: E402
 from .seed import seed_all
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
-_conn: sqlite3.Connection | None = None
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _conn
-    _conn = connect()
-    seed_all(_conn)
+    conn = connect()
+    seed_all(conn)
+    conn.close()
     yield
-    _conn.close()
 
 
 app = FastAPI(title="Deutsch-Trainer", lifespan=lifespan)
 
 
-def get_db() -> sqlite3.Connection:
-    assert _conn is not None
-    return _conn
+def get_db():
+    """One connection per request. Requests run in a thread pool, and a shared sqlite3
+    connection lets concurrent requests interleave cursors (seen: COUNT(*) returning None)."""
+    conn = connect()
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def _lesson_or_404(db: sqlite3.Connection, number: int) -> dict:
@@ -199,6 +200,7 @@ def update_book_progress(number: int, body: BookProgressUpdate, db: sqlite3.Conn
 
 class ReviewStart(BaseModel):
     new_words: bool = True
+    limit: int = Field(srs.MAX_REVIEWS_PER_SESSION, ge=1, le=100)
 
 
 @app.post("/api/review/start")
@@ -206,13 +208,14 @@ def review_start(body: ReviewStart, db: sqlite3.Connection = Depends(get_db)):
     """Introduce today's new lesson words (respecting the daily cap) and return the queue."""
     with transaction(db):
         introduced = srs.introduce_lesson_words(db) if body.new_words else []
-    return {"introduced": len(introduced), "queue": srs.queue(db), "due_count": srs.due_count(db),
+    return {"introduced": len(introduced), "queue": srs.queue(db, limit=body.limit), "due_count": srs.due_count(db),
             "new_today": srs.new_cards_today(db)}
 
 
 @app.get("/api/review/queue")
-def review_queue(db: sqlite3.Connection = Depends(get_db)):
-    return {"queue": srs.queue(db), "due_count": srs.due_count(db)}
+def review_queue(limit: int = Query(srs.MAX_REVIEWS_PER_SESSION, ge=1, le=100),
+                 db: sqlite3.Connection = Depends(get_db)):
+    return {"queue": srs.queue(db, limit=limit), "due_count": srs.due_count(db)}
 
 
 class ReviewAnswer(BaseModel):
@@ -312,12 +315,13 @@ def check_question(question_id: int, body: QuestionAnswer, db: sqlite3.Connectio
 
 class FinishReading(BaseModel):
     seconds: float | None = Field(None, ge=0)
+    reread: bool = False
 
 
 @app.post("/api/texts/{text_id}/finish")
 def finish_text(text_id: int, body: FinishReading, db: sqlite3.Connection = Depends(get_db)):
     try:
-        return generator.finish_reading(db, text_id, seconds=body.seconds)
+        return generator.finish_reading(db, text_id, seconds=body.seconds, reread=body.reread)
     except KeyError:
         raise HTTPException(404, f"Text {text_id} not found")
 
@@ -413,6 +417,37 @@ def writing_submit(body: WritingSubmit, db: sqlite3.Connection = Depends(get_db)
 @app.get("/api/writing")
 def writing_history(limit: int = Query(10, ge=1, le=50), db: sqlite3.Connection = Depends(get_db)):
     return writing.history(db, limit)
+
+
+# ---- daily session + progress -------------------------------------------------------------
+
+def _writer_factory():
+    return app.dependency_overrides.get(get_writer, get_writer)()
+
+
+@app.get("/api/session/plan")
+def session_plan(mode: Literal["full", "quick"] = "full", db: sqlite3.Connection = Depends(get_db)):
+    return session.plan(db, mode)
+
+
+@app.post("/api/session/prepare-text")
+def session_prepare_text(db: sqlite3.Connection = Depends(get_db)):
+    """Starts writing today's text in the background (returns immediately)."""
+    try:
+        _writer_factory()  # fail fast if Claude Code isn't available
+    except LLMUnavailable as e:
+        return {**session.text_status(db), "error": str(e)}
+    return session.prepare_text(db, _writer_factory)
+
+
+@app.get("/api/session/text-status")
+def session_text_status(db: sqlite3.Connection = Depends(get_db)):
+    return session.text_status(db)
+
+
+@app.get("/api/progress")
+def get_progress(db: sqlite3.Connection = Depends(get_db)):
+    return progress.summary(db)
 
 
 @app.get("/api/health")
