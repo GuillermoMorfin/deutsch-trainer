@@ -128,6 +128,21 @@ function formsHTML(c) {
   return bits.join(" · ");
 }
 
+// letter-level diff: what you typed vs. the right spelling (red = extra/wrong, green = missing)
+function charDiffHTML(given, expected) {
+  const a = [...given], b = [...expected], n = a.length, m = b.length;
+  const L = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+    L[i][j] = a[i] === b[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  let i = 0, j = 0, out = "";
+  while (i < n || j < m) {
+    if (i < n && j < m && a[i] === b[j]) { out += esc(a[i]); i++; j++; }
+    else if (j < m && (i >= n || L[i][j + 1] >= L[i + 1][j])) { out += `<ins>${esc(b[j])}</ins>`; j++; }
+    else { out += `<del>${esc(a[i])}</del>`; i++; }
+  }
+  return out;
+}
+
 const POS_HINT = { NOUN: "Nomen · mit Artikel", VERB: "Verb · Infinitiv", ADJ: "Adjektiv", ADV: "Adverb",
   PHRASE: "Ausdruck", CONJ: "Konjunktion", PRON: "Pronomen", ADP: "Präposition", DET: "Artikel/Begleiter", INTJ: "Ausruf" };
 
@@ -257,7 +272,17 @@ async function viewReview(opts = {}) {
       const fb = $app.querySelector(".feedback");
       fb.hidden = false;
       fb.className = `feedback ${ok ? "ok" : "bad"}`;
-      fb.innerHTML = `<strong>${esc(r.check.message)}</strong>
+      const verdictLine = {
+        exact: "✓ Richtig!",
+        typo: "✓ Richtig, mit kleinem Tippfehler",
+        missing_article: "✗ Artikel fehlt",
+        wrong_article: "✗ Falscher Artikel",
+        umlaut: "✗ Achte auf den Umlaut",
+      }[r.check.verdict] || "✗ Leider falsch";
+      const showLetters = ["typo", "umlaut"].includes(r.check.verdict) ||
+        (r.check.verdict === "wrong_article" && r.check.given.trim());
+      fb.innerHTML = `<strong>${verdictLine}</strong>
+        ${showLetters ? `<div class="typo-diff" aria-label="Unterschied">${charDiffHTML(r.check.given.trim(), r.check.expected)}</div>` : ""}
         <div class="flash-word small-word">${nounHTML(c)}</div>
         ${formsHTML(c) ? `<div class="small muted">${formsHTML(c)}</div>` : ""}`;
       $app.querySelector(".umlauts").hidden = true;

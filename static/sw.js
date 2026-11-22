@@ -1,5 +1,5 @@
 // Service worker: app shell cached for offline use; API is network-first with cached fallback.
-const CACHE = "trainer-v10";
+const CACHE = "trainer-v11";
 const SHELL = ["/", "/static/styles.css", "/static/app.js", "/static/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
