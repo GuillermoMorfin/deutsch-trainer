@@ -25,10 +25,11 @@ def cards(conn, lid):
 
 
 def test_daily_cap_limits_new_words(conn):
+    cap = conn.execute("SELECT daily_new_word_cap FROM settings").fetchone()[0]
     first = srs.introduce_lesson_words(conn, at=T0)
-    assert len(first) == 8  # default cap
+    assert len(first) == cap == 12  # default cap
     assert srs.introduce_lesson_words(conn, at=T0 + timedelta(hours=2)) == []
-    assert len(srs.introduce_lesson_words(conn, at=T0 + timedelta(days=1))) == 8
+    assert len(srs.introduce_lesson_words(conn, at=T0 + timedelta(days=1))) == cap
 
 
 def test_new_words_come_from_current_lesson_and_start_learning(conn):
@@ -94,7 +95,7 @@ def test_reviewing_a1_word_never_demotes_it(conn):
 def test_queue_includes_due_and_soon_learning_cards_only(conn):
     srs.introduce_lesson_words(conn, at=T0)
     q = srs.queue(conn, at=T0)
-    assert len(q) == 8 and all(c["direction"] == "recognise" for c in q)
+    assert len(q) == 12 and all(c["direction"] == "recognise" for c in q)
     first = q[0]["id"]
     srs.review(conn, first, rating=3, at=T0)          # learning step: due in ~10 min
     assert first in {c["id"] for c in srs.queue(conn, at=T0)}  # learn-ahead keeps it in session
@@ -111,7 +112,7 @@ def test_recognise_card_requires_rating(conn):
 
 def test_review_api_roundtrip(client):
     start = client.post("/api/review/start", json={}).json()
-    assert start["introduced"] == 8 and len(start["queue"]) == 8
+    assert start["introduced"] == 12 and len(start["queue"]) == 12
     card = start["queue"][0]
     r = client.post(f"/api/review/{card['id']}", json={"rating": 3, "duration_ms": 1200}).json()
     assert r["rating"] == 3

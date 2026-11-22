@@ -29,7 +29,10 @@ def good_body(prompt: str) -> str:
                 sentences.append(f"Ich möchte heute {lemma}.")
             else:
                 sentences.append(f"Das ist sehr {lemma}.")
-    return " ".join(sentences + ["Marco ist heute in Berlin. Wir sind zusammen im Park."])
+    # lesson 1 grammar: Perfekt, war/hatte, letzt-/nächst-/jed-
+    grammar = ["Gestern bin ich gelaufen.", "Als Kind hatte ich einen Hund.", "Letzten Sommer war ich in Berlin.",
+               "Gestern hat Marco gekocht.", "Jeden Tag war ich müde.", "Wir hatten Zeit."]
+    return " ".join(sentences + grammar + ["Marco ist heute in Berlin. Wir sind zusammen im Park."])
 
 
 class FakeWriter:
@@ -71,9 +74,25 @@ def test_repair_loop_fixes_unknown_words_and_blocked_grammar(conn):
     assert t["title"] == "Ein Tag mit Marco" and t["summary"]
     tokens = json.loads(t["annotations"])
     targets = set(json.loads(t["target_lemma_ids"]))
-    assert len(targets) == 4
-    assert sum(1 for tok in tokens if tok.get("target")) >= 12
+    assert len(targets) == 6
+    assert sum(1 for tok in tokens if tok.get("target")) >= 18
+    assert json.loads(t["report_json"])["target_grammar"] == {
+        "PERFEKT_HABEN_SEIN": True, "PRAET_WAR_HATTE": True, "LETZT_NAECHST_JED": True}
     assert conn.execute("SELECT COUNT(*) FROM question WHERE text_id = ?", (result.text_id,)).fetchone()[0] == 2
+
+
+def test_missing_target_grammar_triggers_a_repair(conn):
+    class NoGrammarFirst(FakeWriter):
+        def write(self, system, prompt):
+            d = super().write(system, prompt)
+            if len(self.prompts) == 1:  # first draft: no Perfekt / war / letzt-
+                d.body = d.body.split(" Gestern bin ich")[0] + " Marco ist heute in Berlin."
+            return d
+    w = NoGrammarFirst(bad_drafts=0)
+    result = generator.generate_text(conn, w, seed=11)
+    assert result.attempts == 2
+    assert "target grammar" in w.prompts[1] and "Perfekt" in w.prompts[1]
+    assert "TARGET GRAMMAR of this lesson" in w.prompts[0]
 
 
 def test_prompt_contains_lists_and_personal_context(conn):
@@ -123,9 +142,9 @@ def test_second_text_in_series_sees_the_first(conn):
 def test_finish_reading_puts_targets_into_srs_with_sentence(conn):
     result = generator.generate_text(conn, FakeWriter(bad_drafts=0), seed=6)
     out = generator.finish_reading(conn, result.text_id, seconds=60)
-    assert out["introduced"] == 4 and out["wpm"] > 0
+    assert out["introduced"] == 6 and out["wpm"] > 0
     cards = conn.execute("SELECT * FROM card WHERE source_text_id = ?", (result.text_id,)).fetchall()
-    assert len(cards) == 4 and all(c["source_sentence"].startswith("Das ist") or "möchte" in c["source_sentence"]
+    assert len(cards) == 6 and all(c["source_sentence"].startswith("Das ist") or "möchte" in c["source_sentence"]
                                    for c in cards)
     # reading again doesn't duplicate cards
     assert generator.finish_reading(conn, result.text_id)["introduced"] == 0
@@ -150,7 +169,7 @@ def test_api_flow_with_fake_writer(client):
         assert str(tid) in {str(k) for k in text["lemmas"]}
         q = text["questions"][0]
         assert client.post(f"/api/questions/{q['id']}/check", json={"answer": "Richtig"}).json()["correct"]
-        assert client.post(f"/api/texts/{r['text_id']}/finish", json={"seconds": 40}).json()["introduced"] == 4
+        assert client.post(f"/api/texts/{r['text_id']}/finish", json={"seconds": 40}).json()["introduced"] == 6
         assert len(client.get("/api/texts", params={"lesson": 1}).json()) == 1
     finally:
         app.dependency_overrides.clear()

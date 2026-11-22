@@ -86,6 +86,31 @@ class Lexicon:
         return found[0] if found else None
 
 
+# Words a grammar point is made of: once the point is unlocked they count as known
+# (a lesson about letzt-/nächst-/jed- must be able to say "letzten Sommer").
+GRAMMAR_WORDS = {
+    "LETZT_NAECHST_JED": ("letzt", "nächst", "jeder"), "KONJ_WEIL": ("weil",), "KONJ_DESHALB": ("deshalb",),
+    "KONJ_DASS": ("dass",), "KONJ_WENN": ("wenn",), "INDIREKTE_FRAGE": ("ob",),
+}
+
+
+def personal_names() -> set[str]:
+    """Places and people from personal.json count as names (Tiergarten, Prenzlauer Berg, Marco …)."""
+    import json
+    from pathlib import Path
+    p = Path(__file__).resolve().parent / "seed" / "personal.json"
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return set()
+    names = list(data.get("places", [])) + list(data.get("friends", [])) + list(data.get("recurring_characters", {}))
+    words = set()
+    for n in names:
+        for w in re.findall(r"[A-ZÄÖÜ][\wäöüß-]+", n):
+            words.add(w.lower())
+    return words
+
+
 def build_lexicon(conn: sqlite3.Connection, target_ids: set[int] | None = None,
                   extra_known: set[int] | None = None) -> Lexicon:
     by_lemma: dict[str, list[int]] = {}
@@ -102,6 +127,10 @@ def build_lexicon(conn: sqlite3.Connection, target_ids: set[int] | None = None,
             for p in r["partizip2"].split("/"):
                 forms.setdefault(p.strip().lower(), []).append(r["id"])
     known = {r[0] for r in conn.execute("SELECT lemma_id FROM known_word WHERE state IN ('known', 'learning')")}
+    unlocked = {r[0] for r in conn.execute("SELECT code FROM grammar_point WHERE unlocked = 1")}
+    for code, words in GRAMMAR_WORDS.items():
+        if code in unlocked:
+            known |= {lid for w in words for lid in by_lemma.get(w, [])}
     return Lexicon(by_lemma, forms, known | (extra_known or set()), set(target_ids or ()))
 
 
@@ -153,7 +182,19 @@ def is_counted(tok: Token) -> bool:
         return False  # the particle is counted with its verb
     if tok.ent_type_ in ("PER", "LOC", "ORG") and tok.text[:1].isupper() and tok.pos_ != "NOUN":
         return False
+    if tok.text[:1].isupper() and tok.text.lower() in _names():
+        return False
     return True
+
+
+_NAMES: set[str] | None = None
+
+
+def _names() -> set[str]:
+    global _NAMES
+    if _NAMES is None:
+        _NAMES = personal_names()
+    return _NAMES
 
 
 # ---- grammar ---------------------------------------------------------------------
@@ -307,3 +348,53 @@ def analyse(text: str, lex: Lexicon, unlocked: set[str]) -> tuple[Doc, Report]:
 
 def verify(conn: sqlite3.Connection, text: str, target_ids: set[int] | None = None) -> Report:
     return analyse(text, build_lexicon(conn, target_ids), unlocked_codes(conn))[1]
+
+
+# ---- target grammar: does the text actually practise the lesson's grammar? -----------------
+
+TWO_WAY = {"an", "auf", "hinter", "in", "neben", "über", "unter", "vor", "zwischen", "im", "am", "ins", "ans"}
+
+
+def grammar_presence(doc: Doc) -> set[str]:
+    """Grammar point codes that the text uses (positive detection, not a check for errors)."""
+    found: set[str] = set()
+    for i, tok in enumerate(doc):
+        low = tok.text.lower()
+        lemma = VERB_FORMS.get(low, tok.lemma_).lower()
+        nxt = doc[i + 1].text.lower() if i + 1 < len(doc) else ""
+        if tok.tag_ == "KOUS" and low in SUBORDINATORS:
+            found.add(SUBORDINATORS[low])
+        if low == "deshalb":
+            found.add("KONJ_DESHALB")
+        if tok.tag_.endswith("FIN"):
+            mood, tense = tok.morph.get("Mood"), tok.morph.get("Tense")
+            if lemma in ("haben", "sein") and "Pres" in tense and _has_child(tok, ("VVPP", "VAPP", "VMPP")):
+                found.add("PERFEKT_HABEN_SEIN")
+            if lemma in ("haben", "sein") and "Past" in tense and "Sub" not in mood and not _has_child(tok, ("VVPP", "VAPP", "VMPP")):
+                found.add("PRAET_WAR_HATTE")
+            if (lemma in ("sollen", "können") and ("Sub" in mood or low.startswith(("sollt", "könnt")))) or \
+                    (lemma == "werden" and "Sub" in mood):
+                found.add("KONJ2_RAT_KOENNTE_SOLLTE")
+            if lemma in ("haben", "sein") and any(u in low for u in UMLAUTS) and "Sub" in mood:
+                found.add("KONJ2_WUNSCH_HAETTE_WAERE")
+        if tok.tag_ in ("PWAV", "PWS", "PWAT") and tok.head.dep_ in ("oc", "rc") and tok.head.i > tok.i:
+            found.add("INDIREKTE_FRAGE")
+        if re.match(r"^(letzt|nächst|jed)(e|en|er|es|em)?$", low):
+            found.add("LETZT_NAECHST_JED")
+        if tok.tag_ == "PPOSAT" and re.match(r"^(unser|euer|eur|ihr)", low):
+            found.add("POSS_UNSER_EUER_IHR")
+        if low == "über" and tok.pos_ == "ADP":
+            found.add("PREP_UEBER_AKK")
+        if low == "seit" and tok.pos_ == "ADP":
+            found.add("PREP_SEIT_DAT")
+        if low == "bis" and nxt in ("zum", "zur"):
+            found.add("PREP_VON_BIS_ZUM")
+        if low in ("zum", "zur", "beim", "vom", "bei", "von", "zu") and tok.pos_ == "ADP":
+            found.add("PREP_VON_BEI_ZU_DAT")
+        if lemma in ("legen", "stellen", "hängen", "liegen", "stehen") and tok.pos_ == "VERB":
+            found.add("VERBEN_LEGEN_STELLEN_HAENGEN")
+        if low in TWO_WAY and tok.pos_ == "ADP":
+            found.add("WECHSELPRAEP")
+        if tok.pos_ == "NOUN" and low.endswith("ung") and len(low) > 5:
+            found.add("NOMEN_UNG")
+    return found

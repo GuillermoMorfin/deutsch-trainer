@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS book_progress (
 CREATE TABLE IF NOT EXISTS settings (
     id                  INTEGER PRIMARY KEY CHECK (id = 1),
     gloss_language      TEXT NOT NULL DEFAULT 'es',
-    daily_new_word_cap  INTEGER NOT NULL DEFAULT 8,
+    daily_new_word_cap  INTEGER NOT NULL DEFAULT 12,
     target_retention    REAL NOT NULL DEFAULT 0.9,
     session_minutes     INTEGER NOT NULL DEFAULT 30,
     current_lesson      INTEGER NOT NULL DEFAULT 1,

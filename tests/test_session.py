@@ -48,7 +48,9 @@ def test_summary_and_ready_for_next(conn):
                     JOIN lesson l ON l.id = m.lesson_id WHERE l.number = 1
                     ON CONFLICT(lemma_id) DO UPDATE SET state = 'known'""")
     s = progress.summary(conn)
-    assert s["lessons"][0]["mastery"] == 1.0 and s["ready_for_next"]
+    assert s["lessons"][0]["mastery"] == 1.0 and not s["ready_for_next"]   # still needs 3 texts
+    read_three_texts(conn, 1)
+    assert progress.summary(conn)["ready_for_next"]
 
 
 def test_done_today_flags(conn):
@@ -142,3 +144,64 @@ def test_speaking_counts_for_today(conn):
 def test_session_minutes_setting_validated(client):
     assert client.put("/api/settings", json={"session_minutes": 30}).status_code == 200
     assert client.put("/api/settings", json={"session_minutes": 25}).status_code == 422
+
+
+def test_session_cards_add_new_words_within_daily_cap(conn):
+    assert conn.execute("SELECT daily_new_word_cap FROM settings").fetchone()[0] == 12
+    review = next(s for s in session.plan(conn, "full")["steps"] if s["kind"] == "review")
+    assert review["new"] == 12 - session.TEXT_TARGETS
+
+
+def test_introduced_today_lists_new_lesson_words(conn):
+    srs.introduce_lesson_words(conn, limit=5)
+    conn.commit()
+    today = srs.introduced_today(conn)
+    assert len(today) == 5 and all(w["gloss_es"] for w in today)
+
+
+def test_review_start_respects_new_limit(client):
+    r = client.post("/api/review/start", json={"new_words": True, "new_limit": 3}).json()
+    assert r["introduced"] == 3
+    assert len(client.get("/api/review/today-new").json()) == 3
+
+
+def test_lesson_check_tracks_plan_ingredients(conn):
+    c = progress.lesson_check(conn, 1)
+    assert c["words_total"] > 30 and c["texts_read"] == 0 and c["texts_goal"] == 3 and not c["ready"]
+    assert [g["code"] for g in c["grammar"]] == ["PERFEKT_HABEN_SEIN", "PRAET_WAR_HATTE", "LETZT_NAECHST_JED"]
+    r = generator.generate_text(conn, FakeWriter(bad_drafts=0), seed=3)
+    generator.finish_reading(conn, r.text_id, seconds=60)
+    c = progress.lesson_check(conn, 1)
+    assert c["texts_read"] == 1 and c["words_seen"] >= 6
+    assert all(g["in_texts"] == 1 for g in c["grammar"])
+
+
+def test_ready_needs_words_and_three_texts(conn):
+    conn.execute("""INSERT INTO known_word (lemma_id, state) SELECT m.id, 'known' FROM lemma m
+                    JOIN lesson l ON l.id = m.lesson_id WHERE l.number = 1
+                    ON CONFLICT(lemma_id) DO UPDATE SET state = 'known'""")
+    assert progress.lesson_check(conn, 1)["mastery"] == 1.0
+    assert not progress.summary(conn)["ready_for_next"]          # words yes, texts no
+    for _ in range(3):
+        conn.execute("""INSERT INTO text (lesson_id, title, body, annotations, read_count)
+                        VALUES ((SELECT id FROM lesson WHERE number = 1), 't', 'b', '[]', 1)""")
+    assert progress.summary(conn)["ready_for_next"]
+
+
+def test_lesson_endpoint_includes_check(client):
+    assert client.get("/api/lessons/1").json()["check"]["texts_goal"] == 3
+
+
+def read_three_texts(conn, lesson: int):
+    for _ in range(3):
+        conn.execute("""INSERT INTO text (lesson_id, title, body, annotations, read_count)
+                        VALUES ((SELECT id FROM lesson WHERE number = ?), 't', 'b', '[]', 1)""", (lesson,))
+
+
+def test_words_met_in_text_count_even_without_cards(conn):
+    r = generator.generate_text(conn, FakeWriter(bad_drafts=0), seed=5)
+    letzt = conn.execute("SELECT id FROM lemma WHERE lemma = 'letzt'").fetchone()[0]
+    generator.finish_reading(conn, r.text_id, seconds=60)
+    row = conn.execute("SELECT state, times_seen_in_text FROM known_word WHERE lemma_id = ?", (letzt,)).fetchone()
+    assert row["times_seen_in_text"] == 1 and row["state"] == "new"
+    assert progress.lesson_check(conn, 1)["words_seen"] > 6

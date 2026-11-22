@@ -10,6 +10,7 @@ from .db import rows_to_dicts
 from .drills import top_errors
 
 MASTERY_TO_ADVANCE = 0.8   # depth before breadth: suggest the next lesson at 80 % of words stable
+TEXTS_PER_LESSON = 3       # narrow reading: 3-5 texts per lesson theme before moving on
 
 # Every learning event, as (UTC timestamp) rows; days are counted in local time.
 ACTIVITY_SQL = """
@@ -63,6 +64,42 @@ def lesson_mastery(conn: sqlite3.Connection) -> list[dict]:
            GROUP BY l.id ORDER BY l.number""").fetchall())
 
 
+def lesson_check(conn: sqlite3.Connection, number: int) -> dict:
+    """How well the plan's ingredients have been covered for one lesson."""
+    import json
+    lid = conn.execute("SELECT id FROM lesson WHERE number = ?", (number,)).fetchone()[0]
+    w = conn.execute(
+        """SELECT COUNT(*) AS total, SUM(k.times_seen_in_text > 0) AS seen,
+                  SUM(k.state = 'known') AS known, SUM(k.state = 'learning') AS learning
+           FROM lemma m LEFT JOIN known_word k ON k.lemma_id = m.id
+           WHERE m.lesson_id = ? AND m.pos != 'PHRASE'""", (lid,)).fetchone()
+    texts = conn.execute("SELECT report_json, read_count FROM text WHERE lesson_id = ?", (lid,)).fetchall()
+    texts_read = sum(1 for t in texts if t["read_count"])
+    in_texts: dict[str, int] = {}
+    for t in texts:
+        if t["read_count"] and t["report_json"]:
+            for code, used in (json.loads(t["report_json"]).get("target_grammar") or {}).items():
+                in_texts[code] = in_texts.get(code, 0) + int(bool(used))
+    codes = json.loads(conn.execute("SELECT grammar_points FROM lesson WHERE id = ?", (lid,)).fetchone()[0])
+    grammar = []
+    for code in codes:
+        g = conn.execute(
+            """SELECT g.name, COUNT(a.id) AS attempts, SUM(a.correct) AS right FROM grammar_point g
+               LEFT JOIN drill_item i ON i.grammar_code = g.code LEFT JOIN drill_attempt a ON a.item_id = i.id
+               WHERE g.code = ?""", (code,)).fetchone()
+        grammar.append({"code": code, "name": g["name"], "attempts": g["attempts"],
+                        "accuracy": round((g["right"] or 0) / g["attempts"], 2) if g["attempts"] else None,
+                        "in_texts": in_texts.get(code, 0)})
+    writings = conn.execute("SELECT COUNT(DISTINCT prompt) FROM writing WHERE lesson_id = ?", (lid,)).fetchone()[0]
+    total = w["total"] or 0
+    mastery = round((w["known"] or 0) / total, 3) if total else 0.0
+    return {"number": number, "words_total": total, "words_seen": w["seen"] or 0, "words_known": w["known"] or 0,
+            "words_learning": w["learning"] or 0, "mastery": mastery,
+            "texts_read": texts_read, "texts_goal": TEXTS_PER_LESSON, "grammar": grammar,
+            "writing_tasks_done": writings, "writing_tasks_goal": 3,
+            "ready": mastery >= MASTERY_TO_ADVANCE and texts_read >= TEXTS_PER_LESSON}
+
+
 def reading_speed(conn: sqlite3.Connection, limit: int = 10) -> list[dict]:
     return list(reversed(rows_to_dicts(conn.execute(
         """SELECT r.wpm, r.kind, r.ts, t.title FROM reading_log r JOIN text t ON t.id = r.text_id
@@ -92,7 +129,8 @@ def summary(conn: sqlite3.Connection) -> dict:
         "activity": activity_by_day(conn),
         "lessons": lessons,
         "current_lesson": current,
-        "ready_for_next": current < max(l["number"] for l in lessons) and cur["mastery"] >= MASTERY_TO_ADVANCE,
+        "ready_for_next": current < max(l["number"] for l in lessons) and lesson_check(conn, current)["ready"],
+        "current_check": lesson_check(conn, current),
         "top_errors": top_errors(conn, 5),
         "reading_speed": reading_speed(conn),
         "review_accuracy_7d": review_accuracy(conn),

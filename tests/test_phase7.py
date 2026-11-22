@@ -70,6 +70,8 @@ def test_ready_for_next_uses_last_lesson_in_db(conn):
     conn.execute("UPDATE settings SET current_lesson = 12")
     conn.execute("""INSERT INTO known_word (lemma_id, state) SELECT m.id, 'known' FROM lemma m
                     JOIN lesson l ON l.id = m.lesson_id WHERE l.number = 12""")
+    from tests.test_session import read_three_texts
+    read_three_texts(conn, 12)
     assert progress.summary(conn)["ready_for_next"] is False      # 12 is the last lesson
     add_lesson_13(conn)
     assert progress.summary(conn)["ready_for_next"] is True

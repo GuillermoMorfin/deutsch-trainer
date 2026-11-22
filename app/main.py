@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from . import drills, export, generator, optimize, progress, session, srs, writing  # noqa: E402
+from . import progress as progress_mod  # noqa: E402  (get_lesson has a local named 'progress')
 from .db import connect, row_to_dict, rows_to_dicts, transaction  # noqa: E402
 from .llm import GenerationError, LLMUnavailable, Writer, default_writer  # noqa: E402
 from .seed import seed_all
@@ -109,7 +110,7 @@ def get_lesson(number: int, db: sqlite3.Connection = Depends(get_db)):
     progress = row_to_dict(db.execute(
         "SELECT * FROM book_progress WHERE lesson_id = ?", (lesson["id"],)).fetchone())
     return {"lesson": lesson, "grammar": grammar, "words": words,
-            "exercises": exercises, "book_progress": progress}
+            "exercises": exercises, "book_progress": progress, "check": progress_mod.lesson_check(db, number)}
 
 
 @app.get("/api/words")
@@ -203,6 +204,7 @@ def update_book_progress(number: int, body: BookProgressUpdate, db: sqlite3.Conn
 
 class ReviewStart(BaseModel):
     new_words: bool = True
+    new_limit: int | None = Field(None, ge=0, le=50)   # at most this many new words now (still within the daily cap)
     limit: int = Field(srs.MAX_REVIEWS_PER_SESSION, ge=1, le=100)
 
 
@@ -210,9 +212,15 @@ class ReviewStart(BaseModel):
 def review_start(body: ReviewStart, db: sqlite3.Connection = Depends(get_db)):
     """Introduce today's new lesson words (respecting the daily cap) and return the queue."""
     with transaction(db):
-        introduced = srs.introduce_lesson_words(db) if body.new_words else []
+        introduced = srs.introduce_lesson_words(db, limit=body.new_limit) if body.new_words else []
     return {"introduced": len(introduced), "queue": srs.queue(db, limit=body.limit), "due_count": srs.due_count(db),
             "new_today": srs.new_cards_today(db)}
+
+
+@app.get("/api/review/today-new")
+def review_today_new(db: sqlite3.Connection = Depends(get_db)):
+    """Lesson words that entered the cards today, for the in-session recall rounds."""
+    return srs.introduced_today(db)
 
 
 @app.get("/api/review/queue")

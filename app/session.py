@@ -84,8 +84,12 @@ def size_for(minutes: int) -> tuple[int, dict]:
     return m, SIZES[m]
 
 
+TEXT_TARGETS = 6   # new words each text introduces (generator default)
+
+
 def plan(conn: sqlite3.Connection, mode: str = "full") -> dict:
     due = srs.due_count(conn)
+    cap = conn.execute("SELECT daily_new_word_cap FROM settings WHERE id = 1").fetchone()[0]
     minutes, size = size_for(conn.execute("SELECT session_minutes FROM settings WHERE id = 1").fetchone()[0])
     if mode == "quick":
         steps = [{"kind": "review", "label": "Wortschatz", "limit": 20, "due": due},
@@ -96,7 +100,9 @@ def plan(conn: sqlite3.Connection, mode: str = "full") -> dict:
         if warm:
             steps.append({"kind": "warmup", "label": "Aufwärmen", "text_id": warm["id"], "title": warm["title"]})
         steps += [
-            {"kind": "review", "label": "Wortschatz", "limit": size["review"], "due": due},
+            # the cards add new lesson words too; the text brings its own TEXT_TARGETS later
+            {"kind": "review", "label": "Wortschatz", "limit": size["review"], "due": due,
+             "new": max(0, cap - TEXT_TARGETS)},
             {"kind": "text", "label": "Neuer Text"},
             {"kind": "newwords", "label": "Neue Wörter", "rounds": size["rounds"]},
             {"kind": "drill", "label": "Grammatik", "n": size["drills"]},

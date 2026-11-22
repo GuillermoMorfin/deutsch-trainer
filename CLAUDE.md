@@ -35,6 +35,11 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
   answers + error_log + missed Grammatik exercises from book_progress. Wrong answers write `error_log`.
 - `app/writing.py`: tasks in `app/seed/writing_prompts.json`; feedback capped at 3 corrections; codes are
   validated against grammar_point; a word error makes that word's produce card due now.
+- Texts must practise the lesson's grammar: `verifier.grammar_presence` detects each lesson point and the
+  generator repairs drafts that miss it; 6 target words per text; words of unlocked grammar points
+  (`GRAMMAR_WORDS`) and places/people from personal.json count as known.
+- `progress.lesson_check` = the plan's per-lesson ingredients (texts read ≥ 3, words met, words known ≥ 80 %,
+  grammar drilled, writing tasks); next lesson is suggested only when ready.
 - `app/session.py` plans the daily flow and writes the day's text in a background thread with its own
   DB connection; `app/progress.py` computes streak (local days), mastery, errors, WPM.
 - `get_db` opens one sqlite connection per request; never share a connection across threads.

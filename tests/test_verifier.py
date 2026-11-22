@@ -147,3 +147,43 @@ def test_redemittel_only_use_grammar_of_their_lesson(conn):
                 text = text.rstrip(" ,") + ("" if text.endswith(("?", "!", ".")) else ".")
             issues = [g.code for g in analyse(text, lex, unlocked)[1].grammar]
             assert issues == [], (lesson["number"], phrase, issues)
+
+
+@pytest.mark.parametrize("text, code", [
+    ("Gestern bin ich gelaufen.", "PERFEKT_HABEN_SEIN"),
+    ("Als Kind hatte ich einen Hund.", "PRAET_WAR_HATTE"),
+    ("Letzten Sommer war ich in Berlin.", "LETZT_NAECHST_JED"),
+    ("Ich bleibe zu Hause, weil ich krank bin.", "KONJ_WEIL"),
+    ("Das ist unsere Wohnung.", "POSS_UNSER_EUER_IHR"),
+    ("Ich bin krank. Deshalb bleibe ich zu Hause.", "KONJ_DESHALB"),
+    ("Wir sprechen über den Lauf.", "PREP_UEBER_AKK"),
+    ("Ich wohne seit einem Jahr hier.", "PREP_SEIT_DAT"),
+    ("Das Fest ist vom 1. bis zum 3. Mai.", "PREP_VON_BIS_ZUM"),
+    ("Du solltest mehr schlafen.", "KONJ2_RAT_KOENNTE_SOLLTE"),
+    ("Ich finde gut, dass du kommst.", "KONJ_DASS"),
+    ("Wenn ich Zeit habe, laufe ich.", "KONJ_WENN"),
+    ("Die Besprechung ist lang.", "NOMEN_UNG"),
+    ("Ich lege das Buch auf den Tisch.", "VERBEN_LEGEN_STELLEN_HAENGEN"),
+    ("Ich lege das Buch auf den Tisch.", "WECHSELPRAEP"),
+    ("Ich fahre zum Arzt.", "PREP_VON_BEI_ZU_DAT"),
+    ("Ich wäre gern am Meer.", "KONJ2_WUNSCH_HAETTE_WAERE"),
+    ("Weißt du, ob der Bus fährt?", "INDIREKTE_FRAGE"),
+])
+def test_grammar_presence_detects_each_lesson_point(text, code):
+    from app.verifier import grammar_presence, nlp
+    assert code in grammar_presence(nlp()(text))
+
+
+def test_grammar_presence_not_triggered_by_plain_text():
+    from app.verifier import grammar_presence, nlp
+    found = grammar_presence(nlp()("Marco trinkt Kaffee. Er ist müde."))
+    assert not found & {"KONJ_WEIL", "KONJ_DASS", "PERFEKT_HABEN_SEIN", "PRAET_WAR_HATTE", "INDIREKTE_FRAGE"}
+
+
+def test_grammar_words_and_personal_places_are_allowed(conn):
+    from app.verifier import build_lexicon, unlocked_codes
+    conn.execute("UPDATE grammar_point SET unlocked = 1 WHERE code = 'LETZT_NAECHST_JED'")
+    lex = build_lexicon(conn)   # fresh learner: lesson words not known, but the grammar point is unlocked
+    _, r = analyse("Letzten Sonntag bin ich durch den Tiergarten gelaufen. Nächsten Samstag laufe ich wieder.",
+                   lex, unlocked_codes(conn))
+    assert r.unknown == [], r.unknown

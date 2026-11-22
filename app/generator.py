@@ -13,7 +13,8 @@ from spacy.tokens import Doc, Token
 from . import srs
 from .db import row_to_dict, transaction
 from .llm import Draft, GenerationError, Writer
-from .verifier import Report, analyse, build_lexicon, candidates, is_counted, separable_lemma, unlocked_codes
+from .verifier import (Report, analyse, build_lexicon, candidates, grammar_presence, is_counted, separable_lemma,
+                       unlocked_codes)
 
 PERSONAL_PATH = Path(__file__).resolve().parent / "seed" / "personal.json"
 TARGET_POS = ("NOUN", "VERB", "ADJ", "ADV")
@@ -32,7 +33,7 @@ class Result:
 
 # ---- selection ---------------------------------------------------------------------
 
-def select_targets(conn: sqlite3.Connection, lesson_number: int, n: int = 4, seed: int | None = None) -> list[dict]:
+def select_targets(conn: sqlite3.Connection, lesson_number: int, n: int = 6, seed: int | None = None) -> list[dict]:
     """Lesson words the learner doesn't know yet; least-read first (narrow reading recycles them)."""
     rows = conn.execute(
         f"""SELECT m.*, COALESCE(k.times_seen_in_text, 0) AS seen FROM lemma m
@@ -83,7 +84,9 @@ no relative clauses, no passive, no genitive (use von + Dativ), no Futur (use pr
 no Präteritum except the forms explicitly allowed (use Perfekt), no subordinate clauses except with the \
 allowed conjunctions. Prefer short main clauses.
 3. Every TARGET WORD appears at least 3 times, naturally, in different sentences.
-4. Length: 150-250 words, 3-5 short paragraphs separated by a blank line.
+4. The text practises the lesson's TARGET GRAMMAR: use each target grammar point naturally at least \
+2 times (e.g. several weil-sentences in a lesson about weil). This is what the lesson is about.
+5. Length: 200-300 words, 4-6 short paragraphs separated by a blank line.
 
 Content: an everyday story about the learner's life in Berlin, written so it is interesting to read: a small \
 problem, a plan, a conversation. Use the PERSONAL CONTEXT and keep recurring characters consistent with \
@@ -122,8 +125,12 @@ def build_prompt(conn: sqlite3.Connection, lesson: dict, targets: list[dict], re
     previous = conn.execute(
         "SELECT title, summary FROM text WHERE lesson_id = ? ORDER BY id DESC LIMIT 4", (lesson["id"],)).fetchall()
     series = "\n".join(f"- {r['title']}: {r['summary']}" for r in reversed(previous)) or "- (first text of the series)"
+    target_grammar = target_grammar_points(conn, lesson)
     return f"""THEME (Lektion {lesson['number']}): {lesson['theme']} · word field: {lesson['word_field']}
 Useful phrases from the lesson (use 1-2 if they fit): {"; ".join(lesson['redemittel'])}
+
+TARGET GRAMMAR of this lesson (use each at least 2 times):
+{chr(10).join(f"- {g['name']}: {g['rule']} Example: {g['example']}" for g in target_grammar)}
 
 TARGET WORDS (each at least 3 times):
 {chr(10).join("- " + fmt_word(t) for t in targets)}
@@ -147,8 +154,23 @@ KNOWN WORDS ({len(known := known_word_list(conn))}):
 {", ".join(known)}"""
 
 
-def repair_prompt(base_prompt: str, draft: Draft, report: Report, targets: list[dict]) -> str:
+def target_grammar_points(conn: sqlite3.Connection, lesson: dict) -> list[dict]:
+    codes = lesson["grammar_points"]
+    if not codes:
+        return []
+    rows = [dict(r) for r in conn.execute(
+        f"SELECT code, name, rule, example FROM grammar_point WHERE unlocked = 1 AND code IN ({','.join('?' * len(codes))})",
+        codes)]
+    rows.sort(key=lambda g: codes.index(g["code"]))
+    return rows
+
+
+def repair_prompt(base_prompt: str, draft: Draft, report: Report, targets: list[dict],
+                  missing_grammar: list[dict] | None = None) -> str:
     problems = []
+    for g in missing_grammar or []:
+        problems.append(f"The text does not use the lesson's target grammar '{g['name']}' yet. "
+                        f"Use it naturally at least 2 times (example: {g['example']}).")
     if report.unknown:
         problems.append("These words are NOT on the lists. Replace each with known words or rephrase: "
                         + ", ".join(report.unknown))
@@ -244,7 +266,7 @@ def _store_glosses(conn: sqlite3.Connection, writer: Writer, words: list[str], b
 
 
 def generate_text(conn: sqlite3.Connection, writer: Writer, *, lesson_number: int | None = None,
-                  n_targets: int = 4, seed: int | None = None) -> Result:
+                  n_targets: int = 6, seed: int | None = None) -> Result:
     if lesson_number is None:
         lesson_number = conn.execute("SELECT current_lesson FROM settings WHERE id = 1").fetchone()[0]
     lesson = row_to_dict(conn.execute("SELECT * FROM lesson WHERE number = ?", (lesson_number,)).fetchone())
@@ -256,13 +278,20 @@ def generate_text(conn: sqlite3.Connection, writer: Writer, *, lesson_number: in
 
     lex = build_lexicon(conn, target_ids)
     unlocked = unlocked_codes(conn)
+    wanted = target_grammar_points(conn, lesson)
+    missing = lambda d: [g for g in wanted if g["code"] not in grammar_presence(d)]  # noqa: E731
     draft = writer.write(SYSTEM, base)
     doc, report = analyse(draft.body, lex, unlocked)
     attempts = 1
-    while not report.passes(min_coverage=MIN_COVERAGE, min_target_uses=MIN_TARGET_USES) and attempts <= MAX_REPAIRS:
-        draft = writer.write(SYSTEM, repair_prompt(base, draft, report, targets))
+    while (not report.passes(min_coverage=MIN_COVERAGE, min_target_uses=MIN_TARGET_USES) or missing(doc)) \
+            and attempts <= MAX_REPAIRS:
+        draft = writer.write(SYSTEM, repair_prompt(base, draft, report, targets, missing(doc)))
         doc, report = analyse(draft.body, lex, unlocked)
         attempts += 1
+    # Target grammar is strongly requested and repaired, but a text that is otherwise good is kept even
+    # if one point is missing; the report records it.
+    used = grammar_presence(doc)
+    report_extra = {"target_grammar": {g["code"]: g["code"] in used for g in wanted}}
 
     if report.grammar or report.coverage < ACCEPT_COVERAGE or any(c < 2 for c in report.target_counts.values()):
         raise GenerationError(
@@ -280,7 +309,8 @@ def generate_text(conn: sqlite3.Connection, writer: Writer, *, lesson_number: in
             """INSERT INTO text (lesson_id, title, body, summary, annotations, coverage, target_lemma_ids, report_json)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (lesson["id"], draft.title, draft.body, draft.summary, json.dumps(tokens, ensure_ascii=False),
-             report.coverage, json.dumps(sorted(target_ids)), json.dumps(report.to_dict(), ensure_ascii=False)))
+             report.coverage, json.dumps(sorted(target_ids)),
+             json.dumps({**report.to_dict(), **report_extra}, ensure_ascii=False)))
         text_id = cur.lastrowid
 
     questions = checked_questions(writer, draft, lex, unlocked)
@@ -340,8 +370,11 @@ def finish_reading(conn: sqlite3.Connection, text_id: int, *, seconds: float | N
             sentence = first_sentence_with(t["body"], tokens, lid)
             if srs.introduce_word(conn, lid, sentence=sentence, text_id=text_id):
                 introduced.append(lid)
-        conn.execute(f"UPDATE known_word SET times_seen_in_text = times_seen_in_text + 1 "
-                     f"WHERE lemma_id IN ({','.join('?' * len(seen))})", list(seen)) if seen else None
+        # every word met in the text counts, also ones without a card yet (state stays 'new')
+        conn.executemany(
+            """INSERT INTO known_word (lemma_id, state, times_seen_in_text) VALUES (?, 'new', 1)
+               ON CONFLICT(lemma_id) DO UPDATE SET times_seen_in_text = times_seen_in_text + 1""",
+            [(lid,) for lid in seen])
         wpm = None
         if seconds and seconds > 5:
             words = sum(1 for tok in tokens if tok.get("t", "").isalpha())

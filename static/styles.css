@@ -381,3 +381,11 @@ code { font-size: .85em; background: var(--cream-200); padding: 1px 5px; border-
 .session-steps { align-items: center; }
 .skip-step { margin-left: auto; flex: 0 0 auto; border: 0; background: transparent; color: var(--accent-strong);
   font: 600 .75rem var(--font-ui); cursor: pointer; padding: 4px 6px; white-space: nowrap; }
+
+/* Lektions-Check */
+.check-list { list-style: none; padding: 0; margin: 8px 0 0; }
+.check-list li { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--cream-200); }
+.check-list .ck { flex: 0 0 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--cream-200); color: var(--muted); font-size: .8rem; font-weight: 700; }
+.check-list li.done .ck { background: var(--ok-bg); color: var(--ok); }
+.check-list .ck-body { flex: 1; display: flex; flex-direction: column; min-width: 0; }

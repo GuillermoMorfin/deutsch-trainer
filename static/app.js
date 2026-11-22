@@ -82,7 +82,7 @@ async function viewHome() {
     </div>
     ${p.ready_for_next ? `<a class="card" href="#/progress" style="display:block;text-decoration:none;color:inherit">
       <h3>Bereit für Lektion ${l.number + 1}! 🚀</h3>
-      <p class="small muted">${pct(l.mastery)} der Wörter aus Lektion ${l.number} sitzen. Im Fortschritt kannst du wechseln.</p></a>` : ""}
+      <p class="small muted">${pct(l.mastery)} der Wörter sitzen und 3 Texte sind gelesen. Im Fortschritt kannst du wechseln.</p></a>` : ""}
     <a class="card" href="#/lesson/${l.number}" style="display:block;text-decoration:none;color:inherit">
       <p class="eyebrow">Aktuelle Lektion ${l.number} · ${esc(l.theme)}</p>
       <h3>${esc(l.title)}</h3>
@@ -151,7 +151,8 @@ const POS_HINT = { NOUN: "Nomen · mit Artikel", VERB: "Verb · Infinitiv", ADJ:
 async function viewReview(opts = {}) {
   $app.innerHTML = `<p class="empty">Karten werden geladen…</p>`;
   const limit = opts.limit || 40;
-  const start = await api("/review/start", { method: "POST", body: { new_words: opts.newWords ?? true, limit } });
+  const start = await api("/review/start", { method: "POST", body: {
+    new_words: opts.newWords ?? true, new_limit: opts.newLimit ?? null, limit } });
   let queue = start.queue;
   let done = 0, correct = 0;
 
@@ -314,6 +315,27 @@ document.addEventListener("keydown", (e) => {
   if (keyHandler && !(e.target instanceof HTMLInputElement)) keyHandler(e);
 });
 
+// "Lektions-Check": how well the plan's ingredients are covered for one lesson
+function checkHTML(c) {
+  const row = (done, label, detail, href) => `<li class="${done ? "done" : ""}">
+    <span class="ck">${done ? "✓" : "○"}</span>
+    <span class="ck-body"><span>${label}</span><span class="small muted">${detail}</span></span>
+    ${href && !done ? `<a class="btn secondary small-btn" href="${href}">Los</a>` : ""}</li>`;
+  return `<div class="card lesson-check">
+    <h2>Lektions-Check</h2>
+    <p class="small muted">Bereit für die nächste Lektion: 80 % der Wörter sicher und ${c.texts_goal} Texte gelesen.</p>
+    <ul class="check-list">
+      ${row(c.texts_read >= c.texts_goal, "Texte gelesen", `${c.texts_read} von ${c.texts_goal} (mehrere Texte zum selben Thema)`, "#/read")}
+      ${row(c.words_total && c.words_seen >= c.words_total * 0.8, "Wörter in Texten getroffen", `${c.words_seen} von ${c.words_total}`, "#/read")}
+      ${row(c.mastery >= 0.8, "Wörter sicher", `${c.words_known} von ${c.words_total} · ${pct(c.mastery)}${c.words_learning ? ` · ${c.words_learning} in Arbeit` : ""}`, "#/review")}
+      ${c.grammar.map((g) => row(g.attempts >= 6 && (g.accuracy ?? 0) >= 0.7, esc(g.name),
+        `${g.attempts ? `${g.attempts}× geübt · ${pct(g.accuracy)} richtig` : "noch nicht geübt"} · in ${g.in_texts} ${g.in_texts === 1 ? "Text" : "Texten"}`,
+        `#/drill/${esc(g.code)}`)).join("")}
+      ${row(c.writing_tasks_done >= c.writing_tasks_goal, "Schreibaufgaben", `${c.writing_tasks_done} von ${c.writing_tasks_goal}`, "#/write")}
+    </ul>
+  </div>`;
+}
+
 async function viewLessons() {
   const lessons = await api("/lessons");
   $app.innerHTML = `
@@ -345,6 +367,8 @@ async function viewLesson(number) {
     <p class="muted">${esc(l.theme)} · Wortfeld: ${esc(l.word_field)}</p>
     <div class="progress"><i style="width:${pct(l.mastery)}"></i></div>
     <p class="small muted">${l.known_count}/${l.word_count} Wörter sicher</p>
+
+    ${checkHTML(d.check)}
 
     <div class="card">
       <h2>Grammatik</h2>
@@ -1086,20 +1110,23 @@ async function viewWrite(opts = {}) {
 // ---- new words: quick in-session recall before they enter spaced review ------------------
 
 async function viewNewWords(textId, onDone, rounds = 2) {
-  const d = await api(`/texts/${textId}`);
-  const words = d.text.target_lemma_ids.map((id) => d.lemmas[id]).filter(Boolean);
+  const [d, today] = await Promise.all([textId ? api(`/texts/${textId}`) : null, api("/review/today-new")]);
+  const fromText = d ? d.text.target_lemma_ids.map((id) => d.lemmas[id]).filter(Boolean) : [];
+  const seen = new Set(fromText.map((w) => w.id));
+  const words = [...fromText, ...today.filter((w) => !seen.has(w.id))];
   if (!words.length) return onDone();
   const ROUNDS = rounds;
   let round = 1, queue = [...words], retry = [];
   const sentence = (w) => {
-    // the sentence from the text, for context
+    // the sentence the word came from: today's text, else the card's source sentence
+    if (!d) return w.source_sentence || "";
     const toks = d.tokens; let cur = [], hit = false;
     for (const t of toks) {
       if (t.br) { cur = []; continue; }
       cur.push(t.t + t.ws); if (t.id === w.id) hit = true;
       if (/[.!?]$/.test(t.t)) { if (hit) return cur.join("").trim(); cur = []; }
     }
-    return "";
+    return w.source_sentence || "";
   };
   const show = () => {
     if (!queue.length) {
@@ -1195,13 +1222,13 @@ async function viewSession(mode) {
     window.scrollTo(0, 0);
     const st = steps[i];
     if (st.kind === "warmup") return viewText(st.text_id, { reread: true, onDone: next });
-    if (st.kind === "review") return viewReview({ newWords: false, limit: st.limit, onDone: next });
+    if (st.kind === "review") return viewReview({ newWords: (st.new || 0) > 0, newLimit: st.new || 0, limit: st.limit, onDone: next });
     if (st.kind === "text") {
       textId = await waitForText();
       if (!textId) { steps.splice(i, 2); return run(); } // skip text + new words
       return viewText(textId, { onDone: next });
     }
-    if (st.kind === "newwords") return textId ? viewNewWords(textId, next, st.rounds) : next();
+    if (st.kind === "newwords") return viewNewWords(textId, next, st.rounds);
     if (st.kind === "drill") return viewDrill(null, { n: st.n, onDone: next });
     if (st.kind === "write") return viewWrite({ onDone: next });
     if (st.kind === "speak") return viewSpeak({ onDone: next });
@@ -1251,12 +1278,13 @@ async function viewProgress() {
       <div class="stat"><b>${lastWpm ?? "–"}</b><span>Wörter/Min.${firstWpm ? ` (vorher ${firstWpm})` : ""}</span></div>
     </div>
     ${p.ready_for_next ? `<div class="card hero"><h3>Bereit für Lektion ${p.current_lesson + 1}! 🚀</h3>
-      <p class="small">${pct(cur.mastery)} der Wörter aus Lektion ${p.current_lesson} sitzen. Wechsle, wenn dein Kurs so weit ist.</p>
+      <p class="small">${pct(cur.mastery)} der Wörter aus Lektion ${p.current_lesson} sitzen und du hast ${p.current_check.texts_read} Texte dazu gelesen. Wechsle, wenn dein Kurs so weit ist.</p>
       <button class="btn" id="advance">Zu Lektion ${p.current_lesson + 1} wechseln</button></div>` : ""}
     <div class="card"><h3>Aktivität · 14 Tage</h3>${activityChart(p.activity)}
       <p class="small muted">${p.review_accuracy_7d != null ? `Karten richtig (7 Tage): ${pct(p.review_accuracy_7d)} · ` : ""}${p.texts_read} ${p.texts_read === 1 ? "Text" : "Texte"} gelesen · ${p.writings} ${p.writings === 1 ? "Text" : "Texte"} geschrieben</p></div>
     <div class="card"><h3>Lektionen</h3>
-      <p class="small muted">Ziel vor der nächsten Lektion: 80 % der Wörter sicher.</p>
+      <p class="small muted">Ziel vor der nächsten Lektion: 80 % der Wörter sicher und 3 Texte gelesen.
+        Aktuelle Lektion: ${p.current_check.texts_read}/3 Texte · <a href="#/lesson/${p.current_lesson}">Lektions-Check</a></p>
       ${p.lessons.map((l) => `<a class="mastery-row ${l.number === p.current_lesson ? "current" : ""}" href="#/lesson/${l.number}">
         <span class="m-num">${l.number}</span>
         <span class="m-body"><span class="m-title">${esc(l.theme)}</span>

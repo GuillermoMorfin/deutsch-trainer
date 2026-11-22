@@ -102,6 +102,17 @@ def introduce_lesson_words(conn: sqlite3.Connection, *, limit: int | None = None
     return [cid for r in rows if (cid := introduce_word(conn, r["id"], at=at))]
 
 
+def introduced_today(conn: sqlite3.Connection) -> list[dict]:
+    rows = conn.execute(
+        """SELECT m.id, m.lemma, m.pos, m.article, m.plural, m.aux, m.partizip2, m.gloss_es, m.gloss_en,
+                  c.source_sentence
+           FROM known_word k JOIN lemma m ON m.id = k.lemma_id
+           JOIN card c ON c.lemma_id = m.id AND c.direction = 'recognise'
+           WHERE m.lesson_id IS NOT NULL AND date(k.first_seen, 'localtime') = date('now', 'localtime')
+           ORDER BY k.first_seen, m.id""").fetchall()
+    return [dict(r) for r in rows]
+
+
 # ---- queue ----------------------------------------------------------------------
 
 CARD_SELECT = """
