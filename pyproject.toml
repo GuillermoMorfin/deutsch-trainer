@@ -5,6 +5,7 @@ description = "Personal Momente A2.1 trainer: comprehensible reading, FSRS vocab
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi>=0.115",
+    "fsrs>=6.3.3",
     "uvicorn[standard]>=0.30",
 ]
 

@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from . import srs
 from .db import connect, row_to_dict, rows_to_dicts, transaction
 from .seed import seed_all
 
@@ -70,7 +71,7 @@ def overview(db: sqlite3.Connection = Depends(get_db)):
     known = db.execute("SELECT COUNT(*) FROM known_word WHERE state = 'known'").fetchone()[0]
     learning = db.execute("SELECT COUNT(*) FROM known_word WHERE state = 'learning'").fetchone()[0]
     total = db.execute("SELECT COUNT(*) FROM lemma").fetchone()[0]
-    due = db.execute("SELECT COUNT(*) FROM card WHERE due <= datetime('now')").fetchone()[0]
+    due = srs.due_count(db)
     current = _with_mastery(row_to_dict(db.execute(
         LESSON_STATS_SQL + " WHERE l.number = ? GROUP BY l.id", (settings["current_lesson"],)).fetchone()))
     return {"settings": settings, "known_words": known, "learning_words": learning,
@@ -187,6 +188,43 @@ def update_book_progress(number: int, body: BookProgressUpdate, db: sqlite3.Conn
                 v = int(v)
             db.execute(f"UPDATE book_progress SET {k} = ? WHERE lesson_id = ?", (v, lesson["id"]))
     return row_to_dict(db.execute("SELECT * FROM book_progress WHERE lesson_id = ?", (lesson["id"],)).fetchone())
+
+
+# ---- vocabulary review (FSRS) ----------------------------------------------------
+
+class ReviewStart(BaseModel):
+    new_words: bool = True
+
+
+@app.post("/api/review/start")
+def review_start(body: ReviewStart, db: sqlite3.Connection = Depends(get_db)):
+    """Introduce today's new lesson words (respecting the daily cap) and return the queue."""
+    with transaction(db):
+        introduced = srs.introduce_lesson_words(db) if body.new_words else []
+    return {"introduced": len(introduced), "queue": srs.queue(db), "due_count": srs.due_count(db),
+            "new_today": srs.new_cards_today(db)}
+
+
+@app.get("/api/review/queue")
+def review_queue(db: sqlite3.Connection = Depends(get_db)):
+    return {"queue": srs.queue(db), "due_count": srs.due_count(db)}
+
+
+class ReviewAnswer(BaseModel):
+    rating: int | None = Field(None, ge=1, le=4)
+    answer: str | None = Field(None, max_length=200)
+    duration_ms: int | None = Field(None, ge=0)
+
+
+@app.post("/api/review/{card_id}")
+def review_card(card_id: int, body: ReviewAnswer, db: sqlite3.Connection = Depends(get_db)):
+    try:
+        with transaction(db):
+            return srs.review(db, card_id, rating=body.rating, answer=body.answer, duration_ms=body.duration_ms)
+    except KeyError:
+        raise HTTPException(404, f"Card {card_id} not found")
+    except ValueError as e:
+        raise HTTPException(422, str(e))
 
 
 @app.get("/api/health")

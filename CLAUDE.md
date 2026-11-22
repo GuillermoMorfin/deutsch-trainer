@@ -18,5 +18,10 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
 
 ## Layout
 - `app/main.py` FastAPI routes; `app/db.py` sqlite helpers; `app/seed.py` idempotent seeding.
+- `app/srs.py` FSRS scheduling (py-fsrs 6): `introduce_word` creates the recognise card; 2 Good/Easy
+  recognitions create the produce card; a word is `known` once both cards are in Review and the
+  produce card's stability ≥ 7 days. A1 words are never demoted. Times in DB are UTC `YYYY-MM-DD HH:MM:SS`.
+- `app/answers.py` typed-answer checker: article required, umlaut mistakes never forgiven,
+  small stem typos → Hard. Phase 3 should call `srs.introduce_word(..., sentence=, text_id=)`.
 - `static/` front end (hash router in `app.js`), served by FastAPI; `sw.js` at root scope.
 - Tests: `uv run pytest`. Each test gets its own DB via `TRAINER_DB`.

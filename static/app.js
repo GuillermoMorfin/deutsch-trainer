@@ -71,11 +71,178 @@ async function viewHome() {
       <p class="small muted">${l.known_count} von ${l.word_count} Lektionswörtern sicher · Ziel 80 %</p>
     </a>
     <div class="card">
+      <h3>Wortschatz wiederholen</h3>
+      <p class="small muted">${o.cards_due ? `${o.cards_due} Karten fällig` : "Keine Karten fällig"} ·
+        bis zu ${o.settings.daily_new_word_cap} neue Wörter aus Lektion ${l.number} pro Tag</p>
+      <a class="btn" href="#/review">Jetzt wiederholen</a>
+    </div>
+    <div class="card">
       <h3>Heutige Session</h3>
-      <p class="small muted">Lesen, Wiederholen, Grammatik und Schreiben kommen in den nächsten Bauphasen.</p>
-      <button class="btn" disabled>Session starten</button>
+      <p class="small muted">Lesen, Grammatik und Schreiben kommen in den nächsten Bauphasen.</p>
     </div>`;
 }
+
+// ---- review (FSRS) ---------------------------------------------------------
+
+const RATINGS = [
+  [1, "Nochmal", "again"], [2, "Schwer", "hard"], [3, "Gut", "good"], [4, "Leicht", "easy"],
+];
+
+function nounHTML(c) {
+  return c.article ? `<span class="art ${c.article}">${c.article}</span> ${esc(c.lemma)}` : esc(c.lemma);
+}
+
+function formsHTML(c) {
+  const bits = [];
+  if (c.pos === "NOUN" && c.plural) bits.push(c.plural === "-" ? "kein Plural" : `Pl. die ${esc(c.plural)}`);
+  if (c.pos === "VERB" && c.partizip2) bits.push(`${c.aux === "sein" ? "ist" : "hat"} ${esc(c.partizip2)}`);
+  return bits.join(" · ");
+}
+
+const POS_HINT = { NOUN: "Nomen · mit Artikel", VERB: "Verb · Infinitiv", ADJ: "Adjektiv", ADV: "Adverb",
+  PHRASE: "Ausdruck", CONJ: "Konjunktion", PRON: "Pronomen", ADP: "Präposition", DET: "Artikel/Begleiter", INTJ: "Ausruf" };
+
+async function viewReview() {
+  $app.innerHTML = `<p class="empty">Karten werden geladen…</p>`;
+  const start = await api("/review/start", { method: "POST", body: { new_words: true } });
+  let queue = start.queue;
+  let done = 0, correct = 0;
+
+  const finish = () => {
+    $app.innerHTML = `
+      <div class="card hero review-done">
+        <p class="eyebrow">Fertig für jetzt</p>
+        <h1>Gut gemacht! 🎉</h1>
+        <p>${done} Karten wiederholt${done ? ` · ${Math.round((correct / done) * 100)} % richtig` : ""}.</p>
+        <p class="small muted">Neue Wörter heute: ${start.new_today}. Die nächsten Karten plant FSRS für dich.</p>
+        <a class="btn" href="#/">Zur Übersicht</a>
+      </div>`;
+  };
+
+  const next = async () => {
+    if (!queue.length) {
+      // Learning steps may have brought cards back into the window.
+      queue = (await api("/review/queue")).queue;
+      if (!queue.length) return finish();
+    }
+    const c = queue.shift();
+    (c.direction === "produce" ? showProduce : showRecognise)(c);
+  };
+
+  const header = (c) => `
+    <div class="review-top">
+      <a href="#/" class="small">✕ Beenden</a>
+      <span class="small muted">${done} erledigt · ${queue.length + 1} übrig</span>
+    </div>
+    <div class="progress"><i style="width:${pct(done / (done + queue.length + 1))}"></i></div>
+    <p class="eyebrow">${c.direction === "produce" ? "Español → Deutsch" : "Deutsch → Español"}
+      ${c.lesson_number ? ` · Lektion ${c.lesson_number}` : " · A1"}${c.reps === 0 ? ' · <span class="chip amber">neu</span>' : ""}</p>`;
+
+  // Each card is graded exactly once: ignore double taps and keys pressed while saving.
+  const graded = new Set();
+  const submit = async (c, payload) => {
+    const showing = `${c.id}:${c.reps}`;  // a card can return later in the session with more reps
+    if (graded.has(showing)) return null;
+    graded.add(showing);
+    keyHandler = null;
+    $app.querySelectorAll(".rate, .produce .btn").forEach((b) => (b.disabled = true));
+    let r;
+    try {
+      r = await api(`/review/${c.id}`, { method: "POST", body: payload });
+    } finally {
+      $app.querySelectorAll(".produce .btn").forEach((b) => (b.disabled = false));
+    }
+    done += 1;
+    if (r.rating >= 3 || (r.check && r.check.correct)) correct += 1;
+    if (r.produce_unlocked) toast("Neu: Schreibkarte freigeschaltet ✍️");
+    return r;
+  };
+
+  function showRecognise(c) {
+    const t0 = performance.now();
+    $app.innerHTML = `${header(c)}
+      <div class="flash">
+        <div class="flash-word">${nounHTML(c)}</div>
+        ${c.source_sentence ? `<p class="flash-sentence">${esc(c.source_sentence)}</p>` : ""}
+        <div class="flash-answer" hidden>
+          <div class="flash-gloss">${esc(c.gloss_es)}</div>
+          <div class="small muted">${esc(c.gloss_en || "")}${formsHTML(c) ? ` · ${formsHTML(c)}` : ""}</div>
+        </div>
+      </div>
+      <div class="review-actions">
+        <button class="btn reveal">Zeigen</button>
+        <div class="rate-row" hidden>${RATINGS.map(([v, label, cls]) =>
+          `<button class="rate ${cls}" data-rating="${v}">${label}</button>`).join("")}</div>
+      </div>`;
+    const reveal = () => {
+      $app.querySelector(".flash-answer").hidden = false;
+      $app.querySelector(".reveal").hidden = true;
+      $app.querySelector(".rate-row").hidden = false;
+    };
+    $app.querySelector(".reveal").addEventListener("click", reveal);
+    $app.querySelectorAll(".rate").forEach((b) => b.addEventListener("click", async () => {
+      if (await submit(c, { rating: +b.dataset.rating, duration_ms: Math.round(performance.now() - t0) })) next();
+    }));
+    keyHandler = (e) => {
+      if (e.key === " " || e.key === "Enter") { e.preventDefault(); if (!$app.querySelector(".flash-answer").hidden) return; reveal(); }
+      if (["1", "2", "3", "4"].includes(e.key) && !$app.querySelector(".rate-row").hidden)
+        $app.querySelector(`[data-rating="${e.key}"]`).click();
+    };
+  }
+
+  function showProduce(c) {
+    const t0 = performance.now();
+    $app.innerHTML = `${header(c)}
+      <div class="flash">
+        <div class="flash-gloss big">${esc(c.gloss_es)}</div>
+        <p class="small muted">${POS_HINT[c.pos] || ""}${c.gloss_en ? ` · ${esc(c.gloss_en)}` : ""}</p>
+        <form class="produce" autocomplete="off">
+          <input id="answer" type="text" lang="de" autocapitalize="off" autocorrect="off" spellcheck="false"
+            enterkeyhint="done" placeholder="${c.pos === "NOUN" ? "der / die / das …" : "auf Deutsch…"}" aria-label="Antwort">
+          <div class="umlauts">${["ä", "ö", "ü", "ß", "Ä", "Ö", "Ü"].map((u) =>
+            `<button type="button" class="uml" data-ch="${u}">${u}</button>`).join("")}</div>
+          <button class="btn" type="submit">Prüfen</button>
+        </form>
+        <div class="feedback" hidden></div>
+      </div>`;
+    const $in = $app.querySelector("#answer");
+    $in.focus();
+    $app.querySelectorAll(".uml").forEach((b) => b.addEventListener("click", () => {
+      const s = $in.selectionStart ?? $in.value.length, e = $in.selectionEnd ?? s;
+      $in.value = $in.value.slice(0, s) + b.dataset.ch + $in.value.slice(e);
+      $in.focus(); $in.setSelectionRange(s + 1, s + 1);
+    }));
+    let answered = false, moved = false;
+    $app.querySelector(".produce").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      if (answered) { if (!moved) { moved = true; next(); } return; }
+      const r = await submit(c, { answer: $in.value, duration_ms: Math.round(performance.now() - t0) });
+      if (!r) return;
+      answered = true;
+      const ok = r.check.correct;
+      $in.readOnly = true;
+      $in.classList.add(ok ? (r.check.verdict === "typo" ? "is-typo" : "is-ok") : "is-bad");
+      const fb = $app.querySelector(".feedback");
+      fb.hidden = false;
+      fb.className = `feedback ${ok ? "ok" : "bad"}`;
+      fb.innerHTML = `<strong>${esc(r.check.message)}</strong>
+        <div class="flash-word small-word">${nounHTML(c)}</div>
+        ${formsHTML(c) ? `<div class="small muted">${formsHTML(c)}</div>` : ""}`;
+      $app.querySelector(".umlauts").hidden = true;
+      const btn = $app.querySelector(".produce .btn");
+      btn.textContent = "Weiter";
+      btn.focus();
+    });
+    keyHandler = null;
+  }
+
+  next();
+}
+
+let keyHandler = null;
+document.addEventListener("keydown", (e) => {
+  if (keyHandler && !(e.target instanceof HTMLInputElement)) keyHandler(e);
+});
 
 async function viewLessons() {
   const lessons = await api("/lessons");
@@ -233,12 +400,14 @@ const routes = [
   [/^#?\/?$/, "home", viewHome],
   [/^#\/lessons$/, "lessons", viewLessons],
   [/^#\/lesson\/(\d+)$/, "lessons", (m) => viewLesson(m[1])],
+  [/^#\/review$/, "home", viewReview],
   [/^#\/words$/, "words", viewWords],
   [/^#\/settings$/, "settings", viewSettings],
 ];
 
 async function route() {
   const hash = location.hash || "#/";
+  keyHandler = null;
   for (const [re, name, view] of routes) {
     const m = hash.match(re);
     if (!m) continue;

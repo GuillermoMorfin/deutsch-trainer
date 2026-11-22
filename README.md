@@ -29,7 +29,7 @@ Import a word list: `uv run python -m app.seed --import words.csv --lesson 3`
 ## Build phases
 
 1. ✅ Foundation: schema, seeds, lesson/word browser, design tokens, PWA shell
-2. Vocab SRS (py-fsrs, recognise + produce cards, article checking)
+2. ✅ Vocab SRS: FSRS cards, recognise (reveal + self-rate) → produce (typed, article + umlaut checked)
 3. Reader + verifier (Claude generation → spaCy coverage check → repair loop)
 4. Grammar drills + error log
 5. Writing feedback
