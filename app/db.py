@@ -1,0 +1,63 @@
+"""SQLite access. One file, one user; plain sqlite3 keeps it easy to inspect and back up."""
+
+from __future__ import annotations
+
+import json
+import os
+import sqlite3
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Iterator
+
+APP_DIR = Path(__file__).resolve().parent
+SCHEMA_PATH = APP_DIR / "schema.sql"
+DEFAULT_DB_PATH = APP_DIR.parent / "data" / "trainer.db"
+
+
+def db_path() -> Path:
+    return Path(os.environ.get("TRAINER_DB", DEFAULT_DB_PATH))
+
+
+def connect(path: Path | str | None = None) -> sqlite3.Connection:
+    path = Path(path) if path else db_path()
+    if str(path) != ":memory:":
+        path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA journal_mode = WAL")
+    return conn
+
+
+def init_schema(conn: sqlite3.Connection) -> None:
+    conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+    conn.execute("INSERT OR IGNORE INTO settings (id) VALUES (1)")
+    conn.commit()
+
+
+@contextmanager
+def transaction(conn: sqlite3.Connection) -> Iterator[sqlite3.Connection]:
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
+
+JSON_FIELDS = {"grammar_points", "redemittel", "target_lemma_ids", "wpm_log",
+               "options", "feedback_json", "missed_exercise_ids", "annotations"}
+
+
+def row_to_dict(row: sqlite3.Row | None) -> dict | None:
+    if row is None:
+        return None
+    d = dict(row)
+    for k in JSON_FIELDS & d.keys():
+        if isinstance(d[k], str):
+            d[k] = json.loads(d[k])
+    return d
+
+
+def rows_to_dicts(rows) -> list[dict]:
+    return [row_to_dict(r) for r in rows]

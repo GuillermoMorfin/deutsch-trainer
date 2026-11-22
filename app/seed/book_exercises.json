@@ -1,0 +1,2168 @@
+[
+ {
+  "book": "AB",
+  "lesson": 1,
+  "section": "Mein Vater Vittorio war der Erste hier!",
+  "label": "L1, 7a, Aussprache"
+ },
+ {
+  "book": "AB",
+  "lesson": 1,
+  "section": "Mein Vater Vittorio war der Erste hier!",
+  "label": "Übung: L1, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 1,
+  "section": "Mein Vater Vittorio war der Erste hier!",
+  "label": "Übung: L1, 10"
+ },
+ {
+  "book": "AB",
+  "lesson": 1,
+  "section": "Mein Vater Vittorio war der Erste hier!",
+  "label": "Übung: L1, 11"
+ },
+ {
+  "book": "AB",
+  "lesson": 1,
+  "section": "Mein Vater Vittorio war der Erste hier!",
+  "label": "Übung: L1, 13"
+ },
+ {
+  "book": "AB",
+  "lesson": 1,
+  "section": "Mein Vater Vittorio war der Erste hier!",
+  "label": "Übung: L1, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 1,
+  "section": "Mein Vater Vittorio war der Erste hier!",
+  "label": "Übung: L1, 3a"
+ },
+ {
+  "book": "AB",
+  "lesson": 1,
+  "section": "Mein Vater Vittorio war der Erste hier!",
+  "label": "Übung: L1, 4a_b_c"
+ },
+ {
+  "book": "AB",
+  "lesson": 1,
+  "section": "Mein Vater Vittorio war der Erste hier!",
+  "label": "Übung: L1, 5a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 1,
+  "section": "Mein Vater Vittorio war der Erste hier!",
+  "label": "Übung: L1, 7a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 1,
+  "section": "Mein Vater Vittorio war der Erste hier!",
+  "label": "Übung: L1, 8"
+ },
+ {
+  "book": "AB",
+  "lesson": 1,
+  "section": "Mein Vater Vittorio war der Erste hier!",
+  "label": "Übung: L1, 9"
+ },
+ {
+  "book": "AB",
+  "lesson": 2,
+  "section": "Weil meine Arbeit wirklich wichtig ist.",
+  "label": "L2, 6a, Aussprache"
+ },
+ {
+  "book": "AB",
+  "lesson": 2,
+  "section": "Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Übung: L2, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 2,
+  "section": "Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Übung: L2, 10a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 2,
+  "section": "Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Übung: L2, 12"
+ },
+ {
+  "book": "AB",
+  "lesson": 2,
+  "section": "Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Übung: L2, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 2,
+  "section": "Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Übung: L2, 3a"
+ },
+ {
+  "book": "AB",
+  "lesson": 2,
+  "section": "Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Übung: L2, 5b"
+ },
+ {
+  "book": "AB",
+  "lesson": 2,
+  "section": "Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Übung: L2, 6a_c"
+ },
+ {
+  "book": "AB",
+  "lesson": 2,
+  "section": "Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Übung: L2, 7a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 2,
+  "section": "Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Übung: L2, 8"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "L3, 11a, Aussprache"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: L3, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: L3, 10a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: L3, 11a_b_c"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: L3, 13a"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: L3, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: L3, 4a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: L3, 5"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: L3, 6a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: L3, 7"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: L3, 9"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Fokus Beruf, 2a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Fokus Beruf, 3a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Fokus Beruf, 4a"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Prüfungstraining, Hören, 1a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Prüfungstraining, Hören, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Prüfungstraining, Lesen, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Prüfungstraining, Schreiben, 1a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Prüfungstraining, Schreiben, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Prüfungstraining, Sprechen, 1a"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Test, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Test, 4"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Wiederholung, 10"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Wiederholung, 1a"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Wiederholung, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Wiederholung, 3"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Wiederholung, 4"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Wiederholung, 5a"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Wiederholung, 6"
+ },
+ {
+  "book": "AB",
+  "lesson": 3,
+  "section": "Unsere WG fehlt mir.",
+  "label": "Übung: Modul 1, L1-3_Wiederholung, 8"
+ },
+ {
+  "book": "AB",
+  "lesson": 4,
+  "section": "Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "L4, 5a, Aussprache"
+ },
+ {
+  "book": "AB",
+  "lesson": 4,
+  "section": "Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Übung: L4, 10a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 4,
+  "section": "Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Übung: L4, 11a"
+ },
+ {
+  "book": "AB",
+  "lesson": 4,
+  "section": "Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Übung: L4, 1a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 4,
+  "section": "Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Übung: L4, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 4,
+  "section": "Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Übung: L4, 3a"
+ },
+ {
+  "book": "AB",
+  "lesson": 4,
+  "section": "Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Übung: L4, 4a"
+ },
+ {
+  "book": "AB",
+  "lesson": 4,
+  "section": "Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Übung: L4, 5a"
+ },
+ {
+  "book": "AB",
+  "lesson": 4,
+  "section": "Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Übung: L4, 6a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 4,
+  "section": "Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Übung: L4, 7"
+ },
+ {
+  "book": "AB",
+  "lesson": 4,
+  "section": "Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Übung: L4, 8a"
+ },
+ {
+  "book": "AB",
+  "lesson": 5,
+  "section": "Ach, komm schon! das macht bestimmt Spaß!",
+  "label": "L5, 11a, Aussprache"
+ },
+ {
+  "book": "AB",
+  "lesson": 5,
+  "section": "Ach, komm schon! das macht bestimmt Spaß!",
+  "label": "Übung: L5, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 5,
+  "section": "Ach, komm schon! das macht bestimmt Spaß!",
+  "label": "Übung: L5, 10a"
+ },
+ {
+  "book": "AB",
+  "lesson": 5,
+  "section": "Ach, komm schon! das macht bestimmt Spaß!",
+  "label": "Übung: L5, 11a"
+ },
+ {
+  "book": "AB",
+  "lesson": 5,
+  "section": "Ach, komm schon! das macht bestimmt Spaß!",
+  "label": "Übung: L5, 2a"
+ },
+ {
+  "book": "AB",
+  "lesson": 5,
+  "section": "Ach, komm schon! das macht bestimmt Spaß!",
+  "label": "Übung: L5, 3"
+ },
+ {
+  "book": "AB",
+  "lesson": 5,
+  "section": "Ach, komm schon! das macht bestimmt Spaß!",
+  "label": "Übung: L5, 4a"
+ },
+ {
+  "book": "AB",
+  "lesson": 5,
+  "section": "Ach, komm schon! das macht bestimmt Spaß!",
+  "label": "Übung: L5, 5a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 5,
+  "section": "Ach, komm schon! das macht bestimmt Spaß!",
+  "label": "Übung: L5, 6"
+ },
+ {
+  "book": "AB",
+  "lesson": 5,
+  "section": "Ach, komm schon! das macht bestimmt Spaß!",
+  "label": "Übung: L5, 7"
+ },
+ {
+  "book": "AB",
+  "lesson": 5,
+  "section": "Ach, komm schon! das macht bestimmt Spaß!",
+  "label": "Übung: L5, 8"
+ },
+ {
+  "book": "AB",
+  "lesson": 5,
+  "section": "Ach, komm schon! das macht bestimmt Spaß!",
+  "label": "Übung: L5, 9a"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "L6, 11a, Aussprache"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: L6, 11a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: L6, 12"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: L6, 3"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: L6, 4"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: L6, 6"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: L6, 7"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: L6, 8a"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: L6, 9"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Fokus Beruf, 2a"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Fokus Beruf, 4a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Prüfungstraining, Hören, 1b"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Prüfungstraining, Hören, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Prüfungstraining, Lesen, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Prüfungstraining, Schreiben, 1a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Prüfungstraining, Sprechen, 1a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Test, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Test, 3"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Wiederholung, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Wiederholung, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Wiederholung, 4"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Wiederholung, 5"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Wiederholung, 7"
+ },
+ {
+  "book": "AB",
+  "lesson": 6,
+  "section": "Du solltest mehr trainieren.",
+  "label": "Übung: Modul 2, L4-6_Wiederholung, 9"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "L7, 12a, Aussprache"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "Übung: L7, 10"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "Übung: L7, 11"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "Übung: L7, 12b"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "Übung: L7, 13a"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "Übung: L7, 1a"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "Übung: L7, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "Übung: L7, 3"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "Übung: L7, 4a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "Übung: L7, 5a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "Übung: L7, 7a"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "Übung: L7, 8"
+ },
+ {
+  "book": "AB",
+  "lesson": 7,
+  "section": "Super, dass es da auch Pizza gibt!",
+  "label": "Übung: L7, 9"
+ },
+ {
+  "book": "AB",
+  "lesson": 8,
+  "section": "Wenn ich tanze, vergesse ich alles!",
+  "label": "Übung: L8, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 8,
+  "section": "Wenn ich tanze, vergesse ich alles!",
+  "label": "Übung: L8, 2a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 8,
+  "section": "Wenn ich tanze, vergesse ich alles!",
+  "label": "Übung: L8, 3"
+ },
+ {
+  "book": "AB",
+  "lesson": 8,
+  "section": "Wenn ich tanze, vergesse ich alles!",
+  "label": "Übung: L8, 4a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 8,
+  "section": "Wenn ich tanze, vergesse ich alles!",
+  "label": "Übung: L8, 5a"
+ },
+ {
+  "book": "AB",
+  "lesson": 8,
+  "section": "Wenn ich tanze, vergesse ich alles!",
+  "label": "Übung: L8, 6a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 8,
+  "section": "Wenn ich tanze, vergesse ich alles!",
+  "label": "Übung: L8, 7a"
+ },
+ {
+  "book": "AB",
+  "lesson": 8,
+  "section": "Wenn ich tanze, vergesse ich alles!",
+  "label": "Übung: L8, 8a"
+ },
+ {
+  "book": "AB",
+  "lesson": 8,
+  "section": "Wenn ich tanze, vergesse ich alles!",
+  "label": "Übung: L8, 9a"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "L9, 5a, Aussprache"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: L9, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: L9, 2a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: L9, 3"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: L9, 4a"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: L9, 5a"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: L9, 6a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: L9, 7"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: L9, 8a_b_c"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Fokus Beruf, 2a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Fokus Beruf, 4a_b_c_d"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Prüfungstraining, Hören, 1b"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Prüfungstraining, Hören, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Prüfungstraining, Lesen, 1a_b_c"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Prüfungstraining, Lesen, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Prüfungstraining, Schreiben, 1a_b_c"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Test, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Test, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Wiederholung, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Wiederholung, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Wiederholung, 3"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Wiederholung, 4"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Wiederholung, 6"
+ },
+ {
+  "book": "AB",
+  "lesson": 9,
+  "section": "Nicht schon wieder!",
+  "label": "Übung: Modul 3, L7-9_Wiederholung, 7"
+ },
+ {
+  "book": "AB",
+  "lesson": 10,
+  "section": "Auf keinen Fall! Ohne mich!",
+  "label": "L10, 9a, Aussprache"
+ },
+ {
+  "book": "AB",
+  "lesson": 10,
+  "section": "Auf keinen Fall! Ohne mich!",
+  "label": "Übung: L10, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 10,
+  "section": "Auf keinen Fall! Ohne mich!",
+  "label": "Übung: L10, 10"
+ },
+ {
+  "book": "AB",
+  "lesson": 10,
+  "section": "Auf keinen Fall! Ohne mich!",
+  "label": "Übung: L10, 2a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 10,
+  "section": "Auf keinen Fall! Ohne mich!",
+  "label": "Übung: L10, 4a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 10,
+  "section": "Auf keinen Fall! Ohne mich!",
+  "label": "Übung: L10, 5"
+ },
+ {
+  "book": "AB",
+  "lesson": 10,
+  "section": "Auf keinen Fall! Ohne mich!",
+  "label": "Übung: L10, 6"
+ },
+ {
+  "book": "AB",
+  "lesson": 10,
+  "section": "Auf keinen Fall! Ohne mich!",
+  "label": "Übung: L10, 7a"
+ },
+ {
+  "book": "AB",
+  "lesson": 10,
+  "section": "Auf keinen Fall! Ohne mich!",
+  "label": "Übung: L10, 8"
+ },
+ {
+  "book": "AB",
+  "lesson": 11,
+  "section": "Da wäre ich jetztt auch gern mit dabei!",
+  "label": "L11, 6a, Aussprache"
+ },
+ {
+  "book": "AB",
+  "lesson": 11,
+  "section": "Da wäre ich jetztt auch gern mit dabei!",
+  "label": "Übung: L11, 1a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 11,
+  "section": "Da wäre ich jetztt auch gern mit dabei!",
+  "label": "Übung: L11, 2a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 11,
+  "section": "Da wäre ich jetztt auch gern mit dabei!",
+  "label": "Übung: L11, 3a"
+ },
+ {
+  "book": "AB",
+  "lesson": 11,
+  "section": "Da wäre ich jetztt auch gern mit dabei!",
+  "label": "Übung: L11, 4a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 11,
+  "section": "Da wäre ich jetztt auch gern mit dabei!",
+  "label": "Übung: L11, 5"
+ },
+ {
+  "book": "AB",
+  "lesson": 11,
+  "section": "Da wäre ich jetztt auch gern mit dabei!",
+  "label": "Übung: L11, 6a"
+ },
+ {
+  "book": "AB",
+  "lesson": 11,
+  "section": "Da wäre ich jetztt auch gern mit dabei!",
+  "label": "Übung: L11, 8a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: L12, 1a"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: L12, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: L12, 3"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: L12, 4a_b_c"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: L12, 5a"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: L12, 6b"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: L12, 7"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: L12, 9a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Fokus Beruf, 2a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Fokus Beruf, 3b"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Fokus Beruf, 4a"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Fokus Beruf, 5"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Prüfungstraining, Hören, 1a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Prüfungstraining, Hören, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Prüfungstraining, Lesen, 1a_b"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Prüfungstraining, Lesen, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Prüfungstraining, Sprechen, 1a"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Test, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Test, 3"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Wiederholung, 1"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Wiederholung, 2"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Wiederholung, 4"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Wiederholung, 5a"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Wiederholung, 7"
+ },
+ {
+  "book": "AB",
+  "lesson": 12,
+  "section": "Kopf hoch!",
+  "label": "Übung: Modul 4, L10-12_Wiederholung, 8"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 1, noch_mehr_L1, 5_leicht"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 1, noch_mehr_L1, 5_schwer"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 1, noch_mehr_L2, 11_leicht"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 1, noch_mehr_L2, 11_schwer"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 1, noch_mehr_L3, 7_leicht"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 1, noch_mehr_L3, 7_schwer"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 2, noch_mehr_L4, 9_leicht"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 2, noch_mehr_L4, 9_schwer"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 2, noch_mehr_L5, 10_leicht"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 2, noch_mehr_L5, 8_leicht"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 2, noch_mehr_L5, 8_schwer"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 2, noch_mehr_L6, 11_leicht"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 2, noch_mehr_L6, 11_schwer"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 3, noch_mehr_L7, 5_leicht"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 3, noch_mehr_L8, 7_leicht"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 3, noch_mehr_L9, 4_leicht"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 3, noch_mehr_L9, 4_schwer"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 4, noch_mehr_L10, 6_leicht"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 4, noch_mehr_L10, 6_schwer"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 4, noch_mehr_L11, 3_leicht"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 4, noch_mehr_L11, 3_schwer"
+ },
+ {
+  "book": "AB",
+  "lesson": null,
+  "section": "Zusatzübungen",
+  "label": "Übung: Modul 4, noch_mehr_L12, 6_leicht"
+ },
+ {
+  "book": "KB",
+  "lesson": 1,
+  "section": "Lektion 1: Mein Vater Vittorio war der Erste hier!",
+  "label": "Aufgabe: L1, 3a_b_c"
+ },
+ {
+  "book": "KB",
+  "lesson": 1,
+  "section": "Lektion 1: Mein Vater Vittorio war der Erste hier!",
+  "label": "Aufgabe: L1, 6"
+ },
+ {
+  "book": "KB",
+  "lesson": 1,
+  "section": "Lektion 1: Mein Vater Vittorio war der Erste hier!",
+  "label": "Aufgabe: L1, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 1,
+  "section": "Lektion 1: Mein Vater Vittorio war der Erste hier!",
+  "label": "Aufgabe: L1, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 1,
+  "section": "Lektion 1: Mein Vater Vittorio war der Erste hier!",
+  "label": "Aufgabe: L1, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 1,
+  "section": "Lektion 1: Mein Vater Vittorio war der Erste hier!",
+  "label": "L1, 3c, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 1,
+  "section": "Lektion 1: Mein Vater Vittorio war der Erste hier!",
+  "label": "L1, 6, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 1,
+  "section": "Lektion 1: Mein Vater Vittorio war der Erste hier!",
+  "label": "L1, 7b, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 1,
+  "section": "Lektion 1: Mein Vater Vittorio war der Erste hier!",
+  "label": "L1, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 1,
+  "section": "Lektion 1: Mein Vater Vittorio war der Erste hier!",
+  "label": "L1, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 1,
+  "section": "Lektion 1: Mein Vater Vittorio war der Erste hier!",
+  "label": "L1, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 1,
+  "section": "Lektion 1: Mein Vater Vittorio war der Erste hier!",
+  "label": "L1, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 2,
+  "section": "Lektion 2: Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Aufgabe: L2, 2"
+ },
+ {
+  "book": "KB",
+  "lesson": 2,
+  "section": "Lektion 2: Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Aufgabe: L2, 3b_c"
+ },
+ {
+  "book": "KB",
+  "lesson": 2,
+  "section": "Lektion 2: Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Aufgabe: L2, 5a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 2,
+  "section": "Lektion 2: Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Aufgabe: L2, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 2,
+  "section": "Lektion 2: Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Aufgabe: L2, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 2,
+  "section": "Lektion 2: Weil meine Arbeit wirklich wichtig ist.",
+  "label": "Aufgabe: L2, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 2,
+  "section": "Lektion 2: Weil meine Arbeit wirklich wichtig ist.",
+  "label": "L2, 5b, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 2,
+  "section": "Lektion 2: Weil meine Arbeit wirklich wichtig ist.",
+  "label": "L2, 8b, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 2,
+  "section": "Lektion 2: Weil meine Arbeit wirklich wichtig ist.",
+  "label": "L2, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 2,
+  "section": "Lektion 2: Weil meine Arbeit wirklich wichtig ist.",
+  "label": "L2, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 2,
+  "section": "Lektion 2: Weil meine Arbeit wirklich wichtig ist.",
+  "label": "L2, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 2,
+  "section": "Lektion 2: Weil meine Arbeit wirklich wichtig ist.",
+  "label": "L2, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 3,
+  "section": "Lektion 3: Unsere WG fehlt mir.",
+  "label": "Aufgabe: L3, 1"
+ },
+ {
+  "book": "KB",
+  "lesson": 3,
+  "section": "Lektion 3: Unsere WG fehlt mir.",
+  "label": "Aufgabe: L3, 3a_b_c"
+ },
+ {
+  "book": "KB",
+  "lesson": 3,
+  "section": "Lektion 3: Unsere WG fehlt mir.",
+  "label": "Aufgabe: L3, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 3,
+  "section": "Lektion 3: Unsere WG fehlt mir.",
+  "label": "Aufgabe: L3, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 3,
+  "section": "Lektion 3: Unsere WG fehlt mir.",
+  "label": "Aufgabe: L3, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 3,
+  "section": "Lektion 3: Unsere WG fehlt mir.",
+  "label": "L3, 3b, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 3,
+  "section": "Lektion 3: Unsere WG fehlt mir.",
+  "label": "L3, 3c, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 3,
+  "section": "Lektion 3: Unsere WG fehlt mir.",
+  "label": "L3, 7b, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 3,
+  "section": "Lektion 3: Unsere WG fehlt mir.",
+  "label": "L3, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 3,
+  "section": "Lektion 3: Unsere WG fehlt mir.",
+  "label": "L3, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 3,
+  "section": "Lektion 3: Unsere WG fehlt mir.",
+  "label": "L3, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 3,
+  "section": "Lektion 3: Unsere WG fehlt mir.",
+  "label": "L3, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Aufgabe: L4, 1a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Aufgabe: L4, 3a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Aufgabe: L4, 5a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Aufgabe: L4, 8a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Aufgabe: L4, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Aufgabe: L4, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "Aufgabe: L4, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "L4, 5b, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "L4, 8b, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "L4, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "L4, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "L4, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 4,
+  "section": "Lektion 4: Deshalb haben wir jetzt sehr viel Arbeit.",
+  "label": "L4, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "Aufgabe: L5, 1a_b_c"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "Aufgabe: L5, 2a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "Aufgabe: L5, 3a"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "Aufgabe: L5, 4a_b_c"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "Aufgabe: L5, 6a"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "Aufgabe: L5, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "Aufgabe: L5, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "Aufgabe: L5, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "L5, 3a, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "L5, 4c, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "L5, 6b, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "L5, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "L5, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "L5, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 5,
+  "section": "Lektion 5: Ach, komm schon! Das macht bestimmt Spaß!",
+  "label": "L5, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 6,
+  "section": "Lektion 6: Du solltest mehr trainieren.",
+  "label": "Aufgabe: L6, 1a"
+ },
+ {
+  "book": "KB",
+  "lesson": 6,
+  "section": "Lektion 6: Du solltest mehr trainieren.",
+  "label": "Aufgabe: L6, 2a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 6,
+  "section": "Lektion 6: Du solltest mehr trainieren.",
+  "label": "Aufgabe: L6, 5b"
+ },
+ {
+  "book": "KB",
+  "lesson": 6,
+  "section": "Lektion 6: Du solltest mehr trainieren.",
+  "label": "Aufgabe: L6, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 6,
+  "section": "Lektion 6: Du solltest mehr trainieren.",
+  "label": "Aufgabe: L6, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 6,
+  "section": "Lektion 6: Du solltest mehr trainieren.",
+  "label": "Aufgabe: L6, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 6,
+  "section": "Lektion 6: Du solltest mehr trainieren.",
+  "label": "L6, 1b, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 6,
+  "section": "Lektion 6: Du solltest mehr trainieren.",
+  "label": "L6, 2b, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 6,
+  "section": "Lektion 6: Du solltest mehr trainieren.",
+  "label": "L6, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 6,
+  "section": "Lektion 6: Du solltest mehr trainieren.",
+  "label": "L6, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 6,
+  "section": "Lektion 6: Du solltest mehr trainieren.",
+  "label": "L6, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 6,
+  "section": "Lektion 6: Du solltest mehr trainieren.",
+  "label": "L6, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "Aufgabe: L7, 2a"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "Aufgabe: L7, 3a"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "Aufgabe: L7, 4a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "Aufgabe: L7, 7a"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "Aufgabe: L7, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "Aufgabe: L7, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "Aufgabe: L7, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "L7, 4b, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "L7, 7a, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "L7, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "L7, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "L7, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 7,
+  "section": "Lektion 7: Allein unterwegs",
+  "label": "L7, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 8,
+  "section": "Lektion 8: Wenn ich tanze, vergesse ich alles!",
+  "label": "Aufgabe: L8, 1b"
+ },
+ {
+  "book": "KB",
+  "lesson": 8,
+  "section": "Lektion 8: Wenn ich tanze, vergesse ich alles!",
+  "label": "Aufgabe: L8, 3a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 8,
+  "section": "Lektion 8: Wenn ich tanze, vergesse ich alles!",
+  "label": "Aufgabe: L8, 5a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 8,
+  "section": "Lektion 8: Wenn ich tanze, vergesse ich alles!",
+  "label": "Aufgabe: L8, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 8,
+  "section": "Lektion 8: Wenn ich tanze, vergesse ich alles!",
+  "label": "Aufgabe: L8, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 8,
+  "section": "Lektion 8: Wenn ich tanze, vergesse ich alles!",
+  "label": "Aufgabe: L8, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 8,
+  "section": "Lektion 8: Wenn ich tanze, vergesse ich alles!",
+  "label": "L8, 4, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 8,
+  "section": "Lektion 8: Wenn ich tanze, vergesse ich alles!",
+  "label": "L8, 5b, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 8,
+  "section": "Lektion 8: Wenn ich tanze, vergesse ich alles!",
+  "label": "L8, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 8,
+  "section": "Lektion 8: Wenn ich tanze, vergesse ich alles!",
+  "label": "L8, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 8,
+  "section": "Lektion 8: Wenn ich tanze, vergesse ich alles!",
+  "label": "L8, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 8,
+  "section": "Lektion 8: Wenn ich tanze, vergesse ich alles!",
+  "label": "L8, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 9,
+  "section": "Lektion 9: Nicht schon wieder!",
+  "label": "Aufgabe: L9, 1a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 9,
+  "section": "Lektion 9: Nicht schon wieder!",
+  "label": "Aufgabe: L9, 2a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 9,
+  "section": "Lektion 9: Nicht schon wieder!",
+  "label": "Aufgabe: L9, 4a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 9,
+  "section": "Lektion 9: Nicht schon wieder!",
+  "label": "Aufgabe: L9, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 9,
+  "section": "Lektion 9: Nicht schon wieder!",
+  "label": "Aufgabe: L9, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 9,
+  "section": "Lektion 9: Nicht schon wieder!",
+  "label": "Aufgabe: L9, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 9,
+  "section": "Lektion 9: Nicht schon wieder!",
+  "label": "L9, 2b, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 9,
+  "section": "Lektion 9: Nicht schon wieder!",
+  "label": "L9, 5, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 9,
+  "section": "Lektion 9: Nicht schon wieder!",
+  "label": "L9, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 9,
+  "section": "Lektion 9: Nicht schon wieder!",
+  "label": "L9, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 9,
+  "section": "Lektion 9: Nicht schon wieder!",
+  "label": "L9, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 9,
+  "section": "Lektion 9: Nicht schon wieder!",
+  "label": "L9, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "Aufgabe: L10, 2"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "Aufgabe: L10, 3"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "Aufgabe: L10, 4a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "Aufgabe: L10, 5a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "Aufgabe: L10, 9a"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "Aufgabe: L10, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "Aufgabe: L10, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "Aufgabe: L10, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "L10, 4b, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "L10, 5b, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "L10, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "L10, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "L10, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 10,
+  "section": "Lektion 10: Auf keinen Fall! Ohne mich!",
+  "label": "L10, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 11,
+  "section": "Lektion 11: Da wäre ich jetzt auch gern mit dabei!",
+  "label": "Aufgabe: L11, 1a"
+ },
+ {
+  "book": "KB",
+  "lesson": 11,
+  "section": "Lektion 11: Da wäre ich jetzt auch gern mit dabei!",
+  "label": "Aufgabe: L11, 2a"
+ },
+ {
+  "book": "KB",
+  "lesson": 11,
+  "section": "Lektion 11: Da wäre ich jetzt auch gern mit dabei!",
+  "label": "Aufgabe: L11, 6"
+ },
+ {
+  "book": "KB",
+  "lesson": 11,
+  "section": "Lektion 11: Da wäre ich jetzt auch gern mit dabei!",
+  "label": "Aufgabe: L11, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 11,
+  "section": "Lektion 11: Da wäre ich jetzt auch gern mit dabei!",
+  "label": "Aufgabe: L11, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 11,
+  "section": "Lektion 11: Da wäre ich jetzt auch gern mit dabei!",
+  "label": "Aufgabe: L11, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 11,
+  "section": "Lektion 11: Da wäre ich jetzt auch gern mit dabei!",
+  "label": "L11, 2a, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 11,
+  "section": "Lektion 11: Da wäre ich jetzt auch gern mit dabei!",
+  "label": "L11, 6, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 11,
+  "section": "Lektion 11: Da wäre ich jetzt auch gern mit dabei!",
+  "label": "L11, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 11,
+  "section": "Lektion 11: Da wäre ich jetzt auch gern mit dabei!",
+  "label": "L11, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 11,
+  "section": "Lektion 11: Da wäre ich jetzt auch gern mit dabei!",
+  "label": "L11, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 11,
+  "section": "Lektion 11: Da wäre ich jetzt auch gern mit dabei!",
+  "label": "L11, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "Aufgabe: L12, 1b_c"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "Aufgabe: L12, 3a_b"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "Aufgabe: L12, 5a_d"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "Aufgabe: L12, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "Aufgabe: L12, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "Aufgabe: L12, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "L12, 3b, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "L12, 3d, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "L12, 5d, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "L12, Schnelltest, Grammatik"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "L12, Schnelltest, Kommunikation"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "L12, Schnelltest, Wörter"
+ },
+ {
+  "book": "KB",
+  "lesson": 12,
+  "section": "Lektion 12: Kopf hoch!",
+  "label": "L12, Wörter"
+ }
+]

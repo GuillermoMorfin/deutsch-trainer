@@ -1,0 +1,464 @@
+lemma,pos,article,plural,aux,partizip2,gloss_es,gloss_en
+sein,VERB,,,sein,gewesen,ser / estar,to be
+haben,VERB,,,haben,gehabt,tener,to have
+werden,VERB,,,sein,geworden,llegar a ser / volverse,to become
+können,VERB,,,haben,gekonnt,poder,can
+müssen,VERB,,,haben,gemusst,tener que,must
+wollen,VERB,,,haben,gewollt,querer,to want
+sollen,VERB,,,haben,gesollt,deber,should
+dürfen,VERB,,,haben,gedurft,tener permiso,may
+mögen,VERB,,,haben,gemocht,gustar,to like
+möchten,VERB,,,,,querría / me gustaría,would like
+gehen,VERB,,,sein,gegangen,ir (a pie),to go
+kommen,VERB,,,sein,gekommen,venir,to come
+fahren,VERB,,,sein,gefahren,ir (en vehículo) / conducir,to drive / ride
+laufen,VERB,,,sein,gelaufen,correr / caminar,to run / walk
+fliegen,VERB,,,sein,geflogen,volar,to fly
+bleiben,VERB,,,sein,geblieben,quedarse,to stay
+machen,VERB,,,haben,gemacht,hacer,to do / make
+arbeiten,VERB,,,haben,gearbeitet,trabajar,to work
+lernen,VERB,,,haben,gelernt,aprender / estudiar,to learn
+studieren,VERB,,,haben,studiert,estudiar (en la universidad),to study
+wohnen,VERB,,,haben,gewohnt,vivir (residir),to live
+leben,VERB,,,haben,gelebt,vivir,to live
+spielen,VERB,,,haben,gespielt,jugar / tocar,to play
+kaufen,VERB,,,haben,gekauft,comprar,to buy
+kochen,VERB,,,haben,gekocht,cocinar,to cook
+essen,VERB,,,haben,gegessen,comer,to eat
+trinken,VERB,,,haben,getrunken,beber,to drink
+schlafen,VERB,,,haben,geschlafen,dormir,to sleep
+sprechen,VERB,,,haben,gesprochen,hablar,to speak
+sagen,VERB,,,haben,gesagt,decir,to say
+fragen,VERB,,,haben,gefragt,preguntar,to ask
+antworten,VERB,,,haben,geantwortet,responder,to answer
+hören,VERB,,,haben,gehört,oír / escuchar,to hear
+sehen,VERB,,,haben,gesehen,ver,to see
+lesen,VERB,,,haben,gelesen,leer,to read
+schreiben,VERB,,,haben,geschrieben,escribir,to write
+nehmen,VERB,,,haben,genommen,tomar,to take
+geben,VERB,,,haben,gegeben,dar,to give
+finden,VERB,,,haben,gefunden,encontrar / opinar,to find
+suchen,VERB,,,haben,gesucht,buscar,to look for
+brauchen,VERB,,,haben,gebraucht,necesitar,to need
+wissen,VERB,,,haben,gewusst,saber,to know (a fact)
+kennen,VERB,,,haben,gekannt,conocer,to know (be familiar)
+heißen,VERB,,,haben,geheißen,llamarse,to be called
+treffen,VERB,,,haben,getroffen,encontrarse con,to meet
+besuchen,VERB,,,haben,besucht,visitar,to visit
+bezahlen,VERB,,,haben,bezahlt,pagar,to pay
+kosten,VERB,,,haben,gekostet,costar,to cost
+öffnen,VERB,,,haben,geöffnet,abrir,to open
+schließen,VERB,,,haben,geschlossen,cerrar,to close
+beginnen,VERB,,,haben,begonnen,empezar,to begin
+helfen,VERB,,,haben,geholfen,ayudar,to help
+danken,VERB,,,haben,gedankt,agradecer,to thank
+gefallen,VERB,,,haben,gefallen,gustar,to please
+gehören,VERB,,,haben,gehört,pertenecer,to belong
+schmecken,VERB,,,haben,geschmeckt,saber (comida),to taste
+glauben,VERB,,,haben,geglaubt,creer,to believe
+denken,VERB,,,haben,gedacht,pensar,to think
+lieben,VERB,,,haben,geliebt,amar,to love
+warten,VERB,,,haben,gewartet,esperar,to wait
+zeigen,VERB,,,haben,gezeigt,mostrar,to show
+bringen,VERB,,,haben,gebracht,traer / llevar,to bring
+holen,VERB,,,haben,geholt,ir a buscar,to fetch
+tragen,VERB,,,haben,getragen,llevar (puesto) / cargar,to wear / carry
+waschen,VERB,,,haben,gewaschen,lavar,to wash
+putzen,VERB,,,haben,geputzt,limpiar,to clean
+duschen,VERB,,,haben,geduscht,ducharse,to shower
+tanzen,VERB,,,haben,getanzt,bailar,to dance
+singen,VERB,,,haben,gesungen,cantar,to sing
+schwimmen,VERB,,,sein,geschwommen,nadar,to swim
+wandern,VERB,,,sein,gewandert,hacer senderismo,to hike
+reisen,VERB,,,sein,gereist,viajar,to travel
+fotografieren,VERB,,,haben,fotografiert,fotografiar,to photograph
+telefonieren,VERB,,,haben,telefoniert,hablar por teléfono,to phone
+verstehen,VERB,,,haben,verstanden,entender,to understand
+vergessen,VERB,,,haben,vergessen,olvidar,to forget
+bekommen,VERB,,,haben,bekommen,recibir,to get
+erzählen,VERB,,,haben,erzählt,contar,to tell
+erklären,VERB,,,haben,erklärt,explicar,to explain
+bestellen,VERB,,,haben,bestellt,pedir (encargar),to order
+mieten,VERB,,,haben,gemietet,alquilar,to rent
+stehen,VERB,,,haben,gestanden,estar de pie,to stand
+liegen,VERB,,,haben,gelegen,estar tumbado / estar situado,to lie
+sitzen,VERB,,,haben,gesessen,estar sentado,to sit
+passieren,VERB,,,sein,passiert,pasar (ocurrir),to happen
+dauern,VERB,,,haben,gedauert,durar,to last
+regnen,VERB,,,haben,geregnet,llover,to rain
+scheinen,VERB,,,haben,geschienen,brillar / parecer,to shine / seem
+feiern,VERB,,,haben,gefeiert,celebrar,to celebrate
+einladen,VERB,,,haben,eingeladen,invitar,to invite
+aufstehen,VERB,,,sein,aufgestanden,levantarse,to get up
+aufwachen,VERB,,,sein,aufgewacht,despertarse,to wake up
+anrufen,VERB,,,haben,angerufen,llamar por teléfono,to call
+ankommen,VERB,,,sein,angekommen,llegar,to arrive
+abfahren,VERB,,,sein,abgefahren,salir (un tren / bus),to depart
+einkaufen,VERB,,,haben,eingekauft,hacer la compra,to shop
+mitkommen,VERB,,,sein,mitgekommen,venir con,to come along
+mitbringen,VERB,,,haben,mitgebracht,traer consigo,to bring along
+anfangen,VERB,,,haben,angefangen,empezar,to start
+aufhören,VERB,,,haben,aufgehört,terminar / dejar de,to stop
+aufräumen,VERB,,,haben,aufgeräumt,ordenar,to tidy up
+fernsehen,VERB,,,haben,ferngesehen,ver la televisión,to watch TV
+umziehen,VERB,,,sein,umgezogen,mudarse,to move house
+einsteigen,VERB,,,sein,eingestiegen,subir (a un vehículo),to get on
+aussteigen,VERB,,,sein,ausgestiegen,bajar (de un vehículo),to get off
+umsteigen,VERB,,,sein,umgestiegen,hacer transbordo,to change (trains)
+zurückkommen,VERB,,,sein,zurückgekommen,volver,to come back
+ausgehen,VERB,,,sein,ausgegangen,salir (de fiesta),to go out
+vorbereiten,VERB,,,haben,vorbereitet,preparar,to prepare
+trainieren,VERB,,,haben,trainiert,entrenar,to train
+radeln,VERB,,,sein,geradelt,ir en bici,to cycle
+Mann,NOUN,der,Männer,,,el hombre,man
+Frau,NOUN,die,Frauen,,,la mujer,woman
+Kind,NOUN,das,Kinder,,,el niño,child
+Familie,NOUN,die,Familien,,,la familia,family
+Mutter,NOUN,die,Mütter,,,la madre,mother
+Vater,NOUN,der,Väter,,,el padre,father
+Eltern,NOUN,die,-,,,los padres,parents
+Bruder,NOUN,der,Brüder,,,el hermano,brother
+Schwester,NOUN,die,Schwestern,,,la hermana,sister
+Sohn,NOUN,der,Söhne,,,el hijo,son
+Tochter,NOUN,die,Töchter,,,la hija,daughter
+Freund,NOUN,der,Freunde,,,el amigo / el novio,friend / boyfriend
+Freundin,NOUN,die,Freundinnen,,,la amiga / la novia,friend / girlfriend
+Partner,NOUN,der,Partner,,,la pareja (m),partner
+Partnerin,NOUN,die,Partnerinnen,,,la pareja (f),partner
+Kollege,NOUN,der,Kollegen,,,el colega,colleague
+Kollegin,NOUN,die,Kolleginnen,,,la colega,colleague
+Nachbar,NOUN,der,Nachbarn,,,el vecino,neighbour
+Mensch,NOUN,der,Menschen,,,la persona / el ser humano,person
+Leute,NOUN,die,-,,,la gente,people
+Name,NOUN,der,Namen,,,el nombre,name
+Jahr,NOUN,das,Jahre,,,el año,year
+Monat,NOUN,der,Monate,,,el mes,month
+Woche,NOUN,die,Wochen,,,la semana,week
+Tag,NOUN,der,Tage,,,el día,day
+Stunde,NOUN,die,Stunden,,,la hora,hour
+Minute,NOUN,die,Minuten,,,el minuto,minute
+Uhr,NOUN,die,Uhren,,,el reloj / la hora,clock / o'clock
+Zeit,NOUN,die,Zeiten,,,el tiempo,time
+Morgen,NOUN,der,Morgen,,,la mañana,morning
+Mittag,NOUN,der,Mittage,,,el mediodía,noon
+Nachmittag,NOUN,der,Nachmittage,,,la tarde,afternoon
+Abend,NOUN,der,Abende,,,la tarde / la noche,evening
+Nacht,NOUN,die,Nächte,,,la noche,night
+Wochenende,NOUN,das,Wochenenden,,,el fin de semana,weekend
+Montag,NOUN,der,Montage,,,el lunes,Monday
+Dienstag,NOUN,der,Dienstage,,,el martes,Tuesday
+Mittwoch,NOUN,der,Mittwoche,,,el miércoles,Wednesday
+Donnerstag,NOUN,der,Donnerstage,,,el jueves,Thursday
+Freitag,NOUN,der,Freitage,,,el viernes,Friday
+Samstag,NOUN,der,Samstage,,,el sábado,Saturday
+Sonntag,NOUN,der,Sonntage,,,el domingo,Sunday
+Frühling,NOUN,der,Frühlinge,,,la primavera,spring
+Sommer,NOUN,der,Sommer,,,el verano,summer
+Herbst,NOUN,der,Herbste,,,el otoño,autumn
+Winter,NOUN,der,Winter,,,el invierno,winter
+Wetter,NOUN,das,-,,,el tiempo (clima),weather
+Sonne,NOUN,die,Sonnen,,,el sol,sun
+Regen,NOUN,der,-,,,la lluvia,rain
+Schnee,NOUN,der,-,,,la nieve,snow
+Stadt,NOUN,die,Städte,,,la ciudad,city
+Land,NOUN,das,Länder,,,el país / el campo,country
+Straße,NOUN,die,Straßen,,,la calle,street
+Platz,NOUN,der,Plätze,,,la plaza / el sitio,square / place
+Park,NOUN,der,Parks,,,el parque,park
+Fluss,NOUN,der,Flüsse,,,el río,river
+See,NOUN,der,Seen,,,el lago,lake
+Meer,NOUN,das,Meere,,,el mar,sea
+Strand,NOUN,der,Strände,,,la playa,beach
+Berg,NOUN,der,Berge,,,la montaña,mountain
+Bahnhof,NOUN,der,Bahnhöfe,,,la estación de tren,train station
+Haltestelle,NOUN,die,Haltestellen,,,la parada,stop
+Flughafen,NOUN,der,Flughäfen,,,el aeropuerto,airport
+Bus,NOUN,der,Busse,,,el autobús,bus
+U-Bahn,NOUN,die,U-Bahnen,,,el metro,underground
+S-Bahn,NOUN,die,S-Bahnen,,,el tren de cercanías,suburban train
+Zug,NOUN,der,Züge,,,el tren,train
+Auto,NOUN,das,Autos,,,el coche,car
+Fahrrad,NOUN,das,Fahrräder,,,la bicicleta,bicycle
+Rad,NOUN,das,Räder,,,la bici / la rueda,bike / wheel
+Ticket,NOUN,das,Tickets,,,el billete,ticket
+Fahrkarte,NOUN,die,Fahrkarten,,,el billete,ticket
+Weg,NOUN,der,Wege,,,el camino,way / path
+Haus,NOUN,das,Häuser,,,la casa,house
+Wohnung,NOUN,die,Wohnungen,,,el piso,flat
+WG,NOUN,die,WGs,,,el piso compartido,flat share
+Zimmer,NOUN,das,Zimmer,,,la habitación,room
+Küche,NOUN,die,Küchen,,,la cocina,kitchen
+Bad,NOUN,das,Bäder,,,el baño,bathroom
+Schlafzimmer,NOUN,das,Schlafzimmer,,,el dormitorio,bedroom
+Wohnzimmer,NOUN,das,Wohnzimmer,,,la sala de estar,living room
+Balkon,NOUN,der,Balkone,,,el balcón,balcony
+Garten,NOUN,der,Gärten,,,el jardín,garden
+Miete,NOUN,die,Mieten,,,el alquiler,rent
+Tisch,NOUN,der,Tische,,,la mesa,table
+Stuhl,NOUN,der,Stühle,,,la silla,chair
+Bett,NOUN,das,Betten,,,la cama,bed
+Schrank,NOUN,der,Schränke,,,el armario,cupboard
+Sofa,NOUN,das,Sofas,,,el sofá,sofa
+Lampe,NOUN,die,Lampen,,,la lámpara,lamp
+Fenster,NOUN,das,Fenster,,,la ventana,window
+Tür,NOUN,die,Türen,,,la puerta,door
+Schlüssel,NOUN,der,Schlüssel,,,la llave,key
+Handy,NOUN,das,Handys,,,el móvil,mobile phone
+Computer,NOUN,der,Computer,,,el ordenador,computer
+Buch,NOUN,das,Bücher,,,el libro,book
+Tasche,NOUN,die,Taschen,,,el bolso,bag
+Arbeit,NOUN,die,Arbeiten,,,el trabajo,work
+Beruf,NOUN,der,Berufe,,,la profesión,job / profession
+Büro,NOUN,das,Büros,,,la oficina,office
+Firma,NOUN,die,Firmen,,,la empresa,company
+Chef,NOUN,der,Chefs,,,el jefe,boss
+Chefin,NOUN,die,Chefinnen,,,la jefa,boss
+Universität,NOUN,die,Universitäten,,,la universidad,university
+Schule,NOUN,die,Schulen,,,la escuela,school
+Kurs,NOUN,der,Kurse,,,el curso,course
+Sprache,NOUN,die,Sprachen,,,el idioma,language
+Wort,NOUN,das,Wörter,,,la palabra,word
+Frage,NOUN,die,Fragen,,,la pregunta,question
+Antwort,NOUN,die,Antworten,,,la respuesta,answer
+Termin,NOUN,der,Termine,,,la cita,appointment
+Pause,NOUN,die,Pausen,,,la pausa,break
+Urlaub,NOUN,der,Urlaube,,,las vacaciones,holiday
+Reise,NOUN,die,Reisen,,,el viaje,trip
+Hotel,NOUN,das,Hotels,,,el hotel,hotel
+Koffer,NOUN,der,Koffer,,,la maleta,suitcase
+Geld,NOUN,das,-,,,el dinero,money
+Euro,NOUN,der,Euro,,,el euro,euro
+Preis,NOUN,der,Preise,,,el precio,price
+Geschäft,NOUN,das,Geschäfte,,,la tienda,shop
+Supermarkt,NOUN,der,Supermärkte,,,el supermercado,supermarket
+Restaurant,NOUN,das,Restaurants,,,el restaurante,restaurant
+Café,NOUN,das,Cafés,,,la cafetería,café
+Bäckerei,NOUN,die,Bäckereien,,,la panadería,bakery
+Essen,NOUN,das,-,,,la comida,food / meal
+Frühstück,NOUN,das,Frühstücke,,,el desayuno,breakfast
+Mittagessen,NOUN,das,Mittagessen,,,el almuerzo,lunch
+Abendessen,NOUN,das,Abendessen,,,la cena,dinner
+Brot,NOUN,das,Brote,,,el pan,bread
+Brötchen,NOUN,das,Brötchen,,,el panecillo,bread roll
+Käse,NOUN,der,-,,,el queso,cheese
+Butter,NOUN,die,-,,,la mantequilla,butter
+Ei,NOUN,das,Eier,,,el huevo,egg
+Fleisch,NOUN,das,-,,,la carne,meat
+Fisch,NOUN,der,Fische,,,el pescado / el pez,fish
+Gemüse,NOUN,das,-,,,la verdura,vegetables
+Obst,NOUN,das,-,,,la fruta,fruit
+Apfel,NOUN,der,Äpfel,,,la manzana,apple
+Banane,NOUN,die,Bananen,,,el plátano,banana
+Kartoffel,NOUN,die,Kartoffeln,,,la patata,potato
+Reis,NOUN,der,-,,,el arroz,rice
+Nudeln,NOUN,die,-,,,la pasta,noodles
+Salat,NOUN,der,Salate,,,la ensalada,salad
+Suppe,NOUN,die,Suppen,,,la sopa,soup
+Kuchen,NOUN,der,Kuchen,,,el pastel,cake
+Wasser,NOUN,das,-,,,el agua,water
+Kaffee,NOUN,der,-,,,el café,coffee
+Tee,NOUN,der,Tees,,,el té,tea
+Milch,NOUN,die,-,,,la leche,milk
+Saft,NOUN,der,Säfte,,,el zumo,juice
+Bier,NOUN,das,Biere,,,la cerveza,beer
+Wein,NOUN,der,Weine,,,el vino,wine
+Körper,NOUN,der,Körper,,,el cuerpo,body
+Kopf,NOUN,der,Köpfe,,,la cabeza,head
+Bein,NOUN,das,Beine,,,la pierna,leg
+Fuß,NOUN,der,Füße,,,el pie,foot
+Hand,NOUN,die,Hände,,,la mano,hand
+Arm,NOUN,der,Arme,,,el brazo,arm
+Rücken,NOUN,der,Rücken,,,la espalda,back
+Bauch,NOUN,der,Bäuche,,,la barriga,belly
+Arzt,NOUN,der,Ärzte,,,el médico,doctor
+Ärztin,NOUN,die,Ärztinnen,,,la médica,doctor
+Gesundheit,NOUN,die,-,,,la salud,health
+Sport,NOUN,der,-,,,el deporte,sport
+Training,NOUN,das,Trainings,,,el entrenamiento,training
+Marathon,NOUN,der,Marathons,,,el maratón,marathon
+Lauf,NOUN,der,Läufe,,,la carrera,run / race
+Kilometer,NOUN,der,Kilometer,,,el kilómetro,kilometre
+Hobby,NOUN,das,Hobbys,,,el pasatiempo,hobby
+Musik,NOUN,die,-,,,la música,music
+Film,NOUN,der,Filme,,,la película,film
+Kino,NOUN,das,Kinos,,,el cine,cinema
+Konzert,NOUN,das,Konzerte,,,el concierto,concert
+Party,NOUN,die,Partys,,,la fiesta,party
+Fest,NOUN,das,Feste,,,la fiesta,celebration
+Geburtstag,NOUN,der,Geburtstage,,,el cumpleaños,birthday
+Geschenk,NOUN,das,Geschenke,,,el regalo,present
+Kleidung,NOUN,die,-,,,la ropa,clothes
+Hose,NOUN,die,Hosen,,,el pantalón,trousers
+Hemd,NOUN,das,Hemden,,,la camisa,shirt
+Jacke,NOUN,die,Jacken,,,la chaqueta,jacket
+Schuh,NOUN,der,Schuhe,,,el zapato,shoe
+Hund,NOUN,der,Hunde,,,el perro,dog
+Katze,NOUN,die,Katzen,,,el gato,cat
+Farbe,NOUN,die,Farben,,,el color,colour
+Idee,NOUN,die,Ideen,,,la idea,idea
+Problem,NOUN,das,Probleme,,,el problema,problem
+Lust,NOUN,die,-,,,las ganas,desire
+Spaß,NOUN,der,-,,,la diversión,fun
+E-Mail,NOUN,die,E-Mails,,,el correo electrónico,email
+Nachricht,NOUN,die,Nachrichten,,,el mensaje / la noticia,message / news
+Foto,NOUN,das,Fotos,,,la foto,photo
+gut,ADJ,,,,,bueno / bien,good
+schlecht,ADJ,,,,,malo / mal,bad
+groß,ADJ,,,,,grande,big
+klein,ADJ,,,,,pequeño,small
+alt,ADJ,,,,,viejo,old
+jung,ADJ,,,,,joven,young
+neu,ADJ,,,,,nuevo,new
+schön,ADJ,,,,,bonito,beautiful
+lang,ADJ,,,,,largo,long
+kurz,ADJ,,,,,corto,short
+schnell,ADJ,,,,,rápido,fast
+langsam,ADJ,,,,,lento,slow
+früh,ADJ,,,,,temprano,early
+spät,ADJ,,,,,tarde,late
+teuer,ADJ,,,,,caro,expensive
+billig,ADJ,,,,,barato,cheap
+warm,ADJ,,,,,caliente / cálido,warm
+kalt,ADJ,,,,,frío,cold
+heiß,ADJ,,,,,caliente / muy caluroso,hot
+nett,ADJ,,,,,simpático,nice
+freundlich,ADJ,,,,,amable,friendly
+müde,ADJ,,,,,cansado,tired
+krank,ADJ,,,,,enfermo,ill
+gesund,ADJ,,,,,sano,healthy
+glücklich,ADJ,,,,,feliz,happy
+traurig,ADJ,,,,,triste,sad
+lustig,ADJ,,,,,divertido / gracioso,funny
+interessant,ADJ,,,,,interesante,interesting
+langweilig,ADJ,,,,,aburrido,boring
+wichtig,ADJ,,,,,importante,important
+richtig,ADJ,,,,,correcto,correct
+falsch,ADJ,,,,,incorrecto,wrong
+leicht,ADJ,,,,,fácil / ligero,easy / light
+schwer,ADJ,,,,,difícil / pesado,hard / heavy
+voll,ADJ,,,,,lleno,full
+leer,ADJ,,,,,vacío,empty
+laut,ADJ,,,,,ruidoso,loud
+leise,ADJ,,,,,silencioso,quiet
+ruhig,ADJ,,,,,tranquilo,calm
+hell,ADJ,,,,,claro / luminoso,bright
+dunkel,ADJ,,,,,oscuro,dark
+toll,ADJ,,,,,genial,great
+super,ADJ,,,,,genial,great
+lecker,ADJ,,,,,rico (comida),tasty
+frei,ADJ,,,,,libre,free
+fertig,ADJ,,,,,listo / terminado,ready / finished
+sportlich,ADJ,,,,,deportista,sporty
+nah,ADJ,,,,,cerca,near
+weit,ADJ,,,,,lejos,far
+viel,ADJ,,,,,mucho,much
+wenig,ADJ,,,,,poco,little
+ganz,ADJ,,,,,entero / completamente,whole / quite
+hier,ADV,,,,,aquí,here
+dort,ADV,,,,,allí,there
+da,ADV,,,,,ahí,there
+heute,ADV,,,,,hoy,today
+morgen,ADV,,,,,mañana,tomorrow
+gestern,ADV,,,,,ayer,yesterday
+jetzt,ADV,,,,,ahora,now
+dann,ADV,,,,,luego,then
+danach,ADV,,,,,después,afterwards
+zuerst,ADV,,,,,primero,first
+später,ADV,,,,,más tarde,later
+immer,ADV,,,,,siempre,always
+oft,ADV,,,,,a menudo,often
+manchmal,ADV,,,,,a veces,sometimes
+selten,ADV,,,,,rara vez,rarely
+nie,ADV,,,,,nunca,never
+schon,ADV,,,,,ya,already
+noch,ADV,,,,,todavía,still
+wieder,ADV,,,,,otra vez,again
+auch,ADV,,,,,también,also
+sehr,ADV,,,,,muy,very
+zu,ADV,,,,,demasiado,too
+nur,ADV,,,,,solo,only
+gern,ADV,,,,,con gusto,gladly
+lieber,ADV,,,,,preferiblemente,rather
+zusammen,ADV,,,,,juntos,together
+allein,ADV,,,,,solo (sin compañía),alone
+vielleicht,ADV,,,,,quizás,maybe
+leider,ADV,,,,,lamentablemente,unfortunately
+natürlich,ADV,,,,,por supuesto,of course
+bestimmt,ADV,,,,,seguramente,certainly
+wirklich,ADV,,,,,de verdad,really
+genau,ADV,,,,,exactamente,exactly
+ziemlich,ADV,,,,,bastante,quite
+etwas,PRON,,,,,algo,something
+nichts,PRON,,,,,nada,nothing
+alles,PRON,,,,,todo,everything
+man,PRON,,,,,uno / se,one
+ja,ADV,,,,,sí,yes
+nein,ADV,,,,,no,no
+nicht,ADV,,,,,no,not
+links,ADV,,,,,a la izquierda,left
+rechts,ADV,,,,,a la derecha,right
+geradeaus,ADV,,,,,todo recto,straight ahead
+draußen,ADV,,,,,fuera,outside
+zu Hause,ADV,,,,,en casa,at home
+nach Hause,ADV,,,,,a casa,home (direction)
+und,CONJ,,,,,y,and
+oder,CONJ,,,,,o,or
+aber,CONJ,,,,,pero,but
+denn,CONJ,,,,,porque (sin cambio de orden),because
+sondern,CONJ,,,,,sino,but rather
+wann,ADV,,,,,cuándo,when
+wo,ADV,,,,,dónde,where
+wohin,ADV,,,,,adónde,where to
+woher,ADV,,,,,de dónde,where from
+wie,ADV,,,,,cómo,how
+warum,ADV,,,,,por qué,why
+was,PRON,,,,,qué,what
+wer,PRON,,,,,quién,who
+welch,DET,,,,,cuál,which
+in,ADP,,,,,en,in
+an,ADP,,,,,en / junto a,at / on
+auf,ADP,,,,,sobre / en,on
+aus,ADP,,,,,de (procedencia),from / out of
+bei,ADP,,,,,en casa de / cerca de,at / near
+mit,ADP,,,,,con,with
+nach,ADP,,,,,a (destino) / después de,to / after
+von,ADP,,,,,de,from / of
+zu,ADP,,,,,a,to
+für,ADP,,,,,para,for
+ohne,ADP,,,,,sin,without
+durch,ADP,,,,,a través de,through
+gegen,ADP,,,,,contra,against
+um,ADP,,,,,a (hora) / alrededor de,at / around
+vor,ADP,,,,,delante de / hace,in front of / ago
+hinter,ADP,,,,,detrás de,behind
+neben,ADP,,,,,al lado de,next to
+unter,ADP,,,,,debajo de,under
+über,ADP,,,,,sobre / encima de,over / about
+zwischen,ADP,,,,,entre,between
+seit,ADP,,,,,desde (hace),since / for
+bis,ADP,,,,,hasta,until
+ab,ADP,,,,,a partir de,from
+der,DET,,,,,el,the
+ein,DET,,,,,un / uno,a / one
+kein,DET,,,,,ningún,no / not a
+mein,DET,,,,,mi,my
+dein,DET,,,,,tu,your
+sein,DET,,,,,su (de él),his
+ihr,DET,,,,,su (de ella / de ellos),her / their
+dies,DET,,,,,este,this
+ich,PRON,,,,,yo,I
+du,PRON,,,,,tú,you
+er,PRON,,,,,él,he
+sie,PRON,,,,,ella / ellos,she / they
+es,PRON,,,,,ello,it
+wir,PRON,,,,,nosotros,we
+ihr,PRON,,,,,vosotros,you (pl.)
+Sie,PRON,,,,,usted / ustedes,you (formal)
+sich,PRON,,,,,se,oneself
+eins,NUM,,,,,uno,one
+zwei,NUM,,,,,dos,two
+drei,NUM,,,,,tres,three
+hallo,INTJ,,,,,hola,hello
+danke,INTJ,,,,,gracias,thanks
+bitte,INTJ,,,,,por favor,please
+tschüss,INTJ,,,,,adiós,bye
