@@ -32,6 +32,7 @@ Personal story context lives in `app/seed/personal.json`.
   plus `BLOCK_*` structures the verifier must reject.
 - `app/seed/a1_core.csv`: starter known-word list (A1).
 - `app/seed/lessons/_source.txt`: A2.1 lesson vocabulary (headwords from the Momente AB Lernwortschatz, glosses written fresh). Rebuild the `L<nn>.csv` files with `python3 scripts/build_wordlists.py`.
+- `app/seed/drills.json`: hand-written starter drills, ≥ 6 per A2.1 grammar point (each must pass the verifier at its lesson).
 - `app/seed/book_exercises.json`: exercise labels from the Momente course backups (labels only).
 
 Import a word list: `uv run python -m app.seed --import words.csv --lesson 3`
@@ -41,6 +42,6 @@ Import a word list: `uv run python -m app.seed --import words.csv --lesson 3`
 1. ✅ Foundation: schema, seeds, lesson/word browser, design tokens, PWA shell
 2. ✅ Vocab SRS: FSRS cards, recognise (reveal + self-rate) → produce (typed, article + umlaut checked)
 3. ✅ Reader + verifier: Claude (via Claude Code, Sonnet) writes → spaCy verifier checks coverage + blocked grammar → up to 3 repairs → Haiku glosses new words → tap-to-gloss reader, audio, comprehension questions
-4. Grammar drills + error log
+4. ✅ Grammar drills + error log: gap / choice / word-order items (109 hand-written, more via Claude Code, all verifier-checked), error-weighted sessions, rule → bridge → example → warning feedback, missed book exercises boost their lesson
 5. Writing feedback
 6. Daily session + progress dashboard + audio

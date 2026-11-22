@@ -30,5 +30,8 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
   tests use a fake writer, never the API). Default writer is `ClaudeCodeWriter` (`claude -p` on the
   learner's subscription; strips ANTHROPIC_API_KEY so it can never bill the API). The learner does not
   want to pay for API usage: keep Claude Code the default.
+- `app/drills.py`: drill items are shown only if their `full_sentence` passes the verifier with the
+  learner's known words + words of lessons ≤ current. Session weighting = current lesson + recent wrong
+  answers + error_log + missed Grammatik exercises from book_progress. Wrong answers write `error_log`.
 - `static/` front end (hash router in `app.js`), served by FastAPI; `sw.js` at root scope.
 - Tests: `uv run pytest`. Each test gets its own DB via `TRAINER_DB`.

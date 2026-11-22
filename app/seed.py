@@ -179,6 +179,11 @@ def seed_exercises(conn: sqlite3.Connection) -> int:
     return len(items)
 
 
+def seed_drills(conn: sqlite3.Connection) -> int:
+    from .drills import seed_drills as _seed  # local import: drills pulls in spaCy
+    return _seed(conn)
+
+
 def seed_all(conn: sqlite3.Connection) -> dict[str, int]:
     init_schema(conn)
     with transaction(conn):
@@ -188,6 +193,7 @@ def seed_all(conn: sqlite3.Connection) -> dict[str, int]:
             "a1_lemmas": seed_a1(conn),
             "lesson_lemmas": seed_lesson_wordlists(conn),
             "book_exercises": seed_exercises(conn),
+            "drills": seed_drills(conn),
         }
 
 

@@ -261,3 +261,29 @@ button.state-dot::after { content: ""; position: absolute; inset: -14px; } /* 40
 .q-feedback { margin-top: 8px; font-weight: 600; }
 .warning-box { background: var(--cream-200); border-left: 4px solid var(--amber-500); padding: 8px 12px; border-radius: var(--r-sm); }
 .nav a { font-size: .68rem; }
+
+/* Grammar drills */
+.flash.drill { text-align: left; align-items: stretch; }
+.drill-sentence { font: 1.3rem/1.6 var(--font-read); margin: 0 0 12px; }
+.drill .blank { display: inline-block; min-width: 3ch; border-bottom: 2px solid var(--amber-400);
+  color: var(--accent-strong); font-weight: 600; text-align: center; }
+.gap-input { font: 600 1.2rem var(--font-read); min-height: 40px; padding: 2px 8px; margin: 0 4px;
+  border: 0; border-bottom: 2px solid var(--amber-400); background: var(--cream-100); border-radius: 6px 6px 0 0;
+  color: var(--text); text-align: center; max-width: 11ch; }
+.gap-input.is-ok { border-color: var(--ok); background: var(--das-bg); }
+.gap-input.is-bad { border-color: var(--bad); background: var(--die-bg); }
+.drill-gap { display: flex; flex-direction: column; gap: 10px; }
+.drill .umlauts { justify-content: flex-start; }
+.order-line { min-height: 52px; border: 2px dashed var(--border); border-radius: var(--r-md); padding: 6px;
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.order-line.is-ok { border-style: solid; border-color: var(--ok); background: var(--das-bg); }
+.order-line.is-bad { border-style: solid; border-color: var(--bad); background: var(--die-bg); }
+.order-pool { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; min-height: 44px; }
+.chip-btn { min-height: 44px; padding: 0 14px; border-radius: var(--r-sm); border: 1px solid var(--border);
+  background: var(--cream-50); font: 500 1.05rem var(--font-read); cursor: pointer; color: var(--ink-900); }
+.order-line .chip-btn { background: #fff; border-color: var(--amber-400); }
+.drill-fb { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.drill-fb .feedback .drill-sentence { font-size: 1.1rem; margin: 6px 0 0; color: var(--ink-900); }
+.drill-fb .gnote { margin: 0; }
+.hint { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.small-btn { min-height: 36px; padding: 0 14px; font-size: .85rem; margin-top: 6px; }

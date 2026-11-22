@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from . import generator, srs  # noqa: E402
+from . import drills, generator, srs  # noqa: E402
 from .db import connect, row_to_dict, rows_to_dicts, transaction  # noqa: E402
 from .llm import GenerationError, LLMUnavailable, Writer, default_writer  # noqa: E402
 from .seed import seed_all
@@ -335,6 +335,53 @@ def set_word_state(lemma_id: int, body: WordState, db: sqlite3.Connection = Depe
         db.execute("""INSERT INTO known_word (lemma_id, state) VALUES (?, ?)
                       ON CONFLICT(lemma_id) DO UPDATE SET state = excluded.state""", (lemma_id, body.state))
     return {"lemma_id": lemma_id, "state": body.state}
+
+
+# ---- grammar drills ------------------------------------------------------------------
+
+@app.get("/api/drills/session")
+def drill_session(n: int = Query(drills.DEFAULT_SESSION, ge=1, le=20), code: str | None = None,
+                  db: sqlite3.Connection = Depends(get_db)):
+    items = drills.session(db, n=n, code=code)
+    return {"items": items, "code": code}
+
+
+class DrillAnswer(BaseModel):
+    answer: str | list[str]
+
+
+@app.post("/api/drills/{item_id}/check")
+def drill_check(item_id: int, body: DrillAnswer, db: sqlite3.Connection = Depends(get_db)):
+    try:
+        return drills.check(db, item_id, body.answer)
+    except KeyError:
+        raise HTTPException(404, f"Drill item {item_id} not found")
+
+
+class DrillGenerate(BaseModel):
+    code: str
+
+
+@app.post("/api/drills/generate")
+def drill_generate(body: DrillGenerate, db: sqlite3.Connection = Depends(get_db)):
+    """Slow (~30 s): Claude writes new items for one grammar point; only verified ones are kept."""
+    try:
+        writer = app.dependency_overrides.get(get_writer, get_writer)()
+        return {"added": drills.generate(db, writer, body.code)}
+    except LLMUnavailable as e:
+        raise HTTPException(503, str(e))
+    except GenerationError as e:
+        raise HTTPException(502, str(e))
+
+
+@app.get("/api/drills/stats")
+def drill_stats(db: sqlite3.Connection = Depends(get_db)):
+    return drills.stats(db)
+
+
+@app.get("/api/errors")
+def errors(limit: int = Query(5, ge=1, le=50), db: sqlite3.Connection = Depends(get_db)):
+    return drills.top_errors(db, limit)
 
 
 @app.get("/api/health")

@@ -50,13 +50,15 @@ function grammarHTML(g) {
       ${g.example ? `<dt>Beispiel</dt><dd class="example">${esc(g.example)}</dd>` : ""}
       ${g.warning ? `<dt>Achtung</dt><dd class="warning">${esc(g.warning)}</dd>` : ""}
     </dl>
+    ${g.unlocked && g.lesson_id ? `<a class="btn secondary small-btn" href="#/drill/${esc(g.code)}">Üben</a>` : ""}
   </div>`;
 }
 
 // ---- views -----------------------------------------------------------------
 
 async function viewHome() {
-  const o = await api("/overview");
+  const [o, allErrors] = await Promise.all([api("/overview"), api("/errors?limit=5")]);
+  const errors = allErrors.filter((e) => e.grammar_code);
   const l = o.current_lesson;
   $app.innerHTML = `
     <p class="eyebrow">Momente A2.1 · Deutsch-Trainer</p>
@@ -77,6 +79,13 @@ async function viewHome() {
       <p class="small muted">${o.cards_due ? `${o.cards_due} Karten fällig` : "Keine Karten fällig"} ·
         bis zu ${o.settings.daily_new_word_cap} neue Wörter aus Lektion ${l.number} pro Tag</p>
       <a class="btn" href="#/review">Jetzt wiederholen</a>
+    </div>
+    <div class="card">
+      <h3>Grammatik üben</h3>
+      <p class="small muted">8 kurze Übungen, mehr davon, wo du Fehler machst.</p>
+      ${errors.length ? `<p class="small"><strong>Häufige Fehler:</strong> ${errors.map((e) =>
+        `<a href="#/drill/${esc(e.grammar_code)}">${esc(e.name)}</a> (${e.count}×)`).join(" · ")}</p>` : ""}
+      <a class="btn secondary" href="#/drill">Grammatik üben</a>
     </div>
     <div class="card">
       <h3>Lesen</h3>
@@ -565,6 +574,168 @@ async function viewText(id) {
   });
 }
 
+// ---- grammar drills -----------------------------------------------------------
+
+const UMLAUT_KEYS = ["ä", "ö", "ü", "ß"];
+
+async function viewDrill(code) {
+  $app.innerHTML = `<p class="empty">Übungen werden geladen…</p>`;
+  const { items } = await api(`/drills/session?n=8${code ? `&code=${encodeURIComponent(code)}` : ""}`);
+  let idx = 0, right = 0;
+  const missed = {};
+
+  const generateBtn = (c) => `<button class="btn secondary gen-drills" data-code="${esc(c)}">Neue Übungen erstellen</button>
+    <p class="small muted gen-status" hidden></p>`;
+  const wireGenerate = () => $app.querySelectorAll(".gen-drills").forEach((b) => b.addEventListener("click", async () => {
+    b.disabled = true;
+    const st = b.nextElementSibling;
+    st.hidden = false;
+    st.textContent = "Claude schreibt neue Übungen (ca. 30 s)…";
+    try {
+      const r = await api("/drills/generate", { method: "POST", body: { code: b.dataset.code } });
+      st.textContent = r.added ? `${r.added} neue Übungen gespeichert.` : "Keine neue Übung hat die Prüfung bestanden. Versuch es nochmal.";
+      if (r.added) setTimeout(() => route(), 900);
+    } catch (e) {
+      st.textContent = `Das hat nicht geklappt: ${e.message.replace(/^\d+ /, "")}`;
+    }
+    b.disabled = false;
+  }));
+
+  if (!items.length) {
+    $app.innerHTML = `<h1>Grammatik üben</h1>
+      <p class="empty">Für diesen Punkt gibt es gerade keine passenden Übungen mit deinen Wörtern.</p>
+      ${code ? generateBtn(code) : ""}`;
+    wireGenerate();
+    return;
+  }
+
+  const finish = () => {
+    const codes = Object.entries(missed);
+    $app.innerHTML = `
+      <div class="card hero review-done">
+        <p class="eyebrow">Grammatik</p>
+        <h1>${right === items.length ? "Perfekt! 🎉" : "Gut gemacht!"}</h1>
+        <p>${right} von ${items.length} richtig.</p>
+      </div>
+      ${codes.length ? `<div class="card"><h3>Nochmal üben</h3>${codes.map(([c, name]) => `
+        <div class="toolbar" style="align-items:center;justify-content:space-between">
+          <span>${esc(name)}</span>
+          <span><a class="btn secondary" href="#/drill/${encodeURIComponent(c)}">Üben</a></span>
+        </div>`).join("")}</div>` : ""}
+      ${code ? `<div class="card"><h3>Mehr davon?</h3>${generateBtn(code)}</div>` : ""}
+      <a class="btn" href="#/">Zur Übersicht</a>`;
+    wireGenerate();
+  };
+
+  const header = () => `
+    <div class="review-top">
+      <a href="#/" class="small">✕ Beenden</a>
+      <span class="small muted">${idx + 1} / ${items.length}</span>
+    </div>
+    <div class="progress"><i style="width:${pct(idx / items.length)}"></i></div>`;
+
+  const feedback = (r) => `
+    <div class="feedback ${r.correct ? "ok" : "bad"}">
+      <strong>${r.correct ? "Richtig!" : "Leider falsch."}</strong>
+      <div class="drill-sentence">${esc(r.full_sentence)}</div>
+      ${r.explanation ? `<div class="small">${esc(r.explanation)}</div>` : ""}
+    </div>
+    ${r.correct ? "" : grammarHTML(r.grammar)}`;
+
+  const show = () => {
+    if (idx >= items.length) return finish();
+    const it = items[idx];
+    let answered = false;
+    const parts = it.prompt.split("___");
+    let body = "";
+    if (it.type === "gap") {
+      body = `<form class="drill-gap" autocomplete="off">
+          <p class="drill-sentence">${esc(parts[0])}<input class="gap-input" lang="de" autocapitalize="off"
+            autocorrect="off" spellcheck="false" aria-label="Lücke" size="8">${esc(parts[1] || "")}</p>
+          <div class="umlauts">${UMLAUT_KEYS.map((u) => `<button type="button" class="uml" data-ch="${u}">${u}</button>`).join("")}</div>
+          <button class="btn" type="submit">Prüfen</button></form>`;
+    } else if (it.type === "choice") {
+      body = `<p class="drill-sentence">${esc(parts[0])}<span class="blank">＿＿</span>${esc(parts[1] || "")}</p>
+        <div class="options">${it.options.map((o) => `<button class="opt" data-a="${esc(o)}">${esc(o)}</button>`).join("")}</div>`;
+    } else {
+      body = `<p class="drill-sentence">${esc(it.prompt)}</p>
+        <div class="order-line" aria-label="Deine Antwort"></div>
+        <div class="order-pool">${it.tokens.map((t, i) => `<button class="chip-btn" data-i="${i}">${esc(t)}</button>`).join("")}</div>
+        <div class="toolbar"><button class="btn secondary order-reset">Zurücksetzen</button>
+          <button class="btn order-check" disabled>Prüfen</button></div>`;
+    }
+    $app.innerHTML = `${header()}
+      <p class="eyebrow">${{ gap: "Lücke füllen", choice: "Wähle", order: "Sätze bauen" }[it.type]}
+        ${it.hint ? ` · <span class="hint">${esc(it.hint)}</span>` : ""}</p>
+      <div class="flash drill">${body}<div class="drill-fb"></div></div>`;
+
+    const $fb = $app.querySelector(".drill-fb");
+    const next = document.createElement("button");
+    next.className = "btn";
+    next.textContent = idx + 1 < items.length ? "Weiter" : "Fertig";
+    next.addEventListener("click", () => { idx += 1; show(); });
+
+    const submit = async (answer) => {
+      if (answered) return null;
+      answered = true;
+      const r = await api(`/drills/${it.id}/check`, { method: "POST", body: { answer } });
+      if (r.correct) right += 1; else missed[it.grammar_code] = r.grammar.name;
+      $fb.innerHTML = feedback(r);
+      $fb.appendChild(next);
+      next.focus();
+      return r;
+    };
+
+    if (it.type === "gap") {
+      const $in = $app.querySelector(".gap-input");
+      $in.focus();
+      $app.querySelectorAll(".uml").forEach((b) => b.addEventListener("click", () => {
+        const a = $in.selectionStart ?? $in.value.length;
+        $in.value = $in.value.slice(0, a) + b.dataset.ch + $in.value.slice($in.selectionEnd ?? a);
+        $in.focus(); $in.setSelectionRange(a + 1, a + 1);
+      }));
+      $app.querySelector(".drill-gap").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (answered) return next.click();
+        if (!$in.value.trim()) return;
+        const r = await submit($in.value);
+        if (!r) return;
+        $in.readOnly = true;
+        $in.classList.add(r.correct ? "is-ok" : "is-bad");
+        $app.querySelector(".drill-gap .btn").hidden = true;
+        $app.querySelector(".umlauts").hidden = true;
+      });
+    } else if (it.type === "choice") {
+      $app.querySelectorAll(".opt").forEach((b) => b.addEventListener("click", async () => {
+        const r = await submit(b.dataset.a);
+        if (!r) return;
+        b.classList.add(r.correct ? "right" : "wrong");
+        if (!r.correct) $app.querySelectorAll(".opt").forEach((o) => { if (o.dataset.a === r.expected) o.classList.add("right"); });
+        $app.querySelector(".blank").textContent = r.expected;
+      }));
+    } else {
+      const $line = $app.querySelector(".order-line"), $pool = $app.querySelector(".order-pool");
+      const $check = $app.querySelector(".order-check");
+      const sync = () => { $check.disabled = $pool.querySelectorAll(".chip-btn").length > 0; };
+      const move = (b) => { if (answered) return; (b.parentElement === $pool ? $line : $pool).appendChild(b); sync(); };
+      $app.querySelectorAll(".chip-btn").forEach((b) => b.addEventListener("click", () => move(b)));
+      $app.querySelector(".order-reset").addEventListener("click", () => {
+        if (answered) return;
+        [...$line.children].forEach((b) => $pool.appendChild(b));
+        sync();
+      });
+      $check.addEventListener("click", async () => {
+        const r = await submit([...$line.children].map((b) => b.textContent));
+        if (!r) return;
+        $line.classList.add(r.correct ? "is-ok" : "is-bad");
+        $app.querySelector(".toolbar").hidden = true;
+        $pool.hidden = true;
+      });
+    }
+  };
+  show();
+}
+
 // ---- router ----------------------------------------------------------------
 
 const routes = [
@@ -573,6 +744,8 @@ const routes = [
   [/^#\/lesson\/(\d+)$/, "lessons", (m) => viewLesson(m[1])],
   [/^#\/review$/, "home", viewReview],
   [/^#\/read$/, "read", viewReadList],
+  [/^#\/drill$/, "home", () => viewDrill(null)],
+  [/^#\/drill\/([A-Z0-9_]+)$/, "home", (m) => viewDrill(m[1])],
   [/^#\/text\/(\d+)$/, "read", (m) => viewText(m[1])],
   [/^#\/words$/, "words", viewWords],
   [/^#\/settings$/, "settings", viewSettings],

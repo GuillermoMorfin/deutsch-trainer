@@ -42,7 +42,10 @@ VERB_FORMS = {
     "will": "wollen", "willst": "wollen", "darf": "dürfen", "darfst": "dürfen",
     "mag": "mögen", "magst": "mögen",
     "nimmt": "nehmen", "nimmst": "nehmen", "hält": "halten", "hältst": "halten",
+    "war": "sein", "warst": "sein", "waren": "sein", "wart": "sein",
+    "hatte": "haben", "hattest": "haben", "hatten": "haben", "hattet": "haben",
 }
+DET_FORMS = {f: "euer" for f in ("eure", "euren", "eurem", "eurer", "eures")}
 # strong verbs change the stem vowel in du/er forms: isst → essen, liest → lesen, fährt → fahren
 VOWEL_SWAPS = (("ie", "e"), ("i", "e"), ("äu", "au"), ("ä", "a"), ("ö", "o"))
 UMLAUTS = "äöü"
@@ -122,6 +125,8 @@ def candidates(tok: Token) -> list[str]:
         out.append(PRONOUN_FORMS.get(tok.text, PRONOUN_FORMS.get(tok.text.lower(), "")))
     if tok.text.lower() in VERB_FORMS:
         out.append(VERB_FORMS[tok.text.lower()])
+    if tok.text.lower() in DET_FORMS:
+        out.append(DET_FORMS[tok.text.lower()])
     if tok.pos_ in ("ADJ", "DET", "ADV", "PRON") or tok.tag_ in ("ADJA", "ADJD"):
         # inflected adjectives/determiners: "Letzten" → "letzt", "nächste" → "nächst", "lange" → "lang"
         stem = re.sub(r"(en|em|er|es|e)$", "", tok.text.lower())
@@ -141,7 +146,7 @@ def candidates(tok: Token) -> list[str]:
 def is_counted(tok: Token) -> bool:
     if tok.pos_ in EXCLUDED_POS or tok.is_punct or tok.is_space or tok.like_num:
         return False
-    if any(ch.isdigit() for ch in tok.text):
+    if any(ch.isdigit() for ch in tok.text) or not any(ch.isalpha() for ch in tok.text):
         return False
     if tok.tag_ == "PTKVZ" and tok.dep_ == "svp":
         return False  # the particle is counted with its verb
@@ -186,7 +191,10 @@ def grammar_issues(doc: Doc, unlocked: set[str]) -> list[GrammarIssue]:
             flag("BLOCK_RELATIVSATZ", tok)
         elif tok.dep_ == "rc" and tok.pos_ in ("VERB", "AUX") and not any(
                 c.tag_ in ("PRELS", "PRELAT") for c in tok.subtree):
-            flag("BLOCK_RELATIVSATZ", tok, tok.sent.text.strip())
+            if any(c.tag_ in ("PWAV", "PWS", "PWAT") or c.text.lower() == "ob" for c in tok.subtree):
+                flag("INDIREKTE_FRAGE", tok)   # "Weißt du, wo mein Pass ist?" parsed as rc
+            else:
+                flag("BLOCK_RELATIVSATZ", tok, tok.sent.text.strip())
 
         # Genitive: unambiguous genitive determiners, or a noun used as genitive attribute.
         # ("der" alone is ambiguous; names with -s like "Marcos Rad" are tolerated.)
@@ -216,14 +224,21 @@ def grammar_issues(doc: Doc, unlocked: set[str]) -> list[GrammarIssue]:
                 if lemma in ("sollen", "können", "werden"):
                     flag("KONJ2_RAT_KOENNTE_SOLLTE", tok)
                 elif lemma in ("haben", "sein"):
-                    flag("KONJ2_WUNSCH_HAETTE_WAERE", tok)
+                    if any(u in low for u in UMLAUTS):          # hätte, wäre
+                        flag("KONJ2_WUNSCH_HAETTE_WAERE", tok)
+                    elif low.startswith("sei"):                  # Konjunktiv I
+                        flag("BLOCK_KONJUNKTIV_ANDERE", tok)
+                    # "habe" after wenn/ob is the indicative form; spaCy sometimes tags it Sub
                 elif lemma not in ("mögen", "möchten") and any(
                         u in low and u not in lemma.lower() for u in UMLAUTS):
                     # only real Konjunktiv II stems (käme, ginge→ no, bräuchte, wüsste …); regular
                     # verbs look identical to the indicative ("ob ich … brauche") and are fine
                     flag("BLOCK_KONJUNKTIV_ANDERE", tok)
             elif "Past" in tense:
-                if lemma in ("haben", "sein") and _has_child(tok, ("VVPP", "VAPP", "VMPP")):
+                if lemma == "sollen":
+                    # "sollte" looks the same in Präteritum and Konjunktiv II; at A2 it's advice
+                    flag("KONJ2_RAT_KOENNTE_SOLLTE", tok)
+                elif lemma in ("haben", "sein") and _has_child(tok, ("VVPP", "VAPP", "VMPP")):
                     flag("BLOCK_PLUSQUAMPERFEKT", tok)
                 elif lemma in ("haben", "sein"):
                     flag("PRAET_WAR_HATTE", tok)

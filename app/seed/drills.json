@@ -1,0 +1,1372 @@
+{
+ "_comment": "Hand-written starter drills (no book content). type: gap | choice | order. order answers are lists of words; the first is shown as the solution.",
+ "items": [
+  {
+   "code": "PERFEKT_HABEN_SEIN",
+   "type": "gap",
+   "prompt": "Gestern ___ ich 15 Kilometer gelaufen.",
+   "answers": [
+    "bin"
+   ],
+   "hint": "haben oder sein?"
+  },
+  {
+   "code": "PERFEKT_HABEN_SEIN",
+   "type": "gap",
+   "prompt": "Marco ___ am Wochenende Nudeln gekocht.",
+   "answers": [
+    "hat"
+   ],
+   "hint": "haben oder sein?"
+  },
+  {
+   "code": "PERFEKT_HABEN_SEIN",
+   "type": "choice",
+   "prompt": "Wir ___ mit dem Fahrrad zur Uni gefahren.",
+   "answers": [
+    "sind"
+   ],
+   "options": [
+    "haben",
+    "sind"
+   ]
+  },
+  {
+   "code": "PERFEKT_HABEN_SEIN",
+   "type": "choice",
+   "prompt": "Als Kind ___ ich oft auf Bäume geklettert.",
+   "answers": [
+    "bin"
+   ],
+   "options": [
+    "habe",
+    "bin"
+   ]
+  },
+  {
+   "code": "PERFEKT_HABEN_SEIN",
+   "type": "gap",
+   "prompt": "Ich ___ heute sehr früh aufgestanden.",
+   "answers": [
+    "bin"
+   ],
+   "hint": "haben oder sein?"
+  },
+  {
+   "code": "PERFEKT_HABEN_SEIN",
+   "type": "choice",
+   "prompt": "Hast du den Kuchen schon ___?",
+   "answers": [
+    "probiert"
+   ],
+   "options": [
+    "probiert",
+    "geprobiert"
+   ],
+   "hint": "Verben auf -ieren"
+  },
+  {
+   "code": "PERFEKT_HABEN_SEIN",
+   "type": "gap",
+   "prompt": "Meine Schwester ___ lange geschlafen.",
+   "answers": [
+    "hat"
+   ],
+   "hint": "haben oder sein?"
+  },
+  {
+   "code": "PRAET_WAR_HATTE",
+   "type": "gap",
+   "prompt": "Als Kind ___ ich einen Hund.",
+   "answers": [
+    "hatte"
+   ],
+   "hint": "haben, Präteritum"
+  },
+  {
+   "code": "PRAET_WAR_HATTE",
+   "type": "gap",
+   "prompt": "Früher ___ Marco sehr sportlich.",
+   "answers": [
+    "war"
+   ],
+   "hint": "sein, Präteritum"
+  },
+  {
+   "code": "PRAET_WAR_HATTE",
+   "type": "choice",
+   "prompt": "Wo ___ du gestern?",
+   "answers": [
+    "warst"
+   ],
+   "options": [
+    "warst",
+    "wart",
+    "war"
+   ]
+  },
+  {
+   "code": "PRAET_WAR_HATTE",
+   "type": "gap",
+   "prompt": "Wir ___ letzten Sommer keine Zeit.",
+   "answers": [
+    "hatten"
+   ],
+   "hint": "haben, Präteritum"
+  },
+  {
+   "code": "PRAET_WAR_HATTE",
+   "type": "choice",
+   "prompt": "Ihr ___ im Urlaub am Meer, oder?",
+   "answers": [
+    "wart"
+   ],
+   "options": [
+    "wart",
+    "waren",
+    "war"
+   ]
+  },
+  {
+   "code": "PRAET_WAR_HATTE",
+   "type": "gap",
+   "prompt": "Meine Eltern ___ ein kleines Haus.",
+   "answers": [
+    "hatten"
+   ],
+   "hint": "haben, Präteritum"
+  },
+  {
+   "code": "LETZT_NAECHST_JED",
+   "type": "choice",
+   "prompt": "___ Sommer bin ich nach Berlin gekommen.",
+   "answers": [
+    "Letzten"
+   ],
+   "options": [
+    "Letzten",
+    "Letzte",
+    "Letztes"
+   ],
+   "hint": "der Sommer"
+  },
+  {
+   "code": "LETZT_NAECHST_JED",
+   "type": "choice",
+   "prompt": "___ Woche habe ich einen Termin.",
+   "answers": [
+    "Nächste"
+   ],
+   "options": [
+    "Nächsten",
+    "Nächste",
+    "Nächstes"
+   ],
+   "hint": "die Woche"
+  },
+  {
+   "code": "LETZT_NAECHST_JED",
+   "type": "choice",
+   "prompt": "Ich laufe ___ Tag fünf Kilometer.",
+   "answers": [
+    "jeden"
+   ],
+   "options": [
+    "jeden",
+    "jede",
+    "jedes"
+   ],
+   "hint": "der Tag"
+  },
+  {
+   "code": "LETZT_NAECHST_JED",
+   "type": "choice",
+   "prompt": "___ Jahr fahren wir ans Meer.",
+   "answers": [
+    "Nächstes"
+   ],
+   "options": [
+    "Nächsten",
+    "Nächste",
+    "Nächstes"
+   ],
+   "hint": "das Jahr"
+  },
+  {
+   "code": "LETZT_NAECHST_JED",
+   "type": "choice",
+   "prompt": "Marco ruft ___ Woche seine Mutter an.",
+   "answers": [
+    "jede"
+   ],
+   "options": [
+    "jeden",
+    "jede",
+    "jedes"
+   ],
+   "hint": "die Woche"
+  },
+  {
+   "code": "LETZT_NAECHST_JED",
+   "type": "gap",
+   "prompt": "___ Montag war ich krank.",
+   "answers": [
+    "Letzten"
+   ],
+   "hint": "letzt-, der Montag"
+  },
+  {
+   "code": "KONJ_WEIL",
+   "type": "order",
+   "prompt": "Ich bleibe heute zu Hause,",
+   "answers": [
+    [
+     "weil",
+     "ich",
+     "krank",
+     "bin"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_WEIL",
+   "type": "order",
+   "prompt": "Marco ist müde,",
+   "answers": [
+    [
+     "weil",
+     "er",
+     "viel",
+     "arbeitet"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_WEIL",
+   "type": "order",
+   "prompt": "Ich lerne Deutsch,",
+   "answers": [
+    [
+     "weil",
+     "ich",
+     "in",
+     "Berlin",
+     "wohne"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_WEIL",
+   "type": "order",
+   "prompt": "Sie mag ihre Arbeit,",
+   "answers": [
+    [
+     "weil",
+     "sie",
+     "feste",
+     "Arbeitszeiten",
+     "hat"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_WEIL",
+   "type": "order",
+   "prompt": "Ich fahre mit dem Rad,",
+   "answers": [
+    [
+     "weil",
+     "es",
+     "schnell",
+     "ist"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_WEIL",
+   "type": "order",
+   "prompt": "Ich gehe früh ins Bett,",
+   "answers": [
+    [
+     "weil",
+     "ich",
+     "morgen",
+     "früh",
+     "aufstehe"
+    ],
+    [
+     "weil",
+     "ich",
+     "früh",
+     "morgen",
+     "aufstehe"
+    ]
+   ],
+   "hint": "trennbares Verb"
+  },
+  {
+   "code": "POSS_UNSER_EUER_IHR",
+   "type": "choice",
+   "prompt": "Das ist ___ Wohnung.",
+   "answers": [
+    "unsere"
+   ],
+   "options": [
+    "unser",
+    "unsere",
+    "unseren"
+   ],
+   "hint": "wir · die Wohnung"
+  },
+  {
+   "code": "POSS_UNSER_EUER_IHR",
+   "type": "choice",
+   "prompt": "Wir vermissen ___ Garten.",
+   "answers": [
+    "unseren"
+   ],
+   "options": [
+    "unser",
+    "unseren",
+    "unserem"
+   ],
+   "hint": "wir · der Garten, Akkusativ"
+  },
+  {
+   "code": "POSS_UNSER_EUER_IHR",
+   "type": "choice",
+   "prompt": "Wie ist ___ WG?",
+   "answers": [
+    "eure"
+   ],
+   "options": [
+    "euer",
+    "eure",
+    "euere"
+   ],
+   "hint": "ihr · die WG"
+  },
+  {
+   "code": "POSS_UNSER_EUER_IHR",
+   "type": "choice",
+   "prompt": "Marco und Ana wohnen mit ___ Hund in einem Dorf.",
+   "answers": [
+    "ihrem"
+   ],
+   "options": [
+    "ihr",
+    "ihrem",
+    "ihren"
+   ],
+   "hint": "sie (Plural) · mit + Dativ"
+  },
+  {
+   "code": "POSS_UNSER_EUER_IHR",
+   "type": "choice",
+   "prompt": "Wo ist ___ Fahrrad?",
+   "answers": [
+    "euer"
+   ],
+   "options": [
+    "euer",
+    "eure",
+    "euren"
+   ],
+   "hint": "ihr · das Fahrrad"
+  },
+  {
+   "code": "POSS_UNSER_EUER_IHR",
+   "type": "choice",
+   "prompt": "Wir sprechen mit ___ Nachbarn.",
+   "answers": [
+    "unseren"
+   ],
+   "options": [
+    "unseren",
+    "unserem",
+    "unsere"
+   ],
+   "hint": "wir · Plural, Dativ"
+  },
+  {
+   "code": "KONJ_DESHALB",
+   "type": "order",
+   "prompt": "Mein Kollege ist krank.",
+   "answers": [
+    [
+     "Deshalb",
+     "habe",
+     "ich",
+     "viel",
+     "Arbeit"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_DESHALB",
+   "type": "order",
+   "prompt": "Es regnet.",
+   "answers": [
+    [
+     "Deshalb",
+     "nehme",
+     "ich",
+     "den",
+     "Bus"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_DESHALB",
+   "type": "order",
+   "prompt": "Das Meeting ist um neun Uhr.",
+   "answers": [
+    [
+     "Deshalb",
+     "muss",
+     "ich",
+     "früh",
+     "kommen"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_DESHALB",
+   "type": "choice",
+   "prompt": "Ich habe morgen eine Präsentation. Deshalb ___ heute lange.",
+   "answers": [
+    "arbeite ich"
+   ],
+   "options": [
+    "ich arbeite",
+    "arbeite ich"
+   ]
+  },
+  {
+   "code": "KONJ_DESHALB",
+   "type": "choice",
+   "prompt": "Ich bin müde, deshalb ___ früh ins Bett.",
+   "answers": [
+    "gehe ich"
+   ],
+   "options": [
+    "ich gehe",
+    "gehe ich"
+   ]
+  },
+  {
+   "code": "KONJ_DESHALB",
+   "type": "choice",
+   "prompt": "Ich bin krank, ___ bleibe ich zu Hause.",
+   "answers": [
+    "deshalb"
+   ],
+   "options": [
+    "weil",
+    "deshalb"
+   ]
+  },
+  {
+   "code": "PREP_UEBER_AKK",
+   "type": "choice",
+   "prompt": "Wir sprechen über ___ Festival.",
+   "answers": [
+    "das"
+   ],
+   "options": [
+    "das",
+    "dem"
+   ],
+   "hint": "das Festival"
+  },
+  {
+   "code": "PREP_UEBER_AKK",
+   "type": "choice",
+   "prompt": "Marco erzählt über ___ Lauf.",
+   "answers": [
+    "den"
+   ],
+   "options": [
+    "den",
+    "dem",
+    "der"
+   ],
+   "hint": "der Lauf"
+  },
+  {
+   "code": "PREP_UEBER_AKK",
+   "type": "choice",
+   "prompt": "Ich gehe über ___ Straße.",
+   "answers": [
+    "die"
+   ],
+   "options": [
+    "die",
+    "der"
+   ],
+   "hint": "die Straße"
+  },
+  {
+   "code": "PREP_UEBER_AKK",
+   "type": "choice",
+   "prompt": "Sie spricht oft über ___ Arbeit.",
+   "answers": [
+    "ihre"
+   ],
+   "options": [
+    "ihre",
+    "ihrer"
+   ],
+   "hint": "die Arbeit"
+  },
+  {
+   "code": "PREP_UEBER_AKK",
+   "type": "choice",
+   "prompt": "Wir sprechen über ___ Urlaub.",
+   "answers": [
+    "unseren"
+   ],
+   "options": [
+    "unseren",
+    "unserem"
+   ],
+   "hint": "der Urlaub"
+  },
+  {
+   "code": "PREP_UEBER_AKK",
+   "type": "choice",
+   "prompt": "Er schreibt eine E-Mail über ___ Problem.",
+   "answers": [
+    "das"
+   ],
+   "options": [
+    "das",
+    "dem"
+   ],
+   "hint": "das Problem"
+  },
+  {
+   "code": "PREP_SEIT_DAT",
+   "type": "choice",
+   "prompt": "Ich wohne seit ___ Jahr in Berlin.",
+   "answers": [
+    "einem"
+   ],
+   "options": [
+    "ein",
+    "einem",
+    "einen"
+   ],
+   "hint": "das Jahr"
+  },
+  {
+   "code": "PREP_SEIT_DAT",
+   "type": "choice",
+   "prompt": "Marco läuft seit drei ___ jeden Tag.",
+   "answers": [
+    "Monaten"
+   ],
+   "options": [
+    "Monate",
+    "Monaten"
+   ],
+   "hint": "Dativ Plural"
+  },
+  {
+   "code": "PREP_SEIT_DAT",
+   "type": "choice",
+   "prompt": "Seit ___ Woche bin ich krank.",
+   "answers": [
+    "einer"
+   ],
+   "options": [
+    "eine",
+    "einer",
+    "einem"
+   ],
+   "hint": "die Woche"
+  },
+  {
+   "code": "PREP_SEIT_DAT",
+   "type": "choice",
+   "prompt": "Ich ___ seit einem Monat in einer WG.",
+   "answers": [
+    "wohne"
+   ],
+   "options": [
+    "wohne",
+    "habe gewohnt"
+   ],
+   "hint": "Ich wohne immer noch dort."
+  },
+  {
+   "code": "PREP_SEIT_DAT",
+   "type": "choice",
+   "prompt": "Seit ___ Sommer fahre ich jeden Tag Fahrrad.",
+   "answers": [
+    "dem"
+   ],
+   "options": [
+    "dem",
+    "den",
+    "der"
+   ],
+   "hint": "der Sommer"
+  },
+  {
+   "code": "PREP_SEIT_DAT",
+   "type": "gap",
+   "prompt": "Wir kennen uns seit ___ Kindheit.",
+   "answers": [
+    "unserer"
+   ],
+   "hint": "unser-, die Kindheit"
+  },
+  {
+   "code": "PREP_VON_BIS_ZUM",
+   "type": "choice",
+   "prompt": "Das Festival ist ___ 1. bis zum 3. Juli.",
+   "answers": [
+    "vom"
+   ],
+   "options": [
+    "vom",
+    "von",
+    "von den"
+   ]
+  },
+  {
+   "code": "PREP_VON_BIS_ZUM",
+   "type": "choice",
+   "prompt": "Ich habe Urlaub vom 10. ___ 20. August.",
+   "answers": [
+    "bis zum"
+   ],
+   "options": [
+    "bis zum",
+    "bis",
+    "zum"
+   ]
+  },
+  {
+   "code": "PREP_VON_BIS_ZUM",
+   "type": "gap",
+   "prompt": "Der Kurs ist von Montag ___ Freitag.",
+   "answers": [
+    "bis"
+   ],
+   "hint": "Wochentage ohne Artikel"
+  },
+  {
+   "code": "PREP_VON_BIS_ZUM",
+   "type": "choice",
+   "prompt": "Die Ausstellung ist ___ Mai bis August.",
+   "answers": [
+    "von"
+   ],
+   "options": [
+    "von",
+    "vom"
+   ],
+   "hint": "Monate ohne Artikel"
+  },
+  {
+   "code": "PREP_VON_BIS_ZUM",
+   "type": "choice",
+   "prompt": "Ich arbeite ___ 9 bis 17 Uhr.",
+   "answers": [
+    "von"
+   ],
+   "options": [
+    "von",
+    "vom"
+   ],
+   "hint": "Uhrzeit"
+  },
+  {
+   "code": "PREP_VON_BIS_ZUM",
+   "type": "choice",
+   "prompt": "Wir sind vom 3. ___ 5. Mai in Hamburg.",
+   "answers": [
+    "bis zum"
+   ],
+   "options": [
+    "bis zum",
+    "bis zu"
+   ]
+  },
+  {
+   "code": "KONJ2_RAT_KOENNTE_SOLLTE",
+   "type": "choice",
+   "prompt": "Du bist immer müde. Du ___ mehr schlafen.",
+   "answers": [
+    "solltest"
+   ],
+   "options": [
+    "solltest",
+    "sollst",
+    "solltet"
+   ]
+  },
+  {
+   "code": "KONJ2_RAT_KOENNTE_SOLLTE",
+   "type": "gap",
+   "prompt": "Ihr ___ mehr Wasser trinken.",
+   "answers": [
+    "solltet"
+   ],
+   "hint": "sollen, Rat"
+  },
+  {
+   "code": "KONJ2_RAT_KOENNTE_SOLLTE",
+   "type": "choice",
+   "prompt": "Wir ___ am Samstag zusammen laufen.",
+   "answers": [
+    "könnten"
+   ],
+   "options": [
+    "könnten",
+    "konnten",
+    "können"
+   ],
+   "hint": "Vorschlag"
+  },
+  {
+   "code": "KONJ2_RAT_KOENNTE_SOLLTE",
+   "type": "gap",
+   "prompt": "Marco ___ in einen Verein gehen.",
+   "answers": [
+    "könnte"
+   ],
+   "hint": "können, Rat"
+  },
+  {
+   "code": "KONJ2_RAT_KOENNTE_SOLLTE",
+   "type": "order",
+   "prompt": "An deiner Stelle",
+   "answers": [
+    [
+     "würde",
+     "ich",
+     "langsamer",
+     "laufen"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ2_RAT_KOENNTE_SOLLTE",
+   "type": "choice",
+   "prompt": "Sie ist krank. Sie ___ zum Arzt gehen.",
+   "answers": [
+    "sollte"
+   ],
+   "options": [
+    "sollte",
+    "solltest",
+    "sollten"
+   ]
+  },
+  {
+   "code": "KONJ_DASS",
+   "type": "order",
+   "prompt": "Ich finde super,",
+   "answers": [
+    [
+     "dass",
+     "es",
+     "hier",
+     "Pizza",
+     "gibt"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_DASS",
+   "type": "order",
+   "prompt": "Marco hofft,",
+   "answers": [
+    [
+     "dass",
+     "der",
+     "Lieferservice",
+     "schnell",
+     "ist"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_DASS",
+   "type": "order",
+   "prompt": "Ich glaube,",
+   "answers": [
+    [
+     "dass",
+     "das",
+     "Restaurant",
+     "heute",
+     "geschlossen",
+     "ist"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_DASS",
+   "type": "choice",
+   "prompt": "Ich weiß, ___ du gern Kuchen isst.",
+   "answers": [
+    "dass"
+   ],
+   "options": [
+    "das",
+    "dass"
+   ]
+  },
+  {
+   "code": "KONJ_DASS",
+   "type": "choice",
+   "prompt": "___ Rezept ist kompliziert.",
+   "answers": [
+    "Das"
+   ],
+   "options": [
+    "Das",
+    "Dass"
+   ]
+  },
+  {
+   "code": "KONJ_DASS",
+   "type": "order",
+   "prompt": "Es ist wichtig,",
+   "answers": [
+    [
+     "dass",
+     "wir",
+     "getrennt",
+     "zahlen"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_WENN",
+   "type": "order",
+   "prompt": "Wenn ich Pause habe,",
+   "answers": [
+    [
+     "gehe",
+     "ich",
+     "in",
+     "die",
+     "Kantine"
+    ]
+   ],
+   "hint": "Hauptsatz nach dem Nebensatz"
+  },
+  {
+   "code": "KONJ_WENN",
+   "type": "order",
+   "prompt": "Ich bin glücklich,",
+   "answers": [
+    [
+     "wenn",
+     "die",
+     "Sonne",
+     "scheint"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_WENN",
+   "type": "choice",
+   "prompt": "Wenn es regnet, ___.",
+   "answers": [
+    "bleibe ich zu Hause"
+   ],
+   "options": [
+    "ich bleibe zu Hause",
+    "bleibe ich zu Hause"
+   ]
+  },
+  {
+   "code": "KONJ_WENN",
+   "type": "order",
+   "prompt": "Wenn die Besprechung lange dauert,",
+   "answers": [
+    [
+     "bin",
+     "ich",
+     "müde"
+    ]
+   ],
+   "hint": "Hauptsatz nach dem Nebensatz"
+  },
+  {
+   "code": "KONJ_WENN",
+   "type": "order",
+   "prompt": "Ich höre Musik,",
+   "answers": [
+    [
+     "wenn",
+     "ich",
+     "laufe"
+    ]
+   ]
+  },
+  {
+   "code": "KONJ_WENN",
+   "type": "choice",
+   "prompt": "___ ich Zeit habe, koche ich.",
+   "answers": [
+    "Wenn"
+   ],
+   "options": [
+    "Wenn",
+    "Weil",
+    "Deshalb"
+   ]
+  },
+  {
+   "code": "NOMEN_UNG",
+   "type": "choice",
+   "prompt": "besprechen → ___ Besprechung",
+   "answers": [
+    "die"
+   ],
+   "options": [
+    "der",
+    "die",
+    "das"
+   ]
+  },
+  {
+   "code": "NOMEN_UNG",
+   "type": "gap",
+   "prompt": "wohnen → die ___",
+   "answers": [
+    "Wohnung"
+   ]
+  },
+  {
+   "code": "NOMEN_UNG",
+   "type": "gap",
+   "prompt": "überraschen → die ___",
+   "answers": [
+    "Überraschung"
+   ]
+  },
+  {
+   "code": "NOMEN_UNG",
+   "type": "choice",
+   "prompt": "untersuchen → ___ Untersuchung",
+   "answers": [
+    "die"
+   ],
+   "options": [
+    "der",
+    "die",
+    "das"
+   ]
+  },
+  {
+   "code": "NOMEN_UNG",
+   "type": "gap",
+   "prompt": "erklären → die ___",
+   "answers": [
+    "Erklärung"
+   ]
+  },
+  {
+   "code": "NOMEN_UNG",
+   "type": "choice",
+   "prompt": "Die ___ im Büro dauert eine Stunde.",
+   "answers": [
+    "Besprechung"
+   ],
+   "options": [
+    "Besprechung",
+    "Besprechen",
+    "Besprochen"
+   ]
+  },
+  {
+   "code": "VERBEN_LEGEN_STELLEN_HAENGEN",
+   "type": "choice",
+   "prompt": "Ich ___ das Buch auf den Tisch.",
+   "answers": [
+    "lege"
+   ],
+   "options": [
+    "lege",
+    "liege"
+   ],
+   "hint": "Wohin? → Aktion"
+  },
+  {
+   "code": "VERBEN_LEGEN_STELLEN_HAENGEN",
+   "type": "choice",
+   "prompt": "Das Buch ___ jetzt auf dem Tisch.",
+   "answers": [
+    "liegt"
+   ],
+   "options": [
+    "legt",
+    "liegt"
+   ],
+   "hint": "Wo? → Position"
+  },
+  {
+   "code": "VERBEN_LEGEN_STELLEN_HAENGEN",
+   "type": "choice",
+   "prompt": "Marco ___ die Lampe neben das Sofa.",
+   "answers": [
+    "stellt"
+   ],
+   "options": [
+    "stellt",
+    "steht"
+   ],
+   "hint": "Wohin? → Aktion"
+  },
+  {
+   "code": "VERBEN_LEGEN_STELLEN_HAENGEN",
+   "type": "choice",
+   "prompt": "Die Lampe ___ neben dem Sofa.",
+   "answers": [
+    "steht"
+   ],
+   "options": [
+    "stellt",
+    "steht"
+   ],
+   "hint": "Wo? → Position"
+  },
+  {
+   "code": "VERBEN_LEGEN_STELLEN_HAENGEN",
+   "type": "choice",
+   "prompt": "Ich ___ das Poster an die Wand.",
+   "answers": [
+    "hänge"
+   ],
+   "options": [
+    "hänge",
+    "hängt"
+   ]
+  },
+  {
+   "code": "VERBEN_LEGEN_STELLEN_HAENGEN",
+   "type": "choice",
+   "prompt": "Wo ___ mein Schlüssel?",
+   "answers": [
+    "liegt"
+   ],
+   "options": [
+    "liegt",
+    "legt"
+   ],
+   "hint": "Wo? → Position"
+  },
+  {
+   "code": "WECHSELPRAEP",
+   "type": "choice",
+   "prompt": "Ich gehe in ___ Park.",
+   "answers": [
+    "den"
+   ],
+   "options": [
+    "den",
+    "dem"
+   ],
+   "hint": "Wohin?"
+  },
+  {
+   "code": "WECHSELPRAEP",
+   "type": "choice",
+   "prompt": "Ich laufe in ___ Park.",
+   "answers": [
+    "dem"
+   ],
+   "options": [
+    "den",
+    "dem"
+   ],
+   "hint": "Wo?"
+  },
+  {
+   "code": "WECHSELPRAEP",
+   "type": "choice",
+   "prompt": "Das Handy liegt auf ___ Tisch.",
+   "answers": [
+    "dem"
+   ],
+   "options": [
+    "den",
+    "dem"
+   ],
+   "hint": "Wo?"
+  },
+  {
+   "code": "WECHSELPRAEP",
+   "type": "choice",
+   "prompt": "Leg das Kissen auf ___ Sofa!",
+   "answers": [
+    "das"
+   ],
+   "options": [
+    "das",
+    "dem"
+   ],
+   "hint": "Wohin?"
+  },
+  {
+   "code": "WECHSELPRAEP",
+   "type": "choice",
+   "prompt": "Die Katze schläft unter ___ Bett.",
+   "answers": [
+    "dem"
+   ],
+   "options": [
+    "das",
+    "dem"
+   ],
+   "hint": "Wo?"
+  },
+  {
+   "code": "WECHSELPRAEP",
+   "type": "choice",
+   "prompt": "Ich hänge die Jacke an ___ Garderobe.",
+   "answers": [
+    "die"
+   ],
+   "options": [
+    "die",
+    "der"
+   ],
+   "hint": "Wohin?"
+  },
+  {
+   "code": "PREP_VON_BEI_ZU_DAT",
+   "type": "choice",
+   "prompt": "Ich fahre ___ Arzt.",
+   "answers": [
+    "zum"
+   ],
+   "options": [
+    "zum",
+    "beim",
+    "vom"
+   ],
+   "hint": "Ziel"
+  },
+  {
+   "code": "PREP_VON_BEI_ZU_DAT",
+   "type": "choice",
+   "prompt": "Ich bin heute ___ meiner Freundin.",
+   "answers": [
+    "bei"
+   ],
+   "options": [
+    "zu",
+    "bei",
+    "von"
+   ],
+   "hint": "Ort"
+  },
+  {
+   "code": "PREP_VON_BEI_ZU_DAT",
+   "type": "choice",
+   "prompt": "Marco kommt gerade ___ Bäcker.",
+   "answers": [
+    "vom"
+   ],
+   "options": [
+    "zum",
+    "beim",
+    "vom"
+   ],
+   "hint": "Herkunft"
+  },
+  {
+   "code": "PREP_VON_BEI_ZU_DAT",
+   "type": "choice",
+   "prompt": "Wir gehen heute Abend ___ Marco.",
+   "answers": [
+    "zu"
+   ],
+   "options": [
+    "zu",
+    "bei",
+    "nach"
+   ],
+   "hint": "Ziel: Person"
+  },
+  {
+   "code": "PREP_VON_BEI_ZU_DAT",
+   "type": "choice",
+   "prompt": "Ich gehe jetzt ___ Hause.",
+   "answers": [
+    "nach"
+   ],
+   "options": [
+    "nach",
+    "zu"
+   ]
+  },
+  {
+   "code": "PREP_VON_BEI_ZU_DAT",
+   "type": "choice",
+   "prompt": "Am Wochenende bin ich ___ Hause.",
+   "answers": [
+    "zu"
+   ],
+   "options": [
+    "nach",
+    "zu"
+   ]
+  },
+  {
+   "code": "KONJ2_WUNSCH_HAETTE_WAERE",
+   "type": "gap",
+   "prompt": "Ich ___ jetzt gern am Strand.",
+   "answers": [
+    "wäre"
+   ],
+   "hint": "sein, Wunsch"
+  },
+  {
+   "code": "KONJ2_WUNSCH_HAETTE_WAERE",
+   "type": "gap",
+   "prompt": "Ich ___ gern mehr Zeit.",
+   "answers": [
+    "hätte"
+   ],
+   "hint": "haben, Wunsch"
+  },
+  {
+   "code": "KONJ2_WUNSCH_HAETTE_WAERE",
+   "type": "choice",
+   "prompt": "Wir ___ lieber in den Bergen.",
+   "answers": [
+    "wären"
+   ],
+   "options": [
+    "wären",
+    "waren",
+    "wäre"
+   ]
+  },
+  {
+   "code": "KONJ2_WUNSCH_HAETTE_WAERE",
+   "type": "choice",
+   "prompt": "___ du gern einen Hund?",
+   "answers": [
+    "Hättest"
+   ],
+   "options": [
+    "Hättest",
+    "Hattest",
+    "Hätte"
+   ]
+  },
+  {
+   "code": "KONJ2_WUNSCH_HAETTE_WAERE",
+   "type": "gap",
+   "prompt": "Marco ___ jetzt lieber am Meer.",
+   "answers": [
+    "wäre"
+   ],
+   "hint": "sein, Wunsch"
+  },
+  {
+   "code": "KONJ2_WUNSCH_HAETTE_WAERE",
+   "type": "choice",
+   "prompt": "Früher ___ ich keinen Urlaub.",
+   "answers": [
+    "hatte"
+   ],
+   "options": [
+    "hätte",
+    "hatte"
+   ],
+   "hint": "Realität in der Vergangenheit"
+  },
+  {
+   "code": "INDIREKTE_FRAGE",
+   "type": "order",
+   "prompt": "Wissen Sie,",
+   "answers": [
+    [
+     "ob",
+     "der",
+     "Bus",
+     "zum",
+     "Bahnhof",
+     "fährt"
+    ]
+   ]
+  },
+  {
+   "code": "INDIREKTE_FRAGE",
+   "type": "order",
+   "prompt": "Können Sie mir sagen,",
+   "answers": [
+    [
+     "wie",
+     "lange",
+     "die",
+     "Anmeldung",
+     "dauert"
+    ]
+   ]
+  },
+  {
+   "code": "INDIREKTE_FRAGE",
+   "type": "choice",
+   "prompt": "Ich weiß nicht, ___ ich ein Visum brauche.",
+   "answers": [
+    "ob"
+   ],
+   "options": [
+    "ob",
+    "wenn",
+    "dass"
+   ]
+  },
+  {
+   "code": "INDIREKTE_FRAGE",
+   "type": "order",
+   "prompt": "Ich möchte wissen,",
+   "answers": [
+    [
+     "wann",
+     "der",
+     "Kurs",
+     "beginnt"
+    ]
+   ]
+  },
+  {
+   "code": "INDIREKTE_FRAGE",
+   "type": "order",
+   "prompt": "Weißt du,",
+   "answers": [
+    [
+     "wo",
+     "mein",
+     "Pass",
+     "ist"
+    ]
+   ]
+  },
+  {
+   "code": "INDIREKTE_FRAGE",
+   "type": "choice",
+   "prompt": "Können Sie mir sagen, wie lange ___?",
+   "answers": [
+    "der Kurs dauert"
+   ],
+   "options": [
+    "dauert der Kurs",
+    "der Kurs dauert"
+   ]
+  }
+ ]
+}

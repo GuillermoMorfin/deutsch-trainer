@@ -108,3 +108,22 @@ def test_war_hatte_need_lesson_1(conn):
     lex, unlocked = state_at(conn, 1)
     unlocked = unlocked - {"PRAET_WAR_HATTE"}
     assert "PRAET_WAR_HATTE" in {g.code for g in analyse("Ich war müde.", lex, unlocked)[1].grammar}
+
+
+@pytest.mark.parametrize("text, lesson", [
+    ("Wo warst du gestern? Ihr wart am Meer.", 1),          # war-forms map to sein
+    ("Wie ist eure WG?", 3),                                # eure → euer
+    ("Sie ist krank. Sie sollte zum Arzt gehen.", 6),       # sollte = advice, not Präteritum
+    ("Wenn ich Zeit habe, koche ich.", 8),                  # 'habe' is not Konjunktiv II
+    ("Weißt du, wo mein Pass ist?", 12),                    # indirect question, not a relative clause
+    ("wohnen → die Wohnung", 8),                            # symbols aren't words
+])
+def test_regressions_found_by_drill_bank(conn, text, lesson):
+    lex, unlocked = state_at(conn, lesson)
+    _, r = analyse(text, lex, unlocked)
+    assert r.grammar == [] and r.coverage == 1.0, (r.to_dict())
+
+
+def test_sollte_before_lesson_6_is_still_blocked(conn):
+    lex, unlocked = state_at(conn, 5)
+    assert "KONJ2_RAT_KOENNTE_SOLLTE" in {g.code for g in analyse("Du sollte gehen.", lex, unlocked)[1].grammar}

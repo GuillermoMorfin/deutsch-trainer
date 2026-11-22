@@ -70,10 +70,26 @@ class GlossSet(BaseModel):
     items: list[Gloss]
 
 
+class DrillItemModel(BaseModel):
+    type: Literal["gap", "choice", "order"]
+    prompt: str = Field(description="gap/choice: sentence with ___ ; order: the fixed start of the sentence")
+    options: list[str] = Field(description="choice: 2-4 options; otherwise []")
+    answers: list[str] = Field(description="gap/choice: accepted answers (choice: exactly one option); order: []")
+    order_answers: list[str] = Field(description="order: each accepted solution as the remaining words separated "
+                                                 "by single spaces, no final punctuation; otherwise []")
+    hint: str = Field(description="Short German hint, may be ''")
+    explanation: str = Field(description="One English sentence: why this answer is right")
+
+
+class DrillSet(BaseModel):
+    items: list[DrillItemModel]
+
+
 class Writer(Protocol):
     def write(self, system: str, prompt: str) -> Draft: ...
     def questions(self, system: str, prompt: str) -> list[Question]: ...
     def gloss(self, prompt: str) -> list[Gloss]: ...
+    def drills(self, system: str, prompt: str) -> list[DrillItemModel]: ...
 
 
 # ---- Claude implementation -----------------------------------------------------------
@@ -117,6 +133,9 @@ class ClaudeWriter:
 
     def questions(self, system: str, prompt: str) -> list[Question]:
         return self._parse_gen(system, prompt, QuestionSet).questions
+
+    def drills(self, system: str, prompt: str) -> list[DrillItemModel]:
+        return self._parse_gen(system, prompt, DrillSet).items
 
     def gloss(self, prompt: str) -> list[Gloss]:
         try:
@@ -181,6 +200,10 @@ class ClaudeCodeWriter:
     def questions(self, system: str, prompt: str) -> list[Question]:
         data = self._run(prompt, QuestionSet.model_json_schema(), model=CC_GEN_MODEL, system=system)
         return QuestionSet.model_validate(data).questions
+
+    def drills(self, system: str, prompt: str) -> list[DrillItemModel]:
+        data = self._run(prompt, DrillSet.model_json_schema(), model=CC_GEN_MODEL, system=system)
+        return DrillSet.model_validate(data).items
 
     def gloss(self, prompt: str) -> list[Gloss]:
         try:

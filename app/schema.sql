@@ -153,3 +153,29 @@ CREATE TABLE IF NOT EXISTS settings (
     current_lesson      INTEGER NOT NULL DEFAULT 1,
     umlaut_ascii_ok     INTEGER NOT NULL DEFAULT 0     -- accept "ae" for "ä" only if opted in
 );
+
+-- Grammar drills (Phase 4). Items are lesson-scoped and checked by the verifier before use.
+CREATE TABLE IF NOT EXISTS drill_item (
+    id             INTEGER PRIMARY KEY,
+    grammar_code   TEXT NOT NULL REFERENCES grammar_point(code),
+    type           TEXT NOT NULL CHECK (type IN ('gap', 'choice', 'order')),
+    prompt         TEXT NOT NULL,              -- sentence with ___ (gap/choice) or the fixed start (order)
+    options        TEXT,                       -- JSON list (choice)
+    tokens         TEXT,                       -- JSON list of words to arrange (order)
+    answers        TEXT NOT NULL,              -- JSON list of accepted answers (order: list of word lists)
+    hint           TEXT,
+    explanation    TEXT,
+    full_sentence  TEXT NOT NULL,              -- the correct sentence, used for verification and feedback
+    source         TEXT NOT NULL DEFAULT 'seed' CHECK (source IN ('seed', 'generated')),
+    created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (grammar_code, prompt)
+);
+
+CREATE TABLE IF NOT EXISTS drill_attempt (
+    id        INTEGER PRIMARY KEY,
+    item_id   INTEGER NOT NULL REFERENCES drill_item(id) ON DELETE CASCADE,
+    correct   INTEGER NOT NULL,
+    answer    TEXT,
+    ts        TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_drill_attempt_item ON drill_attempt(item_id, ts);
