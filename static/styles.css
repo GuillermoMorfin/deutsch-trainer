@@ -368,3 +368,7 @@ button.state-dot::after { content: ""; position: absolute; inset: -14px; } /* 40
 .tiny { font-size: .72rem; }
 .quizlet em { font-style: normal; font-weight: 600; }
 code { font-size: .85em; background: var(--cream-200); padding: 1px 5px; border-radius: 4px; }
+
+/* Read-along: the sentence being read aloud */
+.reading .speaking { background: var(--cream-200); box-shadow: 0 2px 0 var(--amber-400); }
+.reading .speaking:first-child { border-radius: 4px 0 0 4px; }

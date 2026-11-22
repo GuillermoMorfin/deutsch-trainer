@@ -454,7 +454,30 @@ async function viewSettings() {
       </div>
       <button class="btn" id="save">Speichern</button>
     </div>
+    <div class="card" id="voice-card">
+      <h3>Vorlese-Stimme</h3>
+      <div class="field"><label for="voice">Stimme</label><select id="voice"></select></div>
+      <div class="field"><label for="tts-rate">Tempo</label>
+        <select id="tts-rate">${[[0.8, "langsam"], [0.9, "normal"], [1, "schnell"]].map(([v, l]) =>
+          `<option value="${v}" ${v === ttsRate() ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+      <button class="btn secondary" id="voice-test">▶ Probehören</button>
+      <p class="small muted" style="margin-top:10px">Noch natürlicher: Auf dem Mac unter <em>Systemeinstellungen →
+        Bedienungshilfen → Gesprochene Inhalte → Systemstimme → Stimmen verwalten</em> eine deutsche Stimme mit
+        „Premium“ oder „Erweitert“ laden (z. B. Anna oder Petra). Sie erscheint dann hier.</p>
+    </div>
     <div class="card" id="fsrs"></div>`;
+  const $voice = $app.querySelector("#voice");
+  voicesReady().then(() => {
+    const rec = recommendedVoice(), cur = chosenVoice();
+    const vs = germanVoices();
+    $voice.innerHTML = vs.length ? vs.map((v) => `<option value="${esc(v.name)}" ${cur && v.name === cur.name ? "selected" : ""}>
+      ${esc(v.name.replace(/ \(German \(Germany\)\)/, ""))}${rec && v.name === rec.name ? " (empfohlen)" : ""}${v.localService ? "" : " · online"}</option>`).join("")
+      : `<option>Keine deutsche Stimme gefunden</option>`;
+  });
+  $voice.addEventListener("change", () => { prefs.set(TTS_VOICE_KEY, $voice.value); });
+  $app.querySelector("#tts-rate").addEventListener("change", (e) => prefs.set(TTS_RATE_KEY, e.target.value));
+  $app.querySelector("#voice-test").addEventListener("click", () =>
+    speak("Hallo! Heute laufe ich mit Marco an der Spree. Danach trinken wir zusammen einen Kaffee. Das macht Spaß!"));
   const renderFsrs = async (extra = "") => {
     const f = await api("/fsrs");
     const $f = $app.querySelector("#fsrs");
@@ -538,17 +561,73 @@ async function viewReadList() {
   });
 }
 
-function speak(text, onEnd) {
-  if (!("speechSynthesis" in window)) { toast("Vorlesen wird hier nicht unterstützt"); return; }
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = "de-DE";
-  u.rate = 0.9;
-  const voice = speechSynthesis.getVoices().find((v) => v.lang.startsWith("de"));
-  if (voice) u.voice = voice;
-  u.onend = onEnd;
-  speechSynthesis.speak(u);
+// ---- voice: friendlier German text-to-speech -------------------------------------------
+// Picks the most natural German voice on the device (or the one chosen in Einstellungen) and reads
+// sentence by sentence with short pauses, so the reader can highlight along and long texts don't cut off.
+
+const TTS_VOICE_KEY = "tts-voice", TTS_RATE_KEY = "tts-rate";
+const prefs = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode: keep defaults */ } },
+};
+// most natural first: downloaded premium/enhanced Mac voices, Chrome's Google voice, the newer Mac voices
+const VOICE_ORDER = [/premium/i, /enhanced|verbessert/i, /^Google Deutsch/, /^Sandy/, /^Shelley/, /^Flo\b/,
+  /^Reed/, /^Eddy/, /^Petra/, /^Helena/, /^Markus/, /^Yannick/, /^Anna/];
+
+function germanVoices() {
+  return "speechSynthesis" in window ? speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith("de")) : [];
 }
+function recommendedVoice() {
+  const vs = germanVoices();
+  for (const re of VOICE_ORDER) { const v = vs.find((x) => re.test(x.name)); if (v) return v; }
+  return vs[0] || null;
+}
+function chosenVoice() {
+  const saved = prefs.get(TTS_VOICE_KEY);
+  return germanVoices().find((v) => v.name === saved) || recommendedVoice();
+}
+function ttsRate() { return +(prefs.get(TTS_RATE_KEY) || 0.9); }
+function voicesReady() {
+  return new Promise((resolve) => {
+    if (!("speechSynthesis" in window) || speechSynthesis.getVoices().length) return resolve();
+    speechSynthesis.addEventListener("voiceschanged", () => resolve(), { once: true });
+    setTimeout(resolve, 1500);
+  });
+}
+function splitSentences(text) {
+  return text.split(/\n+/).flatMap((para, pi) =>
+    (para.match(/[^.!?…]+[.!?…]+["“”»]?|[^.!?…]+$/g) || []).map((t, k) => ({ text: t.trim(), paraStart: k === 0 && pi > 0 })))
+    .filter((x) => x.text);
+}
+
+let ttsRun = 0;
+function stopSpeaking() {
+  ttsRun += 1;
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+}
+async function speakSentences(sentences, { onSentence, onEnd, rate } = {}) {
+  // All sentences go into the engine's queue at once: no JS timers, so it keeps going when the
+  // tab is in the background (timers get throttled there). The engine's gap between utterances
+  // is the pause; each utterance's onstart drives the read-along highlight.
+  if (!("speechSynthesis" in window)) { toast("Vorlesen wird hier nicht unterstützt"); onEnd?.(); return; }
+  await voicesReady();
+  stopSpeaking();
+  const run = ttsRun, voice = chosenVoice();
+  if (!sentences.length) { onEnd?.(); return; }
+  sentences.forEach((sent, i) => {
+    const u = new SpeechSynthesisUtterance(sent.paraStart ? `… ${sent.text}` : sent.text);
+    u.lang = "de-DE";
+    if (voice) u.voice = voice;
+    u.rate = rate || ttsRate();
+    u.onstart = () => { if (run === ttsRun) onSentence?.(i); };
+    if (i === sentences.length - 1) {
+      const finish = () => { if (run === ttsRun) { onSentence?.(-1); onEnd?.(); } };
+      u.onend = finish; u.onerror = finish;
+    }
+    speechSynthesis.speak(u);
+  });
+}
+function speak(text, onEnd) { speakSentences(splitSentences(text), { onEnd }); }
 
 async function viewText(id, opts = {}) {
   const d = await api(`/texts/${id}`);
@@ -556,7 +635,19 @@ async function viewText(id, opts = {}) {
   const started = Date.now();
   const paragraphs = [[]];
   tokens.forEach((tok, i) => tok.br ? (paragraphs.at(-1).length && paragraphs.push([])) : paragraphs.at(-1).push([tok, i]));
-  const plain = tokens.map((tk) => tk.br ? "\n" : tk.t + tk.ws).join("");
+  // group tokens into sentences for read-along
+  const sentOf = [], sentences = [];
+  let curSent = null, newPara = false;
+  tokens.forEach((tk, i) => {
+    if (tk.br) { curSent = null; newPara = sentences.length > 0; return; }
+    if (!curSent && /^["“”»)]$/.test(tk.t) && sentences.length) {   // closing quote belongs to the last sentence
+      sentences.at(-1).text += tk.t + tk.ws; sentOf[i] = sentences.length - 1; return;
+    }
+    if (!curSent) { curSent = { text: "", paraStart: newPara }; sentences.push(curSent); newPara = false; }
+    curSent.text += tk.t + tk.ws;
+    sentOf[i] = sentences.length - 1;
+    if (/[.!?…]$/.test(tk.t)) curSent = null;
+  });
 
   $app.innerHTML = `
     <p class="eyebrow"><a href="#/read">← Lesen</a> · Lektion ${t.lesson_number} · ${pct(t.coverage)} bekannt</p>
@@ -566,8 +657,9 @@ async function viewText(id, opts = {}) {
       <span class="small muted" style="align-self:center">Tippe auf ein Wort für die Übersetzung.</span>
     </div>
     <article class="reading">${paragraphs.filter((p) => p.length).map((p) => `<p>${p.map(([tok, i]) =>
-      tok.id ? `<span class="tok${tok.target ? " target" : ""}" data-i="${i}" role="button" tabindex="0">${esc(tok.t)}</span>${esc(tok.ws)}`
-             : `${esc(tok.t)}${esc(tok.ws)}`).join("")}</p>`).join("")}</article>
+      (tok.id ? `<span class="tok${tok.target ? " target" : ""}" data-s="${sentOf[i]}" data-i="${i}" role="button" tabindex="0">${esc(tok.t)}</span>`
+              : `<span data-s="${sentOf[i]}">${esc(tok.t)}</span>`)
+      + (tok.ws ? `<span data-s="${sentOf[i]}">${esc(tok.ws)}</span>` : "")).join("")}</p>`).join("")}</article>
     ${opts.reread ? `<p class="small muted">⏱ Lies den Text noch einmal, ruhig und flüssig. Die Zeit läuft: <strong id="timer">0:00</strong></p>` : ""}
     <button class="btn" id="done-reading">Fertig gelesen</button>
     <section id="questions" hidden></section>
@@ -596,13 +688,16 @@ async function viewText(id, opts = {}) {
     el.addEventListener("keydown", (e) => { if (e.key === "Enter") show(+el.dataset.i); });
   });
 
-  // audio
+  // audio: read sentence by sentence and highlight the one being read
   const $speak = $app.querySelector("#speak");
   let speaking = false;
+  const highlight = (n) => $app.querySelectorAll(".reading [data-s]").forEach((el) =>
+    el.classList.toggle("speaking", +el.dataset.s === n));
+  const stopReading = () => { stopSpeaking(); speaking = false; $speak.textContent = "▶ Vorlesen"; highlight(-1); };
   $speak.addEventListener("click", () => {
-    if (speaking) { speechSynthesis.cancel(); speaking = false; $speak.textContent = "▶ Vorlesen"; return; }
+    if (speaking) return stopReading();
     speaking = true; $speak.textContent = "■ Stopp";
-    speak(plain, () => { speaking = false; $speak.textContent = "▶ Vorlesen"; });
+    speakSentences(sentences, { onSentence: highlight, onEnd: stopReading });
   });
 
   // comprehension
@@ -616,7 +711,7 @@ async function viewText(id, opts = {}) {
   $app.querySelector("#done-reading").addEventListener("click", async (ev) => {
     ev.target.hidden = true;
     $sheet.hidden = true;
-    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    stopReading();
     const seconds = (Date.now() - started) / 1000;
     if (opts.reread) {
       clearInterval(tick);
@@ -1160,7 +1255,8 @@ async function viewListen() {
       <div class="toolbar" style="align-items:center">
         <button class="btn" id="play-all">▶ Alle abspielen</button>
         <button class="btn secondary" id="stop" hidden>■ Stopp</button>
-        <label class="small">Tempo <select id="rate"><option value="0.8">langsam</option><option value="0.9" selected>normal</option><option value="1">schnell</option></select></label>
+        <label class="small">Tempo <select id="rate">${[[0.8, "langsam"], [0.9, "normal"], [1, "schnell"]].map(([v, l]) =>
+          `<option value="${v}" ${v === ttsRate() ? "selected" : ""}>${l}</option>`).join("")}</select></label>
       </div>
       <p class="small muted" id="now"></p>
     </div>
@@ -1176,20 +1272,17 @@ async function viewListen() {
     const d = await api(`/texts/${t.id}`);
     return `${t.title}.\n` + d.tokens.map((tk) => tk.br ? "\n" : tk.t + tk.ws).join("");
   };
-  const stop = () => { playing = false; speechSynthesis.cancel(); $stop.hidden = true; $all.hidden = false; $now.textContent = "";
+  const stop = () => { playing = false; stopSpeaking(); $stop.hidden = true; $all.hidden = false; $now.textContent = "";
     $app.querySelectorAll(".lesson-row.playing").forEach((r) => r.classList.remove("playing")); };
   const play = async (n, continueAfter) => {
     if (!("speechSynthesis" in window)) return toast("Vorlesen wird hier nicht unterstützt");
     playing = true; idx = n; $stop.hidden = false; $all.hidden = true;
     $app.querySelectorAll(".lesson-row").forEach((r) => r.classList.toggle("playing", +r.dataset.n === n));
     $now.textContent = `Jetzt: ${texts[n].title}`;
-    const u = new SpeechSynthesisUtterance(await plain(texts[n]));
-    u.lang = "de-DE"; u.rate = +$app.querySelector("#rate").value;
-    const voice = speechSynthesis.getVoices().find((v) => v.lang.startsWith("de"));
-    if (voice) u.voice = voice;
-    u.onend = () => { if (playing && continueAfter && idx + 1 < texts.length) play(idx + 1, true); else stop(); };
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
+    speakSentences(splitSentences(await plain(texts[n])), {
+      rate: +$app.querySelector("#rate").value,
+      onEnd: () => { if (playing && continueAfter && idx + 1 < texts.length) play(idx + 1, true); else stop(); },
+    });
   };
   $all.addEventListener("click", () => play(0, true));
   $stop.addEventListener("click", stop);
@@ -1322,7 +1415,7 @@ async function route() {
   const hash = location.hash || "#/";
   keyHandler = null;
   $bar.hidden = true;
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  stopSpeaking();
   for (const [re, name, view] of routes) {
     const m = hash.match(re);
     if (!m) continue;
