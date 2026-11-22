@@ -21,9 +21,17 @@ MAX_CORRECTIONS = 3
 MAX_CHARS = 1200
 
 
-def prompts_for(lesson_number: int) -> list[dict]:
+def prompts_for(lesson_number: int, conn: sqlite3.Connection | None = None) -> list[dict]:
     data = json.loads(PROMPTS_PATH.read_text(encoding="utf-8"))["prompts"]
-    return data.get(str(lesson_number), [])
+    if str(lesson_number) in data or conn is None:
+        return data.get(str(lesson_number), [])
+    # lessons added later (e.g. Momente A2.2) get generic tasks built from their Redemittel
+    lesson = row_to_dict(conn.execute("SELECT theme, redemittel FROM lesson WHERE number = ?",
+                                      (lesson_number,)).fetchone())
+    if not lesson:
+        return []
+    return [{"de": f"Schreib 3 Sätze zum Thema „{lesson['theme']}“. Benutz: „{r}“",
+             "es": f"Escribe 3 frases sobre «{lesson['theme']}». Usa: «{r}»"} for r in lesson["redemittel"][:3]]
 
 
 def next_prompt(conn: sqlite3.Connection, *, lesson_number: int | None = None, exclude: str | None = None,
@@ -32,7 +40,8 @@ def next_prompt(conn: sqlite3.Connection, *, lesson_number: int | None = None, e
     if lesson_number is None:
         lesson_number = conn.execute("SELECT current_lesson FROM settings WHERE id = 1").fetchone()[0]
     lesson = row_to_dict(conn.execute("SELECT * FROM lesson WHERE number = ?", (lesson_number,)).fetchone())
-    options = [p for p in prompts_for(lesson_number) if p["de"] != exclude] or prompts_for(lesson_number)
+    all_prompts = prompts_for(lesson_number, conn)
+    options = [p for p in all_prompts if p["de"] != exclude] or all_prompts
     used = {r[0]: r[1] for r in conn.execute("SELECT prompt, COUNT(*) FROM writing GROUP BY prompt")}
     rng = random.Random(seed)
     options.sort(key=lambda p: (used.get(p["de"], 0), rng.random()))
@@ -55,7 +64,13 @@ correct form. Count other corrected errors in more_errors. If the text has no er
 and say so in the praise."""
 
 
-def build_prompt(conn: sqlite3.Connection, task: str, text: str, lesson_number: int) -> str:
+SPEAKING_NOTE = """The STUDENT TEXT is an automatic speech-to-text transcript of the student speaking. Ignore \
+punctuation, capitalisation and obvious transcription glitches (homophones, missing commas); judge grammar, \
+word order, endings and word choice as you would in speech. In corrected_text, write what they meant with \
+correct grammar and normal punctuation."""
+
+
+def build_prompt(conn: sqlite3.Connection, task: str, text: str, lesson_number: int, kind: str = "write") -> str:
     lesson = row_to_dict(conn.execute("SELECT * FROM lesson WHERE number = ?", (lesson_number,)).fetchone())
     target = rows_to_dicts(conn.execute(
         f"SELECT code, name FROM grammar_point WHERE code IN ({','.join('?' * len(lesson['grammar_points']))})",
@@ -68,7 +83,7 @@ GRAMMAR CODES (use one of these or ''):
 {chr(10).join(f"- {g['code']}: {g['name']}" for g in codes)}
 
 TASK: {task}
-
+{SPEAKING_NOTE if kind == "speak" else ""}
 STUDENT TEXT:
 {text}"""
 
@@ -82,7 +97,7 @@ def _lemma_id(conn: sqlite3.Connection, lemma: str) -> int | None:
 
 
 def submit(conn: sqlite3.Connection, writer: Writer, *, task: str, text: str,
-           lesson_number: int | None = None) -> dict:
+           lesson_number: int | None = None, kind: str = "write") -> dict:
     text = text.strip()
     if not text:
         raise ValueError("Bitte schreib zuerst etwas.")
@@ -91,7 +106,7 @@ def submit(conn: sqlite3.Connection, writer: Writer, *, task: str, text: str,
     if lesson_number is None:
         lesson_number = conn.execute("SELECT current_lesson FROM settings WHERE id = 1").fetchone()[0]
 
-    fb: WritingFeedback = writer.feedback(SYSTEM, build_prompt(conn, task, text, lesson_number))
+    fb: WritingFeedback = writer.feedback(SYSTEM, build_prompt(conn, task, text, lesson_number, kind))
     valid_codes = {r[0] for r in conn.execute("SELECT code FROM grammar_point")}
     corrections = []
     for c in fb.corrections[:MAX_CORRECTIONS]:
@@ -104,9 +119,10 @@ def submit(conn: sqlite3.Connection, writer: Writer, *, task: str, text: str,
     lesson_id = conn.execute("SELECT id FROM lesson WHERE number = ?", (lesson_number,)).fetchone()[0]
     with transaction(conn):
         cur = conn.execute(
-            "INSERT INTO writing (lesson_id, prompt, submission, corrected, feedback_json, ts) VALUES (?, ?, ?, ?, ?, ?)",
+            """INSERT INTO writing (lesson_id, prompt, submission, corrected, feedback_json, ts, kind)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
             (lesson_id, task, text, fb.corrected_text, json.dumps(feedback, ensure_ascii=False),
-             srs.to_db(srs.now_utc())))
+             srs.to_db(srs.now_utc()), kind))
         for c in corrections:
             example = f"{c['original']} → {c['corrected']}"
             if c["grammar_code"]:
@@ -116,7 +132,7 @@ def submit(conn: sqlite3.Connection, writer: Writer, *, task: str, text: str,
                 # a word the learner got wrong comes back in today's review
                 conn.execute("UPDATE card SET due = ? WHERE lemma_id = ? AND direction = 'produce'",
                              (srs.to_db(srs.now_utc()), c["lemma_id"]))
-    return {"id": cur.lastrowid, "submission": text, "corrected": fb.corrected_text, **feedback,
+    return {"id": cur.lastrowid, "kind": kind, "submission": text, "corrected": fb.corrected_text, **feedback,
             "grammar": grammar_notes(conn, [c["grammar_code"] for c in corrections if c["grammar_code"]])}
 
 
@@ -129,10 +145,11 @@ def grammar_notes(conn: sqlite3.Connection, codes: list[str]) -> dict[str, dict]
     return {r["code"]: r for r in rows}
 
 
-def history(conn: sqlite3.Connection, limit: int = 10) -> list[dict]:
+def history(conn: sqlite3.Connection, limit: int = 10, kind: str = "write") -> list[dict]:
     rows = rows_to_dicts(conn.execute(
-        """SELECT w.id, w.prompt, w.submission, w.corrected, w.feedback_json, w.ts, l.number AS lesson_number
-           FROM writing w LEFT JOIN lesson l ON l.id = w.lesson_id ORDER BY w.id DESC LIMIT ?""", (limit,)).fetchall())
+        """SELECT w.id, w.prompt, w.submission, w.corrected, w.feedback_json, w.ts, w.kind, l.number AS lesson_number
+           FROM writing w LEFT JOIN lesson l ON l.id = w.lesson_id WHERE w.kind = ?
+           ORDER BY w.id DESC LIMIT ?""", (kind, limit)).fetchall())
     for r in rows:
         fb = r.pop("feedback_json") or {}
         r.update(fb)

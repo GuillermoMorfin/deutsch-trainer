@@ -45,3 +45,25 @@ Import a word list: `uv run python -m app.seed --import words.csv --lesson 3`
 4. ✅ Grammar drills + error log: gap / choice / word-order items (109 hand-written, more via Claude Code, all verifier-checked), error-weighted sessions, rule → bridge → example → warning feedback, missed book exercises boost their lesson
 5. ✅ Writing feedback: 3 tasks per lesson, Claude Code corrects minimally, max 3 points (lesson grammar first) with Spanish explanations, word diff, errors feed drills and word cards
 6. Daily session + progress dashboard + audio
+
+## Adding Momente A2.2 (or another book)
+
+The app is data-driven, so a new book is just data:
+
+1. Append lessons 13–24 to `app/seed/lessons.json` with `"book": "A2.2"`, their grammar codes and Redemittel.
+2. Add their grammar points to `app/seed/grammar_points.json` (`"lesson": 13`, …) with rule → bridge → example → warning.
+3. Add `@13` … `@24` blocks to `app/seed/lessons/_source.txt` and run `python3 scripts/build_wordlists.py`.
+4. Optional: writing tasks in `app/seed/writing_prompts.json` (lessons without them get generic tasks from their
+   Redemittel) and drills in `app/seed/drills.json` (or generate them in the app).
+5. Restart the server; seeding is idempotent and keeps your progress.
+
+The tests (`uv run pytest`) check that every Redemittel, drill and fixture only uses grammar unlocked by its lesson.
+
+## Phase 7 extras
+
+- **Speaking** (`#/speak`): the browser's speech recognition (Chrome/Safari, `de-DE`) transcribes; Claude Code gives
+  the same focused feedback as for writing, told that the text is a transcript; listen to the corrected version and
+  repeat it with an instant word-by-word comparison.
+- **Quizlet**: copy or download any lesson's words (or all words you're learning) from the lesson page or *Wörter*.
+- **FSRS optimisation**: after 512 reviews, *Einstellungen → Wiederholungsplan anpassen* fits the scheduler to your
+  own history. Needs `uv sync --extra optimizer` (PyTorch). CLI: `uv run python -m app.optimize`.

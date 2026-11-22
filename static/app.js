@@ -64,7 +64,7 @@ async function viewHome() {
   const steps = [["warmup", "Aufwärmen"], ["review", "Wortschatz"], ["text", "Lesen"], ["drill", "Grammatik"], ["write", "Schreiben"]];
   const allDone = steps.every(([k]) => d[k] || (k === "warmup"));
   $app.innerHTML = `
-    <p class="eyebrow">Momente A2.1 · Deutsch-Trainer</p>
+    <p class="eyebrow">Momente ${esc(l.book || "A2.1")} · Deutsch-Trainer</p>
     <h1>Hallo! 👋</h1>
     <div class="stats">
       <div class="stat"><b>${o.known_words}</b><span>Wörter sicher</span></div>
@@ -95,6 +95,7 @@ async function viewHome() {
       <a class="tile" href="#/read"><span>📖</span>Lesen</a>
       <a class="tile" href="#/drill"><span>🧩</span>Grammatik</a>
       <a class="tile" href="#/write"><span>✍️</span>Schreiben</a>
+      <a class="tile" href="#/speak"><span>🎙</span>Sprechen</a>
       <a class="tile" href="#/listen"><span>🎧</span>Hören</a>
       <a class="tile" href="#/progress"><span>📈</span>Fortschritt</a>
     </div>`;
@@ -348,7 +349,10 @@ async function viewLesson(number) {
         <textarea id="note" rows="3" placeholder="z. B. weil-Sätze: Verb vergessen ans Ende">${esc(bp?.missed_items_note || "")}</textarea>
       </div>
       <button class="btn secondary" id="save-note">Notiz speichern</button>
-    </div>`;
+    </div>
+    ${words.length ? quizletCard({ lesson: number },
+      `Alle ${words.filter((w) => w.pos !== "PHRASE").length} Wörter dieser Lektion als Lernset.`) : ""}`;
+  wireQuizlet();
 
   const save = async (body) => { await api(`/lessons/${number}/book-progress`, { method: "PUT", body }); toast("Gespeichert"); };
   $app.querySelectorAll("[data-flag]").forEach((el) =>
@@ -359,6 +363,29 @@ async function viewLesson(number) {
   }));
   $app.querySelector("#save-note").addEventListener("click", () =>
     save({ missed_items_note: $app.querySelector("#note").value }));
+}
+
+// ---- Quizlet export ---------------------------------------------------------------
+
+function quizletCard(params, label) {
+  const q = new URLSearchParams(params).toString();
+  return `<div class="card quizlet" data-q="${esc(q)}">
+    <h3>Quizlet</h3>
+    <p class="small muted">${esc(label)} In Quizlet: <em>Lernset erstellen → Importieren</em>, einfügen,
+      „Zwischen Begriff und Definition: Tab“ wählen.</p>
+    <div class="toolbar">
+      <button class="btn secondary small-btn ql-copy">📋 Kopieren</button>
+      <a class="btn secondary small-btn" href="/api/export/quizlet?${esc(q)}" download>⬇ Herunterladen</a>
+    </div></div>`;
+}
+function wireQuizlet() {
+  $app.querySelectorAll(".quizlet .ql-copy").forEach((b) => b.addEventListener("click", async () => {
+    const q = b.closest(".quizlet").dataset.q;
+    const res = await fetch(`/api/export/quizlet?${q}&download=false`);
+    const text = await res.text();
+    try { await navigator.clipboard.writeText(text); toast(`${text.split("\n").filter(Boolean).length} Karten kopiert`); }
+    catch { toast("Kopieren nicht möglich, bitte herunterladen"); }
+  }));
 }
 
 async function viewWords() {
@@ -379,7 +406,9 @@ async function viewWords() {
       </select>
     </div>
     <p class="small muted" id="count"></p>
-    <ul class="word-list" id="list"></ul>`;
+    <ul class="word-list" id="list"></ul>
+    ${quizletCard({ state: "learning" }, "Alle Wörter, die du gerade lernst.")}`;
+  wireQuizlet();
 
   const $q = $app.querySelector("#q"), $l = $app.querySelector("#lesson"), $p = $app.querySelector("#pos");
   const load = async () => {
@@ -424,7 +453,36 @@ async function viewSettings() {
         <label><input type="checkbox" id="ascii" ${s.umlaut_ascii_ok ? "checked" : ""}> „ae“ statt „ä“ akzeptieren</label>
       </div>
       <button class="btn" id="save">Speichern</button>
-    </div>`;
+    </div>
+    <div class="card" id="fsrs"></div>`;
+  const renderFsrs = async (extra = "") => {
+    const f = await api("/fsrs");
+    const $f = $app.querySelector("#fsrs");
+    $f.innerHTML = `<h3>Wiederholungsplan an dich anpassen</h3>
+      <p class="small muted">FSRS kann seine Parameter an deine eigenen Bewertungen anpassen. Dafür braucht es
+        mindestens ${f.min_reviews} Bewertungen.</p>
+      <div class="progress"><i style="width:${pct(Math.min(1, f.reviews / f.min_reviews))}"></i></div>
+      <p class="small">${f.reviews} von ${f.min_reviews} Bewertungen gesammelt.
+        ${f.optimized ? `<br>✓ Angepasst am ${esc(f.optimized_at.slice(0, 10))} mit ${f.optimized_reviews} Bewertungen.` : ""}</p>
+      ${!f.installed ? `<p class="small warning-box">Der Optimierer ist nicht installiert. Im Projektordner ausführen:
+        <code>uv sync --extra optimizer</code></p>` : ""}
+      <div class="toolbar">
+        <button class="btn secondary" id="opt" ${f.ready ? "" : "disabled"}>${f.optimized ? "Neu anpassen" : "Jetzt anpassen"}</button>
+        ${f.optimized ? `<button class="btn secondary" id="opt-reset">Standard wiederherstellen</button>` : ""}
+      </div>${extra}`;
+    $f.querySelector("#opt")?.addEventListener("click", async (e) => {
+      e.target.disabled = true; e.target.textContent = "Rechnet…";
+      try {
+        const r = await api("/fsrs/optimize", { method: "POST" });
+        renderFsrs(`<p class="small">Fertig: Parameter aus ${r.reviews} Bewertungen.${r.suggested_retention
+          ? ` Empfohlene Behaltensrate: ${Math.round(r.suggested_retention * 100)} %.` : ""}</p>`);
+      } catch (err) { renderFsrs(`<p class="small warning-box">${esc(err.message.replace(/^\d+ /, ""))}</p>`); }
+    });
+    $f.querySelector("#opt-reset")?.addEventListener("click", async () => {
+      await api("/fsrs/reset", { method: "POST" }); renderFsrs();
+    });
+  };
+  renderFsrs();
   $app.querySelector("#save").addEventListener("click", async () => {
     await api("/settings", { method: "PUT", body: {
       current_lesson: +$app.querySelector("#cur").value,
@@ -778,16 +836,19 @@ async function viewDrill(code, opts = {}) {
 
 // ---- writing ----------------------------------------------------------------
 
-function wordDiff(a, b) {
-  // word-level LCS: returns [{t, op}] with op = "same" | "del" | "ins"
+function wordDiff(a, b, loose = false) {
+  // word-level LCS: returns [{t, op}] with op = "same" | "del" | "ins".
+  // loose (speech): ignore capitals and punctuation, which speech-to-text doesn't produce reliably.
   const x = a.split(/\s+/).filter(Boolean), y = b.split(/\s+/).filter(Boolean);
+  const key = (w) => (loose ? w.toLowerCase().replace(/[.,!?;:„“"«»()]/g, "") : w);
+  const kx = x.map(key), ky = y.map(key);
   const n = x.length, m = y.length, L = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
   for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
-    L[i][j] = x[i] === y[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+    L[i][j] = kx[i] === ky[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
   const out = [];
   let i = 0, j = 0;
   while (i < n && j < m) {
-    if (x[i] === y[j]) { out.push({ t: x[i], op: "same" }); i++; j++; }
+    if (kx[i] === ky[j]) { out.push({ t: y[j], op: "same" }); i++; j++; }
     else if (L[i + 1][j] >= L[i][j + 1]) out.push({ t: x[i++], op: "del" });
     else out.push({ t: y[j++], op: "ins" });
   }
@@ -796,8 +857,8 @@ function wordDiff(a, b) {
   return out;
 }
 
-function diffHTML(a, b) {
-  return wordDiff(a, b).map((w) => w.op === "same" ? esc(w.t)
+function diffHTML(a, b, loose = false) {
+  return wordDiff(a, b, loose).map((w) => w.op === "same" ? esc(w.t)
     : `<${w.op === "del" ? "del" : "ins"}>${esc(w.t)}</${w.op === "del" ? "del" : "ins"}>`).join(" ");
 }
 
@@ -806,7 +867,7 @@ function feedbackHTML(r) {
   return `
     <div class="card">
       <h3>Korrigiert</h3>
-      <p class="diff">${diffHTML(r.submission, r.corrected)}</p>
+      <p class="diff">${diffHTML(r.submission, r.corrected, r.kind === "speak")}</p>
       ${r.praise ? `<p class="praise">👏 ${esc(r.praise)}</p>` : ""}
     </div>
     ${r.corrections.length ? `<h3>Die wichtigsten Punkte</h3>` : `<p class="empty">Keine Fehler gefunden. Super!</p>`}
@@ -1135,6 +1196,108 @@ async function viewListen() {
   $app.querySelectorAll(".play-one").forEach((b) => b.addEventListener("click", () => play(+b.dataset.n, false)));
 }
 
+// ---- speaking: browser speech-to-text → Claude feedback → listen & repeat -----------------
+
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function recorder(onText, onState) {
+  // returns { start, stop } around the browser's speech recognition (de-DE)
+  if (!SpeechRec) return null;
+  let rec = null, finalText = "", running = false;
+  const start = () => {
+    finalText = "";
+    rec = new SpeechRec();
+    rec.lang = "de-DE"; rec.continuous = true; rec.interimResults = true;
+    rec.onresult = (e) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript + " ";
+        else interim += e.results[i][0].transcript;
+      }
+      onText((finalText + interim).replace(/\s+/g, " ").trim());
+    };
+    rec.onerror = (e) => { if (e.error === "not-allowed") toast("Mikrofon nicht erlaubt"); };
+    rec.onend = () => { running = false; onState(false); };
+    rec.start(); running = true; onState(true);
+  };
+  const stop = () => { if (running && rec) rec.stop(); };
+  return { start, stop };
+}
+
+async function viewSpeak() {
+  const [task, hist] = await Promise.all([api("/writing/prompt"), api("/writing?limit=5&kind=speak")]);
+  let current = task;
+  const render = () => {
+    $app.innerHTML = `
+      <h1>Sprechen</h1>
+      <div class="card hero">
+        <p class="eyebrow">Lektion ${current.lesson_number} · ${esc(current.theme)}</p>
+        <h2 class="task">${esc(current.prompt)}</h2>
+        <p class="small muted">${esc(current.prompt_es)}</p>
+        <div class="redemittel">${current.redemittel.map((r) => `<span class="chip">${esc(r)}</span>`).join("")}</div>
+        <button class="btn secondary small-btn" id="other">Andere Aufgabe</button>
+      </div>
+      <div class="card speak-card">
+        ${SpeechRec ? `<button class="mic" id="mic" aria-label="Aufnahme starten">🎙</button>
+          <p class="small muted" id="mic-state">Tippe auf das Mikrofon und sprich 2–4 Sätze.</p>`
+          : `<p class="small warning-box">Dein Browser kann keine Sprache erkennen (Chrome oder Safari können es). Du kannst deine Antwort auch tippen.</p>`}
+        <textarea id="said" rows="4" lang="de" spellcheck="false" placeholder="${SpeechRec ? "Hier erscheint, was du sagst…" : "Deine Antwort…"}"></textarea>
+        <button class="btn" id="send" disabled>Korrigieren</button>
+        <p class="small muted" id="status" hidden></p>
+        <p class="tiny muted">Die Spracherkennung läuft über deinen Browser (Chrome: Google, Safari: Apple). Gespeichert wird nur der Text.</p>
+      </div>
+      <section id="result"></section>
+      ${hist.length ? `<h2>Zuletzt gesprochen</h2>${hist.map((h) => `
+        <details class="card history"><summary><strong>${esc(h.prompt)}</strong>
+          <span class="small muted"> · ${esc(h.ts.slice(0, 10))}</span></summary>${feedbackHTML({ ...h, grammar: {} })}</details>`).join("")}` : ""}`;
+
+    const $said = $app.querySelector("#said"), $send = $app.querySelector("#send"), $mic = $app.querySelector("#mic");
+    const sync = () => { $send.disabled = !$said.value.trim(); };
+    $said.addEventListener("input", sync);
+    const rec = recorder((t) => { $said.value = t; sync(); }, (on) => {
+      if (!$mic) return;
+      $mic.classList.toggle("on", on);
+      $app.querySelector("#mic-state").textContent = on ? "Ich höre zu… Tippe nochmal zum Beenden." : "Fertig? Dann „Korrigieren“. Oder nochmal sprechen.";
+    });
+    $mic?.addEventListener("click", () => ($mic.classList.contains("on") ? rec.stop() : rec.start()));
+    $app.querySelector("#other").addEventListener("click", async () => {
+      current = await api(`/writing/prompt?exclude=${encodeURIComponent(current.prompt)}`); render();
+    });
+    $send.addEventListener("click", async () => {
+      rec?.stop();
+      const $st = $app.querySelector("#status");
+      $send.disabled = true; $st.hidden = false; $st.textContent = "Claude hört sich deinen Text an (ca. 20 s)…";
+      try {
+        const r = await api("/writing", { method: "POST", body: { prompt: current.prompt, text: $said.value, kind: "speak" } });
+        $st.hidden = true; $send.hidden = true; $said.readOnly = true;
+        const $r = $app.querySelector("#result");
+        $r.innerHTML = feedbackHTML(r) + `
+          <div class="card"><h3>Jetzt du: Nachsprechen</h3>
+            <p class="small muted">Hör dir die korrigierte Version an und sprich sie nach.</p>
+            <div class="toolbar"><button class="btn secondary" id="listen">▶ Anhören</button>
+              ${SpeechRec ? `<button class="btn secondary" id="shadow">🎙 Nachsprechen</button>` : ""}</div>
+            <p class="diff" id="shadow-out"></p></div>
+          <button class="btn" id="again">Neue Aufgabe</button>`;
+        $r.querySelector("#listen").addEventListener("click", () => speak(r.corrected));
+        const $out = $r.querySelector("#shadow-out");
+        const shadow = recorder((t) => { $out.innerHTML = diffHTML(t, r.corrected, true); }, (on) => {
+          const b = $r.querySelector("#shadow"); b.textContent = on ? "■ Stopp" : "🎙 Nachsprechen";
+          if (!on && $out.textContent) {
+            const same = !$out.querySelector("del, ins");
+            $out.insertAdjacentHTML("beforeend", `<span class="small"> ${same ? "✓ Perfekt nachgesprochen!" : ""}</span>`);
+          }
+        });
+        $r.querySelector("#shadow")?.addEventListener("click", (e) => (e.target.textContent.startsWith("■") ? shadow.stop() : shadow.start()));
+        $r.querySelector("#again").addEventListener("click", () => route());
+        $r.scrollIntoView({ behavior: "smooth" });
+      } catch (err) {
+        $st.textContent = `Das hat nicht geklappt: ${err.message.replace(/^\d+ /, "")}`; $send.disabled = false;
+      }
+    });
+  };
+  render();
+}
+
 // ---- router ----------------------------------------------------------------
 
 const routes = [
@@ -1144,6 +1307,7 @@ const routes = [
   [/^#\/review$/, "home", () => viewReview()],
   [/^#\/read$/, "read", viewReadList],
   [/^#\/write$/, "home", () => viewWrite()],
+  [/^#\/speak$/, "home", viewSpeak],
   [/^#\/session\/(full|quick)$/, "home", (m) => viewSession(m[1])],
   [/^#\/progress$/, "progress", viewProgress],
   [/^#\/listen$/, "read", viewListen],

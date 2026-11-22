@@ -54,7 +54,7 @@ def done_today(conn: sqlite3.Connection) -> dict[str, bool]:
 
 def lesson_mastery(conn: sqlite3.Connection) -> list[dict]:
     return rows_to_dicts(conn.execute(
-        """SELECT l.number, l.title, l.theme, l.status, COUNT(m.id) AS words,
+        """SELECT l.number, l.title, l.theme, l.status, l.book, COUNT(m.id) AS words,
                   SUM(k.state = 'known') AS known, SUM(k.state = 'learning') AS learning
            FROM lesson l LEFT JOIN lemma m ON m.lesson_id = l.id LEFT JOIN known_word k ON k.lemma_id = m.id
            GROUP BY l.id ORDER BY l.number""").fetchall())
@@ -89,7 +89,7 @@ def summary(conn: sqlite3.Connection) -> dict:
         "activity": activity_by_day(conn),
         "lessons": lessons,
         "current_lesson": current,
-        "ready_for_next": current < 12 and cur["mastery"] >= MASTERY_TO_ADVANCE,
+        "ready_for_next": current < max(l["number"] for l in lessons) and cur["mastery"] >= MASTERY_TO_ADVANCE,
         "top_errors": top_errors(conn, 5),
         "reading_speed": reading_speed(conn),
         "review_accuracy_7d": review_accuracy(conn),

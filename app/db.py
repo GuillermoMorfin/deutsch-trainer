@@ -33,6 +33,11 @@ def connect(path: Path | str | None = None) -> sqlite3.Connection:
 MIGRATIONS = [
     ("text", "summary", "TEXT"),
     ("text", "report_json", "TEXT"),
+    ("lesson", "book", "TEXT NOT NULL DEFAULT 'A2.1'"),
+    ("writing", "kind", "TEXT NOT NULL DEFAULT 'write'"),
+    ("settings", "fsrs_parameters", "TEXT"),              # JSON list of 21 floats once optimised
+    ("settings", "fsrs_optimized_at", "TEXT"),
+    ("settings", "fsrs_optimized_reviews", "INTEGER"),
 ]
 
 

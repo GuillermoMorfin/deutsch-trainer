@@ -10,6 +10,7 @@ Card flow per word:
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from datetime import datetime, timedelta, timezone
 
@@ -38,8 +39,11 @@ def from_db(s: str | None) -> datetime | None:
 
 
 def scheduler(conn: sqlite3.Connection) -> Scheduler:
-    retention = conn.execute("SELECT target_retention FROM settings WHERE id = 1").fetchone()[0]
-    return Scheduler(desired_retention=retention)
+    row = conn.execute("SELECT * FROM settings WHERE id = 1").fetchone()
+    params = row["fsrs_parameters"] if "fsrs_parameters" in row.keys() else None
+    if params:  # fitted to the learner's own history (app/optimize.py)
+        return Scheduler(parameters=json.loads(params), desired_retention=row["target_retention"])
+    return Scheduler(desired_retention=row["target_retention"])
 
 
 def _fsrs_card(row: sqlite3.Row) -> Card:

@@ -34,14 +34,14 @@ def seed_lessons(conn: sqlite3.Connection) -> int:
     lessons = json.loads((SEED_DIR / "lessons.json").read_text(encoding="utf-8"))
     for l in lessons:
         conn.execute(
-            """INSERT INTO lesson (number, title, theme, word_field, grammar_points, redemittel)
-               VALUES (?, ?, ?, ?, ?, ?)
+            """INSERT INTO lesson (number, title, theme, word_field, grammar_points, redemittel, book)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT(number) DO UPDATE SET
                  title=excluded.title, theme=excluded.theme, word_field=excluded.word_field,
-                 grammar_points=excluded.grammar_points, redemittel=excluded.redemittel""",
+                 grammar_points=excluded.grammar_points, redemittel=excluded.redemittel, book=excluded.book""",
             (l["number"], l["title"], l["theme"], l["word_field"],
              json.dumps(l["grammar_points"], ensure_ascii=False),
-             json.dumps(l["redemittel"], ensure_ascii=False)),
+             json.dumps(l["redemittel"], ensure_ascii=False), l.get("book", "A2.1")),
         )
     # First run: make the current lesson active.
     if not conn.execute("SELECT 1 FROM lesson WHERE status != 'locked'").fetchone():

@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from . import drills, generator, progress, session, srs, writing  # noqa: E402
+from . import drills, export, generator, optimize, progress, session, srs, writing  # noqa: E402
 from .db import connect, row_to_dict, rows_to_dicts, transaction  # noqa: E402
 from .llm import GenerationError, LLMUnavailable, Writer, default_writer  # noqa: E402
 from .seed import seed_all
@@ -151,7 +151,7 @@ def list_grammar(db: sqlite3.Connection = Depends(get_db)):
 
 
 class SettingsUpdate(BaseModel):
-    current_lesson: int | None = Field(None, ge=1, le=12)
+    current_lesson: int | None = Field(None, ge=1, le=99)
     daily_new_word_cap: int | None = Field(None, ge=0, le=50)
     target_retention: float | None = Field(None, ge=0.7, le=0.97)
     session_minutes: int | None = Field(None, ge=5, le=60)
@@ -161,6 +161,9 @@ class SettingsUpdate(BaseModel):
 @app.put("/api/settings")
 def update_settings(body: SettingsUpdate, db: sqlite3.Connection = Depends(get_db)):
     changes = body.model_dump(exclude_none=True)
+    if "current_lesson" in changes and not db.execute(
+            "SELECT 1 FROM lesson WHERE number = ?", (changes["current_lesson"],)).fetchone():
+        raise HTTPException(422, f"Lektion {changes['current_lesson']} gibt es nicht")
     with transaction(db):
         for k, v in changes.items():
             db.execute(f"UPDATE settings SET {k} = ? WHERE id = 1", (int(v) if isinstance(v, bool) else v,))
@@ -251,7 +254,7 @@ def llm_status():
 
 
 class GenerateRequest(BaseModel):
-    lesson: int | None = Field(None, ge=1, le=12)
+    lesson: int | None = Field(None, ge=1, le=99)
 
 
 @app.post("/api/texts/generate")
@@ -398,6 +401,7 @@ def writing_prompt(exclude: str | None = None, db: sqlite3.Connection = Depends(
 class WritingSubmit(BaseModel):
     prompt: str = Field(..., max_length=400)
     text: str = Field(..., max_length=writing.MAX_CHARS + 200)
+    kind: Literal["write", "speak"] = "write"
 
 
 @app.post("/api/writing")
@@ -405,7 +409,7 @@ def writing_submit(body: WritingSubmit, db: sqlite3.Connection = Depends(get_db)
     """Slow (~15-30 s): Claude corrects the text; errors go to the error log."""
     try:
         writer = app.dependency_overrides.get(get_writer, get_writer)()
-        return writing.submit(db, writer, task=body.prompt, text=body.text)
+        return writing.submit(db, writer, task=body.prompt, text=body.text, kind=body.kind)
     except ValueError as e:
         raise HTTPException(422, str(e))
     except LLMUnavailable as e:
@@ -415,8 +419,9 @@ def writing_submit(body: WritingSubmit, db: sqlite3.Connection = Depends(get_db)
 
 
 @app.get("/api/writing")
-def writing_history(limit: int = Query(10, ge=1, le=50), db: sqlite3.Connection = Depends(get_db)):
-    return writing.history(db, limit)
+def writing_history(limit: int = Query(10, ge=1, le=50), kind: Literal["write", "speak"] = "write",
+                    db: sqlite3.Connection = Depends(get_db)):
+    return writing.history(db, limit, kind)
 
 
 # ---- daily session + progress -------------------------------------------------------------
@@ -448,6 +453,38 @@ def session_text_status(db: sqlite3.Connection = Depends(get_db)):
 @app.get("/api/progress")
 def get_progress(db: sqlite3.Connection = Depends(get_db)):
     return progress.summary(db)
+
+
+# ---- phase 7: export + FSRS optimisation ---------------------------------------------------
+
+@app.get("/api/export/quizlet")
+def export_quizlet(lesson: int | None = None, state: Literal["new", "learning", "known"] | None = None,
+                   download: bool = True, db: sqlite3.Connection = Depends(get_db)):
+    from fastapi.responses import PlainTextResponse
+    name, text = export.quizlet(db, lesson=lesson, state=state)
+    headers = {"Content-Disposition": f'attachment; filename="{name}"'} if download else {}
+    return PlainTextResponse(text, headers=headers)
+
+
+@app.get("/api/fsrs")
+def fsrs_status(db: sqlite3.Connection = Depends(get_db)):
+    return optimize.status(db)
+
+
+@app.post("/api/fsrs/optimize")
+def fsrs_optimize(db: sqlite3.Connection = Depends(get_db)):
+    try:
+        return optimize.optimize(db)
+    except RuntimeError as e:
+        raise HTTPException(503, str(e))
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+
+@app.post("/api/fsrs/reset")
+def fsrs_reset(db: sqlite3.Connection = Depends(get_db)):
+    optimize.reset(db)
+    return optimize.status(db)
 
 
 @app.get("/api/health")
