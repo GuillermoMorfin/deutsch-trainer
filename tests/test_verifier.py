@@ -127,3 +127,23 @@ def test_regressions_found_by_drill_bank(conn, text, lesson):
 def test_sollte_before_lesson_6_is_still_blocked(conn):
     lex, unlocked = state_at(conn, 5)
     assert "KONJ2_RAT_KOENNTE_SOLLTE" in {g.code for g in analyse("Du sollte gehen.", lex, unlocked)[1].grammar}
+
+
+def test_case_colliding_lemmas_resolve_to_the_target(conn):
+    noun = conn.execute("SELECT id FROM lemma WHERE lemma = 'Mal' AND pos = 'NOUN'").fetchone()[0]
+    lex, unlocked = state_at(conn, 1, targets=[noun])
+    _, r = analyse("Das war das erste Mal. Noch ein Mal! Jedes Mal laufe ich.", lex, unlocked)
+    assert r.target_counts[noun] == 3
+
+
+def test_redemittel_only_use_grammar_of_their_lesson(conn):
+    import json as _json
+    from app.seed import SEED_DIR
+    for lesson in _json.loads((SEED_DIR / "lessons.json").read_text(encoding="utf-8")):
+        lex, unlocked = state_at(conn, lesson["number"])
+        for phrase in lesson["redemittel"]:
+            text = phrase.replace("…", "Marco kommt").replace(" ,", ",")
+            if text.rstrip().endswith(("…", ",")) or text.endswith("Marco kommt"):
+                text = text.rstrip(" ,") + ("" if text.endswith(("?", "!", ".")) else ".")
+            issues = [g.code for g in analyse(text, lex, unlocked)[1].grammar]
+            assert issues == [], (lesson["number"], phrase, issues)

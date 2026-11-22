@@ -66,40 +66,41 @@ def nlp():
 
 @dataclass
 class Lexicon:
-    by_lemma: dict[str, int]                 # lowercased lemma -> lemma_id
-    forms: dict[str, int]                    # lowercased inflected form (plural, Partizip II) -> lemma_id
+    by_lemma: dict[str, list[int]]           # lowercased lemma -> lemma_ids ("mal" and "Mal" share a key)
+    forms: dict[str, list[int]]              # lowercased inflected form (plural, Partizip II) -> lemma_ids
     known_ids: set[int]
     target_ids: set[int] = field(default_factory=set)
 
     def lookup(self, candidates: list[str]) -> int | None:
-        """First matching lemma, but a target wins: 'früher' is the target, not known 'früh'."""
+        """All matching lemmas; a target wins ('früher' is the target, not known 'früh'; 'das Mal' the
+        target, not the adverb 'mal'), then a known word, then the first match."""
         found: list[int] = []
         for c in candidates:
             k = c.lower()
             for table in (self.by_lemma, self.forms):
-                if k in table:
-                    found.append(table[k])
-        for lid in found:
-            if lid in self.target_ids:
-                return lid
+                found += table.get(k, [])
+        for pool in (self.target_ids, self.known_ids):
+            for lid in found:
+                if lid in pool:
+                    return lid
         return found[0] if found else None
 
 
 def build_lexicon(conn: sqlite3.Connection, target_ids: set[int] | None = None,
                   extra_known: set[int] | None = None) -> Lexicon:
-    by_lemma: dict[str, int] = {}
-    forms: dict[str, int] = {}
+    by_lemma: dict[str, list[int]] = {}
+    forms: dict[str, list[int]] = {}
     for r in conn.execute("SELECT id, lemma, pos, plural, partizip2 FROM lemma ORDER BY id"):
         if r["pos"] == "PHRASE":
             continue
-        by_lemma.setdefault(r["lemma"].lower(), r["id"])
+        by_lemma.setdefault(r["lemma"].lower(), []).append(r["id"])
         if r["plural"] and r["plural"] != "-":
-            forms.setdefault(r["plural"].lower(), r["id"])
+            forms.setdefault(r["plural"].lower(), []).append(r["id"])
             if not r["plural"].endswith(("n", "s")):
-                forms.setdefault(r["plural"].lower() + "n", r["id"])  # dative plural
+                forms.setdefault(r["plural"].lower() + "n", []).append(r["id"])  # dative plural
         if r["partizip2"]:
             for p in r["partizip2"].split("/"):
-                forms.setdefault(p.strip().lower(), r["id"])
+                forms.setdefault(p.strip().lower(), []).append(r["id"])
     known = {r[0] for r in conn.execute("SELECT lemma_id FROM known_word WHERE state IN ('known', 'learning')")}
     return Lexicon(by_lemma, forms, known | (extra_known or set()), set(target_ids or ()))
 

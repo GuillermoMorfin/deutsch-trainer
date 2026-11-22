@@ -287,3 +287,20 @@ button.state-dot::after { content: ""; position: absolute; inset: -14px; } /* 40
 .drill-fb .gnote { margin: 0; }
 .hint { text-transform: none; letter-spacing: 0; font-weight: 500; }
 .small-btn { min-height: 36px; padding: 0 14px; font-size: .85rem; margin-top: 6px; }
+
+/* Writing */
+.task { font-size: 1.2rem; margin: 4px 0; }
+.redemittel { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.redemittel .chip-btn { min-height: 36px; font-size: .9rem; }
+#write-form textarea { width: 100%; font: 1.1rem/1.6 var(--font-read); }
+#write-form .btn { width: 100%; margin-top: 10px; }
+.diff { font: 1.1rem/1.8 var(--font-read); }
+.diff del, .fix del { color: var(--die); background: var(--die-bg); text-decoration-thickness: 2px; border-radius: 3px; padding: 0 2px; }
+.diff ins, .fix ins { color: var(--das); background: var(--das-bg); text-decoration: none; font-weight: 600; border-radius: 3px; padding: 0 2px; }
+.praise { margin-top: 10px; color: var(--accent-strong); font-weight: 600; }
+.correction .fix { font: 1.05rem/1.6 var(--font-read); margin-bottom: 4px; }
+.num-badge { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff; font: 700 .75rem var(--font-ui); vertical-align: 2px; }
+.correction details { margin-top: 6px; }
+.correction summary, .history summary { cursor: pointer; color: var(--accent-strong); font-weight: 600; }
+.history .card { box-shadow: none; }

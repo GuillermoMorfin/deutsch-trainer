@@ -88,6 +88,11 @@ async function viewHome() {
       <a class="btn secondary" href="#/drill">Grammatik üben</a>
     </div>
     <div class="card">
+      <h3>Schreiben</h3>
+      <p class="small muted">Eine kurze Aufgabe zur Lektion. Claude korrigiert die 3 wichtigsten Punkte.</p>
+      <a class="btn secondary" href="#/write">Schreiben</a>
+    </div>
+    <div class="card">
       <h3>Lesen</h3>
       <p class="small muted">Kurze Texte über dein Leben in Berlin, fast nur mit Wörtern, die du kennst.</p>
       <a class="btn secondary" href="#/read">Zum Lesen</a>
@@ -736,6 +741,123 @@ async function viewDrill(code) {
   show();
 }
 
+// ---- writing ----------------------------------------------------------------
+
+function wordDiff(a, b) {
+  // word-level LCS: returns [{t, op}] with op = "same" | "del" | "ins"
+  const x = a.split(/\s+/).filter(Boolean), y = b.split(/\s+/).filter(Boolean);
+  const n = x.length, m = y.length, L = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+    L[i][j] = x[i] === y[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const out = [];
+  let i = 0, j = 0;
+  while (i < n && j < m) {
+    if (x[i] === y[j]) { out.push({ t: x[i], op: "same" }); i++; j++; }
+    else if (L[i + 1][j] >= L[i][j + 1]) out.push({ t: x[i++], op: "del" });
+    else out.push({ t: y[j++], op: "ins" });
+  }
+  while (i < n) out.push({ t: x[i++], op: "del" });
+  while (j < m) out.push({ t: y[j++], op: "ins" });
+  return out;
+}
+
+function diffHTML(a, b) {
+  return wordDiff(a, b).map((w) => w.op === "same" ? esc(w.t)
+    : `<${w.op === "del" ? "del" : "ins"}>${esc(w.t)}</${w.op === "del" ? "del" : "ins"}>`).join(" ");
+}
+
+function feedbackHTML(r) {
+  const notes = r.grammar || {};
+  return `
+    <div class="card">
+      <h3>Korrigiert</h3>
+      <p class="diff">${diffHTML(r.submission, r.corrected)}</p>
+      ${r.praise ? `<p class="praise">👏 ${esc(r.praise)}</p>` : ""}
+    </div>
+    ${r.corrections.length ? `<h3>Die wichtigsten Punkte</h3>` : `<p class="empty">Keine Fehler gefunden. Super!</p>`}
+    ${r.corrections.map((c, i) => {
+      const g = c.grammar_code && notes[c.grammar_code];
+      return `<div class="card correction">
+        <p class="fix"><span class="num-badge">${i + 1}</span> <del>${esc(c.original)}</del> → <ins>${esc(c.corrected)}</ins></p>
+        <p class="small">${esc(c.explanation)}</p>
+        ${g ? `<details><summary>${esc(g.name)}</summary>${grammarHTML(g)}</details>` : ""}
+      </div>`;
+    }).join("")}
+    ${r.more_errors ? `<p class="small muted">+ ${r.more_errors} kleinere Fehler im Text korrigiert.</p>` : ""}`;
+}
+
+async function viewWrite() {
+  const [task, hist] = await Promise.all([api("/writing/prompt"), api("/writing?limit=5")]);
+  let current = task;
+  const render = () => {
+    $app.innerHTML = `
+      <h1>Schreiben</h1>
+      <div class="card hero">
+        <p class="eyebrow">Lektion ${current.lesson_number} · ${esc(current.theme)}</p>
+        <h2 class="task">${esc(current.prompt)}</h2>
+        <p class="small muted">${esc(current.prompt_es)}</p>
+        <div class="redemittel">${current.redemittel.map((r) => `<button class="chip-btn rm" type="button">${esc(r)}</button>`).join("")}</div>
+        <button class="btn secondary small-btn" id="other">Andere Aufgabe</button>
+      </div>
+      <form id="write-form" class="card">
+        <textarea id="text" rows="5" lang="de" spellcheck="false" autocapitalize="sentences"
+          placeholder="2–4 Sätze auf Deutsch…" aria-label="Dein Text"></textarea>
+        <div class="toolbar" style="justify-content:space-between;align-items:center;margin-top:8px">
+          <div class="umlauts">${UMLAUT_KEYS.map((u) => `<button type="button" class="uml" data-ch="${u}">${u}</button>`).join("")}</div>
+          <span class="small muted" id="count">0 Sätze</span>
+        </div>
+        <button class="btn" type="submit" id="send">Korrigieren</button>
+        <p class="small muted" id="status" hidden></p>
+      </form>
+      <section id="result"></section>
+      ${hist.length ? `<h2>Deine letzten Texte</h2>${hist.map((h) => `
+        <details class="card history"><summary><strong>${esc(h.prompt)}</strong>
+          <span class="small muted"> · ${esc(h.ts.slice(0, 10))}</span></summary>
+          ${feedbackHTML({ ...h, grammar: {} })}</details>`).join("")}` : ""}`;
+
+    const $t = $app.querySelector("#text");
+    const count = () => {
+      const n = ($t.value.match(/[.!?]+(\s|$)/g) || []).length || ($t.value.trim() ? 1 : 0);
+      $app.querySelector("#count").textContent = `${n} ${n === 1 ? "Satz" : "Sätze"}`;
+    };
+    $t.addEventListener("input", count);
+    const insert = (str) => {
+      const a = $t.selectionStart ?? $t.value.length;
+      $t.value = $t.value.slice(0, a) + str + $t.value.slice($t.selectionEnd ?? a);
+      $t.focus(); $t.setSelectionRange(a + str.length, a + str.length); count();
+    };
+    $app.querySelectorAll(".uml").forEach((b) => b.addEventListener("click", () => insert(b.dataset.ch)));
+    $app.querySelectorAll(".rm").forEach((b) => b.addEventListener("click", () =>
+      insert(b.textContent.replace(/\s*…\s*$/, " ").replace(/^…\s*/, ""))));
+    $app.querySelector("#other").addEventListener("click", async () => {
+      const draft = $t.value;
+      current = await api(`/writing/prompt?exclude=${encodeURIComponent(current.prompt)}`);
+      render();
+      $app.querySelector("#text").value = draft;
+    });
+    $app.querySelector("#write-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!$t.value.trim()) return toast("Schreib zuerst ein paar Sätze.");
+      const $send = $app.querySelector("#send"), $st = $app.querySelector("#status");
+      $send.disabled = true; $st.hidden = false; $st.textContent = "Claude korrigiert deinen Text (ca. 20 s)…";
+      try {
+        const r = await api("/writing", { method: "POST", body: { prompt: current.prompt, text: $t.value } });
+        $st.hidden = true;
+        $t.readOnly = true;
+        $send.hidden = true;
+        const $r = $app.querySelector("#result");
+        $r.innerHTML = feedbackHTML(r) + `<button class="btn" id="again">Neue Aufgabe</button>`;
+        $r.querySelector("#again").addEventListener("click", () => route());
+        $r.scrollIntoView({ behavior: "smooth" });
+      } catch (err) {
+        $st.textContent = `Das hat nicht geklappt: ${err.message.replace(/^\d+ /, "")}`;
+        $send.disabled = false;
+      }
+    });
+  };
+  render();
+}
+
 // ---- router ----------------------------------------------------------------
 
 const routes = [
@@ -744,6 +866,7 @@ const routes = [
   [/^#\/lesson\/(\d+)$/, "lessons", (m) => viewLesson(m[1])],
   [/^#\/review$/, "home", viewReview],
   [/^#\/read$/, "read", viewReadList],
+  [/^#\/write$/, "home", viewWrite],
   [/^#\/drill$/, "home", () => viewDrill(null)],
   [/^#\/drill\/([A-Z0-9_]+)$/, "home", (m) => viewDrill(m[1])],
   [/^#\/text\/(\d+)$/, "read", (m) => viewText(m[1])],

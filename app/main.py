@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from . import drills, generator, srs  # noqa: E402
+from . import drills, generator, srs, writing  # noqa: E402
 from .db import connect, row_to_dict, rows_to_dicts, transaction  # noqa: E402
 from .llm import GenerationError, LLMUnavailable, Writer, default_writer  # noqa: E402
 from .seed import seed_all
@@ -382,6 +382,37 @@ def drill_stats(db: sqlite3.Connection = Depends(get_db)):
 @app.get("/api/errors")
 def errors(limit: int = Query(5, ge=1, le=50), db: sqlite3.Connection = Depends(get_db)):
     return drills.top_errors(db, limit)
+
+
+# ---- writing ---------------------------------------------------------------------------
+
+@app.get("/api/writing/prompt")
+def writing_prompt(exclude: str | None = None, db: sqlite3.Connection = Depends(get_db)):
+    return writing.next_prompt(db, exclude=exclude)
+
+
+class WritingSubmit(BaseModel):
+    prompt: str = Field(..., max_length=400)
+    text: str = Field(..., max_length=writing.MAX_CHARS + 200)
+
+
+@app.post("/api/writing")
+def writing_submit(body: WritingSubmit, db: sqlite3.Connection = Depends(get_db)):
+    """Slow (~15-30 s): Claude corrects the text; errors go to the error log."""
+    try:
+        writer = app.dependency_overrides.get(get_writer, get_writer)()
+        return writing.submit(db, writer, task=body.prompt, text=body.text)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    except LLMUnavailable as e:
+        raise HTTPException(503, str(e))
+    except GenerationError as e:
+        raise HTTPException(502, str(e))
+
+
+@app.get("/api/writing")
+def writing_history(limit: int = Query(10, ge=1, le=50), db: sqlite3.Connection = Depends(get_db)):
+    return writing.history(db, limit)
 
 
 @app.get("/api/health")

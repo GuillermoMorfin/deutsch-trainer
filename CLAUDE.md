@@ -33,5 +33,8 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
 - `app/drills.py`: drill items are shown only if their `full_sentence` passes the verifier with the
   learner's known words + words of lessons ≤ current. Session weighting = current lesson + recent wrong
   answers + error_log + missed Grammatik exercises from book_progress. Wrong answers write `error_log`.
+- `app/writing.py`: tasks in `app/seed/writing_prompts.json`; feedback capped at 3 corrections; codes are
+  validated against grammar_point; a word error makes that word's produce card due now.
+- Seed text (Redemittel, drills, fixtures) must pass the verifier at its lesson; tests enforce this.
 - `static/` front end (hash router in `app.js`), served by FastAPI; `sw.js` at root scope.
 - Tests: `uv run pytest`. Each test gets its own DB via `TRAINER_DB`.

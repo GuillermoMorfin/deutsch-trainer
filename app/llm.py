@@ -85,11 +85,29 @@ class DrillSet(BaseModel):
     items: list[DrillItemModel]
 
 
+class Correction(BaseModel):
+    original: str = Field(description="The learner's wrong words, copied exactly (a few words, not the whole sentence)")
+    corrected: str = Field(description="The corrected words")
+    grammar_code: str = Field(description="One code from GRAMMAR CODES that this error belongs to, or '' if none fits")
+    lemma: str = Field(description="For a vocabulary, gender/article or spelling error: the dictionary form of the word "
+                                   "(nouns without article). Otherwise ''")
+    explanation: str = Field(description="One short sentence in Spanish: the rule, with the correct form")
+
+
+class WritingFeedback(BaseModel):
+    corrected_text: str = Field(description="The learner's text with only the necessary corrections (keep their words "
+                                            "and style; do not rewrite or make it more advanced)")
+    corrections: list[Correction] = Field(description="At most 3, most important first; the lesson's target grammar first")
+    more_errors: int = Field(description="How many further, smaller errors were corrected but not listed")
+    praise: str = Field(description="One short, specific, encouraging sentence in simple German")
+
+
 class Writer(Protocol):
     def write(self, system: str, prompt: str) -> Draft: ...
     def questions(self, system: str, prompt: str) -> list[Question]: ...
     def gloss(self, prompt: str) -> list[Gloss]: ...
     def drills(self, system: str, prompt: str) -> list[DrillItemModel]: ...
+    def feedback(self, system: str, prompt: str) -> WritingFeedback: ...
 
 
 # ---- Claude implementation -----------------------------------------------------------
@@ -136,6 +154,9 @@ class ClaudeWriter:
 
     def drills(self, system: str, prompt: str) -> list[DrillItemModel]:
         return self._parse_gen(system, prompt, DrillSet).items
+
+    def feedback(self, system: str, prompt: str) -> WritingFeedback:
+        return self._parse_gen(system, prompt, WritingFeedback)
 
     def gloss(self, prompt: str) -> list[Gloss]:
         try:
@@ -204,6 +225,10 @@ class ClaudeCodeWriter:
     def drills(self, system: str, prompt: str) -> list[DrillItemModel]:
         data = self._run(prompt, DrillSet.model_json_schema(), model=CC_GEN_MODEL, system=system)
         return DrillSet.model_validate(data).items
+
+    def feedback(self, system: str, prompt: str) -> WritingFeedback:
+        data = self._run(prompt, WritingFeedback.model_json_schema(), model=CC_GEN_MODEL, system=system)
+        return WritingFeedback.model_validate(data)
 
     def gloss(self, prompt: str) -> list[Gloss]:
         try:
