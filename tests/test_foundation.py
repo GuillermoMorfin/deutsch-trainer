@@ -12,7 +12,7 @@ def test_seed_is_idempotent(tmp_path):
     second = seed_all(conn)
     assert first == second
     assert conn.execute("SELECT COUNT(*) FROM lesson").fetchone()[0] == 12
-    assert conn.execute("SELECT COUNT(*) FROM lemma").fetchone()[0] == first["a1_lemmas"]
+    assert conn.execute("SELECT COUNT(*) FROM lemma").fetchone()[0] == first["a1_lemmas"] + first["lesson_lemmas"]
 
 
 def test_every_a1_noun_has_an_article():
@@ -81,3 +81,14 @@ def test_book_progress_roundtrip(client):
 def test_frontend_served(client):
     assert "Deutsch-Trainer" in client.get("/").text
     assert client.get("/sw.js").status_code == 200
+
+
+def test_every_lesson_has_a_word_list(tmp_path):
+    conn = connect(tmp_path / "t.db")
+    seed_all(conn)
+    counts = dict(conn.execute(
+        "SELECT l.number, COUNT(m.id) FROM lesson l LEFT JOIN lemma m ON m.lesson_id = l.id GROUP BY l.number").fetchall())
+    assert all(counts[n] >= 15 for n in range(1, 13)), counts
+    # Lesson words start unknown: they must be learned, not assumed.
+    assert conn.execute("""SELECT COUNT(*) FROM known_word k JOIN lemma m ON m.id = k.lemma_id
+                           WHERE m.lesson_id IS NOT NULL""").fetchone()[0] == 0

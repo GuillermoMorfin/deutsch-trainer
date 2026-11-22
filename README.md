@@ -21,7 +21,7 @@ To open it on your phone on home Wi-Fi, start it with `--host 0.0.0.0` and visit
 - `app/seed/grammar_points.json`: every grammar point as rule → bridge → example → warning,
   plus `BLOCK_*` structures the verifier must reject.
 - `app/seed/a1_core.csv`: starter known-word list (A1).
-- `app/seed/lessons/L<n>.csv`: A2.1 lesson word lists (same columns as `a1_core.csv`).
+- `app/seed/lessons/_source.txt`: A2.1 lesson vocabulary (headwords from the Momente AB Lernwortschatz, glosses written fresh). Rebuild the `L<nn>.csv` files with `python3 scripts/build_wordlists.py`.
 - `app/seed/book_exercises.json`: exercise labels from the Momente course backups (labels only).
 
 Import a word list: `uv run python -m app.seed --import words.csv --lesson 3`

@@ -1,0 +1,522 @@
+# Momente A2.1 Lernwortschatz (Arbeitsbuch pp. 106-128): headwords only, glosses written by Claude.
+# Format: N art lemma plural | es | en   ·   V lemma aux partizip2 | es | en   ·   X POS lemma | es | en
+# Regenerate CSVs: python3 -I scripts/build_wordlists.py
+@1
+N das Jubiläum Jubiläen | el aniversario | anniversary
+N die Europameisterschaft Europameisterschaften | el campeonato europeo | European championship
+N die EM - | la Eurocopa | European championship (abbr.)
+N das Finale Finale | la final | final
+N der Neffe Neffen | el sobrino | nephew
+N die Nichte Nichten | la sobrina | niece
+V probieren haben probiert | probar | to try / taste
+V verkaufen haben verkauft | vender | to sell
+V behalten haben behalten | quedarse con / conservar | to keep
+V übernachten haben übernachtet | pasar la noche | to stay overnight
+V klettern sein geklettert | trepar / escalar | to climb
+N der Baum Bäume | el árbol | tree
+V sammeln haben gesammelt | coleccionar | to collect
+N das Fußballbild Fußballbilder | el cromo de fútbol | football sticker
+N der Comic Comics | el cómic | comic
+V zeichnen haben gezeichnet | dibujar | to draw
+N die Süßigkeit Süßigkeiten | la golosina | sweet
+V basteln haben gebastelt | hacer manualidades | to do crafts
+N das Tagebuch Tagebücher | el diario | diary
+N der Schneemann Schneemänner | el muñeco de nieve | snowman
+V bauen haben gebaut | construir | to build
+X ADV früher | antes / de pequeño | in the past
+N die Kindheit - | la infancia | childhood
+N die Geschichte Geschichten | la historia | story / history
+V aufpassen haben aufgepasst | prestar atención / cuidar | to pay attention / look after
+N das Mal Male | la vez | time (occasion)
+N die Sorte Sorten | el tipo / el sabor | kind / flavour
+X DET jeder | cada | every
+X ADJ letzt | último / pasado | last
+X ADJ nächst | próximo | next
+V vorstellen haben vorgestellt | presentar(se) / imaginar(se) | to introduce / imagine
+N die Mensa Mensen | el comedor universitario | university canteen
+N die Uni Unis | la uni | uni
+N der Post Posts | la publicación (redes) | post (social media)
+N das Treppenhaus Treppenhäuser | la escalera (del edificio) | stairwell
+@2
+N die Panne Pannen | la avería | breakdown
+N die Pannenhilfe Pannenhilfen | la asistencia en carretera | breakdown service
+N der Wagen Wagen | el coche | car
+N der Pannenhelfer Pannenhelfer | el mecánico de asistencia | roadside mechanic
+N die Pannenhelferin Pannenhelferinnen | la mecánica de asistencia | roadside mechanic (f)
+N die Messe Messen | la feria | trade fair
+N der Held Helden | el héroe | hero
+N die Heldin Heldinnen | la heroína | heroine
+N der Alltag - | el día a día | everyday life
+X ADJ aufgeregt | nervioso / emocionado | excited / nervous
+V ausmachen haben ausgemacht | apagar / acordar | to switch off / arrange
+N die Batterie Batterien | la batería | battery
+N die Eile - | la prisa | hurry
+N der Erfolg Erfolge | el éxito | success
+V erleben haben erlebt | vivir (experimentar) | to experience
+N die Ferien - | las vacaciones | holidays
+N die Freikarte Freikarten | la entrada gratuita | free ticket
+X ADJ furchtbar | terrible | terrible
+X ADJ hart | duro | hard
+N die Kälte - | el frío | cold
+N die Oper Opern | la ópera | opera
+N der Reifen Reifen | el neumático | tyre
+N die Rolle Rollen | el papel (rol) | role
+X ADJ stressig | estresante | stressful
+X ADJ verzweifelt | desesperado | desperate
+N der Vorteil Vorteile | la ventaja | advantage
+N der Nachteil Nachteile | la desventaja | disadvantage
+V wechseln haben gewechselt | cambiar | to change
+X CONJ weil | porque (verbo al final) | because
+X PHRASE im Freien | al aire libre | outdoors
+X ADV drinnen | dentro | inside
+N die Schicht Schichten | el turno | shift
+N die Arbeitszeit Arbeitszeiten | el horario laboral | working hours
+X ADJ fest | fijo | fixed
+X ADJ flexibel | flexible | flexible
+V verdienen haben verdient | ganar (dinero) | to earn
+N der Mitbewohner Mitbewohner | el compañero de piso | flatmate
+N die Mitbewohnerin Mitbewohnerinnen | la compañera de piso | flatmate (f)
+N der Stress - | el estrés | stress
+N die Werkstatt Werkstätten | el taller | workshop / garage
+@3
+V aufbauen haben aufgebaut | montar / construir | to set up / build
+X ADJ anstrengend | agotador | exhausting
+X ADJ aufregend | emocionante | exciting
+V ausziehen sein ausgezogen | mudarse (de un piso) | to move out
+X ADJ spannend | emocionante / interesante | exciting
+V vermissen haben vermisst | echar de menos | to miss
+V vorbeikommen sein vorbeigekommen | pasarse (por) | to drop by
+N die Alternative Alternativen | la alternativa | alternative
+V beobachten haben beobachtet | observar | to observe
+N der Sand - | la arena | sand
+N der Fan Fans | el aficionado | fan
+V joggen sein gejoggt | hacer footing | to jog
+N die Limonade Limonaden | la limonada | lemonade
+N das Mountainbike Mountainbikes | la bicicleta de montaña | mountain bike
+X ADJ aktiv | activo | active
+X ADV übrigens | por cierto | by the way
+N die Umgebung Umgebungen | los alrededores | surroundings
+X ADJ wunderschön | precioso | beautiful
+N der Norden - | el norte | north
+N der Süden - | el sur | south
+N der Westen - | el oeste | west
+N der Osten - | el este | east
+N die Biene Bienen | la abeja | bee
+N das Pferd Pferde | el caballo | horse
+N das Schaf Schafe | la oveja | sheep
+N der Unterschied Unterschiede | la diferencia | difference
+N die Nordsee - | el mar del Norte | North Sea
+N die Ostsee - | el mar Báltico | Baltic Sea
+X ADV außerdem | además | besides
+X PHRASE es gibt | hay | there is / are
+X PHRASE auf keinen Fall | de ninguna manera | no way
+N die Natur - | la naturaleza | nature
+N das Ufer Ufer | la orilla | shore / bank
+N die Landschaft Landschaften | el paisaje | landscape
+N das Dorf Dörfer | el pueblo | village
+N das Tal Täler | el valle | valley
+N der Frosch Frösche | la rana | frog
+N die Kuh Kühe | la vaca | cow
+N der Kanal Kanäle | el canal | canal
+N der Bachelor Bachelors | el grado (universitario) | bachelor's degree
+N die Wirtschaft Wirtschaften | la economía | economy
+N die Umweltwirtschaft - | la economía ambiental | environmental economics
+N die Betriebswirtschaft - | la administración de empresas | business administration
+V ziehen sein gezogen | mudarse (a) / tirar | to move (to) / pull
+N die Suche Suchen | la búsqueda | search
+N die Arbeitssuche - | la búsqueda de empleo | job search
+N die Pflanze Pflanzen | la planta | plant
+N das Profil Profile | el perfil | profile
+V ausfüllen haben ausgefüllt | rellenar | to fill in
+V abschicken haben abgeschickt | enviar | to send off
+V vereinbaren haben vereinbart | acordar (una cita) | to arrange
+N die Theorie Theorien | la teoría | theory
+V überlegen haben überlegt | pensar / reflexionar | to think about
+N der Stichpunkt Stichpunkte | el punto clave (nota) | bullet point
+@4
+X ADV freitags | los viernes | on Fridays
+N das Homeoffice - | el teletrabajo | working from home
+N das Seminar Seminare | el seminario | seminar
+N das Meeting Meetings | la reunión | meeting
+N die Präsentation Präsentationen | la presentación | presentation
+X ADJ gestresst | estresado | stressed
+V ausschalten haben ausgeschaltet | apagar | to switch off
+N das Mikrofon Mikrofone | el micrófono | microphone
+N das Mikro Mikros | el micro | mic
+V teilnehmen haben teilgenommen | participar | to take part
+N der Werbespot Werbespots | el anuncio | advert
+V aufgehen sein aufgegangen | abrirse / salir (el sol) | to open / rise
+X ADV mittags | a mediodía | at noon
+V kontaktieren haben kontaktiert | contactar | to contact
+V unterschreiben haben unterschrieben | firmar | to sign
+V verschicken haben verschickt | enviar | to send
+X ADV deshalb | por eso | therefore
+V reden haben geredet | hablar / charlar | to talk
+X ADJ möglich | posible | possible
+X ADJ dringend | urgente | urgent
+V erteilen haben erteilt | dar / conceder | to give / grant
+X ADJ negativ | negativo | negative
+X ADJ positiv | positivo | positive
+V übernehmen haben übernommen | asumir / encargarse de | to take over
+V erledigen haben erledigt | hacer / resolver (tareas) | to get done
+V buchen haben gebucht | reservar | to book
+V informieren haben informiert | informar | to inform
+V reservieren haben reserviert | reservar | to reserve
+N die Besprechung Besprechungen | la reunión | meeting
+N der Vertrag Verträge | el contrato | contract
+N der Auftrag Aufträge | el encargo / el pedido | order / task
+@5
+N das Eishockey - | el hockey sobre hielo | ice hockey
+N das Stadion Stadien | el estadio | stadium
+V wählen haben gewählt | elegir / votar | to choose / vote
+N die Überraschung Überraschungen | la sorpresa | surprise
+V überraschen haben überrascht | sorprender | to surprise
+X ADJ enttäuscht | decepcionado | disappointed
+X ADJ begeistert | entusiasmado | enthusiastic
+V schenken haben geschenkt | regalar | to give (a gift)
+N die Story Storys | la historia (reportaje) | story
+X ADJ fantastisch | fantástico | fantastic
+N die Ahnung Ahnungen | la idea (noción) | idea / clue
+N der Star Stars | la estrella | star
+N das Autogramm Autogramme | el autógrafo | autograph
+N der Künstler Künstler | el artista | artist
+N die Künstlerin Künstlerinnen | la artista | artist (f)
+N das Ende Enden | el final | end
+N die Dauer - | la duración | duration
+X ADJ neugierig | curioso | curious
+V klingen haben geklungen | sonar | to sound
+N die Tournee Tourneen | la gira | tour
+N der Clown Clowns | el payaso | clown
+X ADJ einverstanden | de acuerdo | agreed
+V halten haben gehalten | sostener / opinar (halten von) | to hold / think of
+V zustimmen haben zugestimmt | estar de acuerdo | to agree
+V ablehnen haben abgelehnt | rechazar | to decline
+N das Klavier Klaviere | el piano | piano
+N der Autor Autoren | el autor | author
+N die Autorin Autorinnen | la autora | author (f)
+X PRON jemand | alguien | someone
+V überreden haben überredet | persuadir | to persuade
+V überzeugen haben überzeugt | convencer | to convince
+X ADJ zögernd | vacilante | hesitant
+N die Veranstaltung Veranstaltungen | el evento | event
+N das Theaterstück Theaterstücke | la obra de teatro | play
+N die Ausstellung Ausstellungen | la exposición | exhibition
+N das Festival Festivals | el festival | festival
+N die Lesung Lesungen | la lectura pública | reading
+N das Krimidinner Krimidinner | la cena con misterio | murder-mystery dinner
+N das Basketballspiel Basketballspiele | el partido de baloncesto | basketball game
+N die Zaubershow Zaubershows | el espectáculo de magia | magic show
+@6
+N das Programm Programme | el programa | programme
+X ADJ bereit | dispuesto / listo | ready
+V losgehen sein losgegangen | empezar / ponerse en marcha | to start / set off
+X ADV abends | por las noches | in the evenings
+N die Einheit Einheiten | la sesión / la unidad | session / unit
+V verdoppeln haben verdoppelt | duplicar | to double
+X PHRASE an deiner Stelle | yo que tú | if I were you
+X PRON niemand | nadie | nobody
+X ADJ häufig | frecuente | frequent
+N das Kilogramm Kilogramm | el kilogramo | kilogram
+N das Kilo Kilos | el kilo | kilo
+V wiegen haben gewogen | pesar | to weigh
+N die Sportart Sportarten | la disciplina deportiva | type of sport
+N das Judo - | el judo | judo
+N das Badminton - | el bádminton | badminton
+N das Tischtennis - | el ping-pong | table tennis
+V walken sein gewalkt | hacer marcha nórdica | to power-walk
+V rudern sein gerudert | remar | to row
+X ADJ unterschiedlich | diferente | different
+N die Meinung Meinungen | la opinión | opinion
+X ADV morgens | por las mañanas | in the mornings
+X ADJ direkt | directo | direct
+N die Entspannung - | la relajación | relaxation
+X ADJ kostenlos | gratis | free of charge
+N der Verein Vereine | el club / la asociación | club
+N die Unterstützung - | el apoyo | support
+N der Mitarbeiter Mitarbeiter | el empleado | employee
+N die Mitarbeiterin Mitarbeiterinnen | la empleada | employee (f)
+N die Halle Hallen | el pabellón | hall
+N die Platte Platten | la mesa (de ping-pong) / la placa | table / plate
+X PHRASE vor allem | sobre todo | above all
+X PHRASE Das ist nichts für mich! | ¡Eso no es para mí! | That's not for me!
+N die Daten - | los datos | data
+N das Leben - | la vida | life
+N die Mannschaft Mannschaften | el equipo | team
+V ausprobieren haben ausprobiert | probar (algo nuevo) | to try out
+N der Wettkampf Wettkämpfe | la competición | competition
+N der Bewerber Bewerber | el candidato | applicant
+N die Bewerberin Bewerberinnen | la candidata | applicant (f)
+N das Management Managements | la gestión | management
+X ADV beziehungsweise | o bien / respectivamente | or rather
+V passen haben gepasst | quedar bien / encajar | to fit / suit
+V bewerben haben beworben | solicitar (sich bewerben) | to apply
+N die Kenntnis Kenntnisse | el conocimiento | knowledge
+N das Original Originale | el original | original
+V übersetzen haben übersetzt | traducir | to translate
+N die Erklärung Erklärungen | la explicación | explanation
+N die Berufserfahrung Berufserfahrungen | la experiencia laboral | work experience
+X INTJ na ja | bueno… | well…
+X ADJ zuständig | responsable (de) | responsible
+X ADV gerade | justo ahora | right now
+@7
+N der Alkohol - | el alcohol | alcohol
+V genießen haben genossen | disfrutar | to enjoy
+X ADV miteinander | juntos / entre sí | with each other
+N der Humor - | el humor | humour
+X ADJ kritisch | crítico | critical
+V hoffen haben gehofft | esperar (tener esperanza) | to hope
+V fürchten haben gefürchtet | temer | to fear
+N die Birne Birnen | la pera | pear
+N der Imbissstand Imbissstände | el puesto de comida rápida | snack stand
+N der Angestellte Angestellten | el empleado | employee
+N die Angestellte Angestellten | la empleada | employee (f)
+X ADV sonst | si no / por lo demás | otherwise
+V zahlen haben gezahlt | pagar | to pay
+X ADJ getrennt | por separado | separately
+X ADV bar | en efectivo | in cash
+N die EC-Karte EC-Karten | la tarjeta de débito | debit card
+V aufnehmen haben aufgenommen | tomar (pedido) / grabar | to take (an order) / record
+N der Augenblick Augenblicke | el momento | moment
+X ADJ kompliziert | complicado | complicated
+N die Kasse Kassen | la caja | till
+V liefern haben geliefert | entregar / repartir | to deliver
+N der Lieferservice Lieferservices | el servicio a domicilio | delivery service
+X ADJ regelmäßig | regular | regular
+N das Rezept Rezepte | la receta | recipe
+N der Pfannkuchen Pfannkuchen | la tortita | pancake
+X CONJ dass | que (verbo al final) | that
+N die Speise Speisen | el plato (comida) | dish
+N das Getränk Getränke | la bebida | drink
+N das Mineralwasser Mineralwasser | el agua mineral | mineral water
+N die Cola Colas | la cola | cola
+N der Kakao Kakaos | el cacao | cocoa
+N die Pizza Pizzen | la pizza | pizza
+N das Sandwich Sandwiches | el sándwich | sandwich
+N die Erdbeertorte Erdbeertorten | la tarta de fresa | strawberry cake
+N der Birnenkuchen Birnenkuchen | el pastel de pera | pear cake
+N der Marmorkuchen Marmorkuchen | el bizcocho mármol | marble cake
+@8
+X ADJ peinlich | vergonzoso | embarrassing
+N das Personal - | el personal | staff
+V entfernen haben entfernt | quitar / eliminar | to remove
+X ADJ regional | regional | regional
+X ADV dorthin | hacia allí | (to) there
+N das Unternehmen Unternehmen | la empresa | company
+V einrichten haben eingerichtet | amueblar / instalar | to furnish / set up
+N die Untersuchung Untersuchungen | el estudio / el examen | study / examination
+N der Arbeitnehmer Arbeitnehmer | el trabajador | employee
+N die Arbeitnehmerin Arbeitnehmerinnen | la trabajadora | employee (f)
+N der Arbeitgeber Arbeitgeber | el empleador | employer
+N die Arbeitgeberin Arbeitgeberinnen | la empleadora | employer (f)
+N der Betrieb Betriebe | la empresa / el negocio | business
+N das Klima - | el clima / el ambiente | climate / atmosphere
+N der Artikel Artikel | el artículo | article
+V besprechen haben besprochen | hablar de / discutir | to discuss
+V untersuchen haben untersucht | examinar / investigar | to examine
+X ADJ seltsam | raro | strange
+X PHRASE Es wundert mich | me sorprende | it surprises me
+X ADV mindestens | al menos | at least
+X CONJ wenn | cuando / si (verbo al final) | when / if
+N der Raum Räume | la sala | room
+N der Personalchef Personalchefs | el jefe de personal | HR manager
+N der Azubi Azubis | el aprendiz | trainee
+N die Produktion - | la producción | production
+N die Personalabteilung Personalabteilungen | el departamento de RR. HH. | HR department
+N das Lager Lager | el almacén | warehouse
+N die Kantine Kantinen | el comedor de empresa | canteen
+@9
+V hängen haben gehängt | colgar / estar colgado | to hang
+V legen haben gelegt | poner (tumbado) | to lay / put
+V stellen haben gestellt | poner (de pie) | to stand / put
+N die Wand Wände | la pared | wall
+N das Kissen Kissen | el cojín | cushion
+N die Gewohnheit Gewohnheiten | la costumbre | habit
+V veröffentlichen haben veröffentlicht | publicar | to publish
+V zählen haben gezählt | contar | to count
+N die Stufe Stufen | el escalón / el nivel | step / level
+X ADV runter | abajo | down
+N die Mathematik - | las matemáticas | mathematics
+N die Mathe - | las mates | maths
+X ADJ gespannt | expectante | eager / curious
+N die Buchhandlung Buchhandlungen | la librería | bookshop
+V riechen haben gerochen | oler | to smell
+V gucken haben geguckt | mirar | to look
+N der Händler Händler | el comerciante | dealer
+N die Händlerin Händlerinnen | la comerciante | dealer (f)
+X ADV außen | fuera | outside
+X ADV innen | dentro | inside
+V abschneiden haben abgeschnitten | cortar | to cut off
+X ADJ komplett | completo | complete
+V verlassen haben verlassen | dejar / abandonar | to leave
+V kontrollieren haben kontrolliert | controlar / revisar | to check
+V schneiden haben geschnitten | cortar | to cut
+N die Briefmarke Briefmarken | el sello | stamp
+V aussuchen haben ausgesucht | elegir | to pick out
+X ADJ ähnlich | parecido | similar
+X ADJ süß | dulce / mono | sweet / cute
+X ADJ ungewöhnlich | inusual | unusual
+N der Gegenstand Gegenstände | el objeto | object
+N die Garderobe Garderoben | el perchero | coat rack
+N das Heft Hefte | el cuaderno | notebook
+N der Lautsprecher Lautsprecher | el altavoz | loudspeaker
+N das Plakat Plakate | el cartel | poster
+N das Poster Poster | el póster | poster
+N der Radiergummi Radiergummis | la goma de borrar | eraser
+N der Block Blöcke | el bloc | notepad
+N der Zettel Zettel | la nota (papel) | note / slip
+N der Ordner Ordner | la carpeta | folder
+N die Fortbildung Fortbildungen | la formación continua | further training
+N der Patient Patienten | el paciente | patient
+N die Patientin Patientinnen | la paciente | patient (f)
+V pflegen haben gepflegt | cuidar | to care for
+N die Büroarbeit Büroarbeiten | el trabajo de oficina | office work
+N die Betreffzeile Betreffzeilen | la línea de asunto | subject line
+N die Pflegefachfrau Pflegefachfrauen | la enfermera | nurse (f)
+N der Pflegefachmann Pflegefachmänner | el enfermero | nurse
+N die Pflegefachkraft Pflegefachkräfte | el profesional de enfermería | nursing professional
+N das Fortbildungsangebot Fortbildungsangebote | la oferta de formación | training offer
+N der Trick Tricks | el truco | trick
+N die Kursdauer - | la duración del curso | course length
+X ADJ vorletzt | penúltimo | second to last
+N die Beschreibung Beschreibungen | la descripción | description
+N das Gericht Gerichte | el plato / el tribunal | dish / court
+N der Trainer Trainer | el entrenador | coach
+N die Trainerin Trainerinnen | la entrenadora | coach (f)
+N der Anfänger Anfänger | el principiante | beginner
+N die Anfängerin Anfängerinnen | la principiante | beginner (f)
+N der Erwachsene Erwachsenen | el adulto | adult
+N die Erwachsene Erwachsenen | la adulta | adult (f)
+N der Beitrag Beiträge | la contribución / la publicación | contribution / post
+N der Anhang Anhänge | el adjunto | attachment
+@10
+N der E-Scooter E-Scooter | el patinete eléctrico | e-scooter
+N das Mietauto Mietautos | el coche de alquiler | rental car
+X ADV dafür | para eso / a favor | for it / in favour
+V versprechen haben versprochen | prometer | to promise
+X ADV definitiv | definitivamente | definitely
+X ADP gegenüber | enfrente de | opposite
+N die Reihe Reihen | la fila | row
+N der Stau Staus | el atasco | traffic jam
+V unternehmen haben unternommen | hacer (actividades) | to do / undertake
+X ADJ herrlich | maravilloso | wonderful
+N der Bäcker Bäcker | el panadero | baker
+N die Bäckerin Bäckerinnen | la panadera | baker (f)
+X ADV endlich | por fin | finally
+N das Chaos - | el caos | chaos
+V folgen sein gefolgt | seguir | to follow
+X ADJ vorsichtig | cuidadoso | careful
+V überholen haben überholt | adelantar | to overtake
+N das Leihrad Leihräder | la bici de alquiler | rental bike
+N der Verkehr - | el tráfico | traffic
+N das Verkehrsmittel Verkehrsmittel | el medio de transporte | means of transport
+N der Zebrastreifen Zebrastreifen | el paso de cebra | zebra crossing
+N der Bürgersteig Bürgersteige | la acera | pavement
+N die Fußgängerzone Fußgängerzonen | la zona peatonal | pedestrian zone
+N der Gehweg Gehwege | la acera | footpath
+N die Autobahn Autobahnen | la autopista | motorway
+N die Ausfahrt Ausfahrten | la salida | exit
+N die Umleitung Umleitungen | el desvío | diversion
+N der Unfall Unfälle | el accidente | accident
+N der Pkw Pkws | el turismo (coche) | car
+@11
+N die Überquerung Überquerungen | la travesía | crossing
+N die Aussicht Aussichten | la vista | view
+N das Camping - | el camping | camping
+N die Sauna Saunen | la sauna | sauna
+N das Luxushotel Luxushotels | el hotel de lujo | luxury hotel
+N die Wanderung Wanderungen | la excursión a pie | hike
+N der Bergführer Bergführer | el guía de montaña | mountain guide
+N die Bergführerin Bergführerinnen | la guía de montaña | mountain guide (f)
+V erreichen haben erreicht | alcanzar / llegar a | to reach
+V überqueren haben überquert | cruzar | to cross
+V träumen haben geträumt | soñar | to dream
+N die Chance Chancen | la oportunidad | chance
+N das Gebirge Gebirge | la cordillera | mountain range
+N der Knochen Knochen | el hueso | bone
+N der Muskel Muskeln | el músculo | muscle
+X ADV plötzlich | de repente | suddenly
+N der Stein Steine | la piedra | stone
+X ADV vorher | antes | beforehand
+N der Zucker - | el azúcar | sugar
+N die Kreuzfahrt Kreuzfahrten | el crucero | cruise
+N das Kajak Kajaks | el kayak | kayak
+V reduzieren haben reduziert | reducir | to reduce
+N das Prozent Prozente | el por ciento | percent
+X PHRASE die meisten | la mayoría | most
+X ADV rund | aproximadamente | around
+N die Hälfte Hälften | la mitad | half
+N das Viertel Viertel | el cuarto | quarter
+X DET einige | algunos | some
+N das Wellness - | el bienestar (spa) | wellness
+N das Abenteuer Abenteuer | la aventura | adventure
+N das Reisegepäck - | el equipaje | luggage
+N die Zahnbürste Zahnbürsten | el cepillo de dientes | toothbrush
+N die Zahnpasta - | la pasta de dientes | toothpaste
+N die Sonnencreme Sonnencremes | la crema solar | sunscreen
+N das Pflaster Pflaster | la tirita | plaster
+N das Handtuch Handtücher | la toalla | towel
+N der Schlafsack Schlafsäcke | el saco de dormir | sleeping bag
+N das Ladegerät Ladegeräte | el cargador | charger
+N das Taschenmesser Taschenmesser | la navaja | pocket knife
+N die Taschenlampe Taschenlampen | la linterna | torch
+@12
+X PHRASE Kopf hoch! | ¡ánimo! | chin up!
+V ansehen haben angesehen | mirar | to look at
+V rufen haben gerufen | llamar (gritar) | to call
+X ADJ freiwillig | voluntario | voluntary
+V erfahren haben erfahren | enterarse | to find out
+N der Freiwillige Freiwilligen | el voluntario | volunteer
+N die Freiwillige Freiwilligen | la voluntaria | volunteer (f)
+N die Betreuung - | la atención / el cuidado | care
+X ADV gleichzeitig | al mismo tiempo | at the same time
+X ADV bereits | ya | already
+N die Voraussetzung Voraussetzungen | el requisito | requirement
+X ADJ gültig | válido | valid
+X ADV eventuell | posiblemente | possibly
+N die Ausnahme Ausnahmen | la excepción | exception
+N die Öffnungszeit Öffnungszeiten | el horario de apertura | opening hours
+N die Demonstration Demonstrationen | la manifestación | demonstration
+N die Anmeldung Anmeldungen | la inscripción | registration
+X ADJ historisch | histórico | historic
+N die Tankstelle Tankstellen | la gasolinera | petrol station
+N der Saal Säle | la sala | hall
+V ausleihen haben ausgeliehen | prestar / tomar prestado | to lend / borrow
+V leihen haben geliehen | prestar | to lend
+N der Eintritt Eintritte | la entrada | admission
+X ADJ öffentlich | público | public
+N die Linie Linien | la línea | line
+N die Gefahr Gefahren | el peligro | danger
+N die Innenstadt Innenstädte | el centro de la ciudad | city centre
+V kopieren haben kopiert | copiar | to copy
+X ADJ ehrlich | sincero | honest
+N die Erfahrung Erfahrungen | la experiencia | experience
+N die Leitung Leitungen | la dirección | management / leadership
+V unterstützen haben unterstützt | apoyar | to support
+V leiten haben geleitet | dirigir | to lead
+N die Geduld - | la paciencia | patience
+X ADV eben | justamente / pues | just / simply
+N die Enttäuschung Enttäuschungen | la decepción | disappointment
+X CONJ ob | si (pregunta indirecta) | whether
+N das Visum Visa | el visado | visa
+N der Pass Pässe | el pasaporte | passport
+N der Reisepass Reisepässe | el pasaporte | passport
+N der Ausweis Ausweise | el documento de identidad | ID card
+N der Personalausweis Personalausweise | el DNI | identity card
+N der Lebenslauf Lebensläufe | el currículum | CV
+N die Bewerbung Bewerbungen | la solicitud de empleo | application
+N die Staatsangehörigkeit Staatsangehörigkeiten | la nacionalidad | nationality
+N der Familienstand - | el estado civil | marital status
+N die Anschrift Anschriften | la dirección | address
+N der Zugang Zugänge | el acceso | access
+N die Grafik Grafiken | el gráfico | chart
+N die Software - | el software | software
+N die Umfrage Umfragen | la encuesta | survey
+N das Jobticket Jobtickets | el abono de transporte de empresa | job ticket
+N das Monatsticket Monatstickets | el abono mensual | monthly ticket
+N das Drittel Drittel | el tercio | third
+N das Diagramm Diagramme | el diagrama | diagram
+N das Säulendiagramm Säulendiagramme | el gráfico de columnas | column chart
+N das Tortendiagramm Tortendiagramme | el gráfico circular | pie chart
+N das Balkendiagramm Balkendiagramme | el gráfico de barras | bar chart
+N das Ergebnis Ergebnisse | el resultado | result
+V präsentieren haben präsentiert | presentar | to present
