@@ -614,7 +614,7 @@ async function viewDrill(code) {
     $app.innerHTML = `
       <div class="card hero review-done">
         <p class="eyebrow">Grammatik</p>
-        <h1>${right === items.length ? "Perfekt! 🎉" : "Gut gemacht!"}</h1>
+        <h1>${right === items.length ? "Perfekt! 🎉" : right / items.length >= 0.6 ? "Gut gemacht!" : "Dranbleiben! 💪"}</h1>
         <p>${right} von ${items.length} richtig.</p>
       </div>
       ${codes.length ? `<div class="card"><h3>Nochmal üben</h3>${codes.map(([c, name]) => `
