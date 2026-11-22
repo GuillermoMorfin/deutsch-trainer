@@ -86,6 +86,25 @@ def test_prompt_contains_lists_and_personal_context(conn):
     assert "Lektion 1" in p
 
 
+def test_questions_with_blocked_grammar_are_retried_then_dropped(conn):
+    class BadQuestions(FakeWriter):
+        calls = 0
+
+        def questions(self, system, prompt):
+            BadQuestions.calls += 1
+            good = Question(type="true_false", prompt="Marco ist in Berlin.", options=["richtig", "falsch"],
+                            answer="richtig")
+            bad = Question(type="short_answer", prompt="Was lernt die Person, die erzählt?", options=[],
+                           answer="Du lernst Deutsch.")
+            return [good, bad]
+
+    w = BadQuestions(bad_drafts=0)
+    result = generator.generate_text(conn, w, seed=8)
+    assert BadQuestions.calls == 2  # one retry with feedback
+    prompts = [r[0] for r in conn.execute("SELECT prompt FROM question WHERE text_id = ?", (result.text_id,))]
+    assert prompts == ["Marco ist in Berlin."]
+
+
 def test_gives_up_after_three_repairs(conn):
     w = FakeWriter(always_bad=True)
     with pytest.raises(GenerationError):
@@ -137,12 +156,53 @@ def test_api_flow_with_fake_writer(client):
         app.dependency_overrides.clear()
 
 
-def test_generate_without_key_is_503(client, monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.delenv("ANTHROPIC_AUTH_TOKEN", raising=False)
+def test_generate_without_claude_code_is_503(client, monkeypatch):
+    import app.llm as llm
+    monkeypatch.setattr(llm, "find_claude_cli", lambda: None)
     r = client.post("/api/texts/generate", json={})
-    assert r.status_code == 503 and "ANTHROPIC_API_KEY" in r.json()["detail"]
+    assert r.status_code == 503 and "Claude Code" in r.json()["detail"]
     assert client.get("/api/llm/status").json()["configured"] is False
+
+
+FAKE_CLI = """#!/usr/bin/env python3
+import json, os, sys
+args = sys.argv[1:]
+schema = json.loads(args[args.index("--json-schema") + 1])
+prompt = sys.stdin.read()
+log = {"args": args, "prompt": prompt, "has_key": "ANTHROPIC_API_KEY" in os.environ, "cwd": os.getcwd()}
+open(os.environ["FAKE_CLI_LOG"], "w").write(json.dumps(log))
+if "body" in schema["properties"]:
+    out = {"title": "T", "body": "Das ist gut.", "summary": "s"}
+else:
+    out = {"items": []}
+print(json.dumps({"type": "result", "is_error": False, "structured_output": out, "result": ""}))
+"""
+
+
+def test_claude_code_writer_runs_cli_safely(tmp_path, monkeypatch):
+    from app.llm import ClaudeCodeWriter
+    cli = tmp_path / "claude"
+    cli.write_text(FAKE_CLI)
+    cli.chmod(0o755)
+    log = tmp_path / "log.json"
+    monkeypatch.setenv("FAKE_CLI_LOG", str(log))
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-should-not-leak")
+    draft = ClaudeCodeWriter(cli=str(cli)).write("SYS", "PROMPT über Berlin")
+    assert draft.body == "Das ist gut."
+    seen = json.loads(log.read_text())
+    assert seen["prompt"] == "PROMPT über Berlin"           # prompt goes via stdin
+    assert seen["has_key"] is False                          # never bills the API
+    assert "--tools" in seen["args"] and seen["args"][seen["args"].index("--tools") + 1] == ""
+    assert "German app" not in seen["cwd"]                   # runs outside the project
+
+
+def test_claude_code_error_becomes_generation_error(tmp_path):
+    from app.llm import ClaudeCodeWriter
+    cli = tmp_path / "claude"
+    cli.write_text("#!/bin/sh\necho '{\"is_error\": true, \"result\": \"usage limit reached\"}'\n")
+    cli.chmod(0o755)
+    with pytest.raises(GenerationError, match="usage limit"):
+        ClaudeCodeWriter(cli=str(cli)).write("S", "P")
 
 
 def test_word_state_override(client):

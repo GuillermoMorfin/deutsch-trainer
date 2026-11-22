@@ -3,11 +3,24 @@ pipeline can be tested with a fake writer (see tests/test_generator.py)."""
 
 from __future__ import annotations
 
+import json
 import os
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
 from typing import Literal, Protocol
 
 import anthropic
 from pydantic import BaseModel, Field
+
+# Which backend writes the texts:
+#   "claude-code" (default): the local Claude Code CLI, i.e. the learner's existing Claude subscription.
+#   "api": the paid Anthropic API (needs ANTHROPIC_API_KEY).
+WRITER = os.environ.get("TRAINER_WRITER", "claude-code")
+CC_GEN_MODEL = os.environ.get("TRAINER_CC_GEN_MODEL", "sonnet")
+CC_GLOSS_MODEL = os.environ.get("TRAINER_CC_GLOSS_MODEL", "haiku")
+CC_TIMEOUT = int(os.environ.get("TRAINER_CC_TIMEOUT", "300"))
 
 GEN_MODEL = os.environ.get("TRAINER_GEN_MODEL", "claude-sonnet-5-5")      # texts, repairs, questions
 GLOSS_MODEL = os.environ.get("TRAINER_GLOSS_MODEL", "claude-haiku-5-5")   # glosses for new words
@@ -119,3 +132,64 @@ class ClaudeWriter:
         if response.stop_reason == "refusal" or response.parsed_output is None:
             return []
         return response.parsed_output.items
+
+
+# ---- Claude Code CLI implementation (no API key, uses the existing subscription) -----------
+
+def find_claude_cli() -> str | None:
+    return shutil.which("claude") or next(
+        (str(p) for p in (Path.home() / ".local/bin/claude", Path("/opt/homebrew/bin/claude")) if p.exists()), None)
+
+
+class ClaudeCodeWriter:
+    """Runs `claude -p` headless with structured output. No tools, no project files, no MCP:
+    the call can only return JSON matching the schema."""
+
+    def __init__(self, cli: str | None = None):
+        self.cli = cli or find_claude_cli()
+        if not self.cli:
+            raise LLMUnavailable("Claude Code wurde nicht gefunden. Installiere es oder melde dich mit "
+                                 "`claude` im Terminal an, dann den Server neu starten.")
+
+    def _run(self, prompt: str, schema: dict, *, model: str, system: str) -> dict:
+        env = {k: v for k, v in os.environ.items()
+               # never let a key in the environment switch this to paid API billing
+               if k not in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")}
+        cmd = [self.cli, "-p", "--output-format", "json", "--json-schema", json.dumps(schema),
+               "--model", model, "--tools", "", "--system-prompt", system,
+               "--no-session-persistence", "--strict-mcp-config", "--disable-slash-commands"]
+        with tempfile.TemporaryDirectory() as cwd:  # empty folder: no CLAUDE.md, no project context
+            try:
+                proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
+                                      timeout=CC_TIMEOUT, cwd=cwd, env=env)
+            except subprocess.TimeoutExpired as e:
+                raise GenerationError("Claude Code hat zu lange gebraucht.") from e
+        try:
+            out = json.loads(proc.stdout)
+        except json.JSONDecodeError:
+            msg = (proc.stderr or proc.stdout).strip()[:300]
+            if "login" in msg.lower() or "auth" in msg.lower():
+                raise LLMUnavailable(f"Claude Code ist nicht angemeldet: {msg}")
+            raise GenerationError(f"Claude Code Fehler: {msg or 'keine Ausgabe'}")
+        if out.get("is_error") or out.get("structured_output") is None:
+            raise GenerationError(f"Claude Code: {str(out.get('result') or out.get('subtype'))[:300]}")
+        return out["structured_output"]
+
+    def write(self, system: str, prompt: str) -> Draft:
+        return Draft.model_validate(self._run(prompt, Draft.model_json_schema(), model=CC_GEN_MODEL, system=system))
+
+    def questions(self, system: str, prompt: str) -> list[Question]:
+        data = self._run(prompt, QuestionSet.model_json_schema(), model=CC_GEN_MODEL, system=system)
+        return QuestionSet.model_validate(data).questions
+
+    def gloss(self, prompt: str) -> list[Gloss]:
+        try:
+            data = self._run(prompt, GlossSet.model_json_schema(), model=CC_GLOSS_MODEL,
+                             system="You write concise bilingual dictionary entries for German words.")
+            return GlossSet.model_validate(data).items
+        except GenerationError:
+            return []  # glosses are a nice-to-have; the text is still usable
+
+
+def default_writer() -> Writer:
+    return ClaudeWriter() if WRITER == "api" else ClaudeCodeWriter()

@@ -19,7 +19,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from . import generator, srs  # noqa: E402
 from .db import connect, row_to_dict, rows_to_dicts, transaction  # noqa: E402
-from .llm import ClaudeWriter, GenerationError, LLMUnavailable, Writer  # noqa: E402
+from .llm import GenerationError, LLMUnavailable, Writer, default_writer  # noqa: E402
 from .seed import seed_all
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
@@ -235,7 +235,7 @@ def review_card(card_id: int, body: ReviewAnswer, db: sqlite3.Connection = Depen
 # ---- reader ---------------------------------------------------------------------------
 
 def get_writer() -> Writer:
-    return ClaudeWriter()
+    return default_writer()
 
 
 @app.get("/api/llm/status")

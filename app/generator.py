@@ -88,7 +88,15 @@ allowed conjunctions. Prefer short main clauses.
 Content: an everyday story about the learner's life in Berlin, written so it is interesting to read: a small \
 problem, a plan, a conversation. Use the PERSONAL CONTEXT and keep recurring characters consistent with \
 earlier texts in the series (narrow reading: same theme, same people, new situation). Dialogue in quotation \
-marks is welcome. Write natural German a native speaker would accept, never a word list in disguise."""
+marks is welcome. Write natural German a native speaker would accept, never a word list in disguise.
+The narrator is "ich" (the learner). Do not invent facts about the learner's past, hometown, family or \
+job beyond the PERSONAL CONTEXT; invent freely for the other characters."""
+
+QUESTION_SYSTEM = """You write comprehension questions for a German A2.1 learner about a text they just read. \
+Use only simple words that appear in the text or are very basic, and the same simple grammar as the text: \
+no relative clauses, no passive, no genitive, no Präteritum except war/hatte. The narrator "ich" of the text is \
+the learner, so ask about the narrator with "du" (e.g. "Was machst du am Sonntag?"). \
+Test understanding of meaning, not memory of exact sentences."""
 
 
 def personal_context() -> str:
@@ -275,16 +283,30 @@ def generate_text(conn: sqlite3.Connection, writer: Writer, *, lesson_number: in
              report.coverage, json.dumps(sorted(target_ids)), json.dumps(report.to_dict(), ensure_ascii=False)))
         text_id = cur.lastrowid
 
-    questions = writer.questions(
-        "You write comprehension questions for a German A2.1 learner. Use only simple words that appear in "
-        "the text or are very basic. Test understanding of meaning, not memory of exact sentences.",
-        f"Write 5 questions about this text: 2 true_false, 2 multiple_choice (3 options), 1 short_answer "
-        f"that can be answered in one short German sentence.\n\nTitle: {draft.title}\n\n{draft.body}")
+    questions = checked_questions(writer, draft, lex, unlocked)
     with transaction(conn):
         for q in questions[:6]:
             conn.execute("INSERT INTO question (text_id, type, prompt, options, answer) VALUES (?, ?, ?, ?, ?)",
                          (text_id, q.type, q.prompt, json.dumps(q.options, ensure_ascii=False), q.answer))
     return Result(text_id, report, attempts)
+
+
+def checked_questions(writer: Writer, draft: Draft, lex, unlocked: set[str]) -> list:
+    """Questions get the same grammar check as the text: one retry with feedback, then drop offenders."""
+    ask = (f"Write 5 questions about this text: 2 true_false, 2 multiple_choice (3 options), 1 short_answer "
+           f"that can be answered in one short German sentence.\n\nTitle: {draft.title}\n\n{draft.body}")
+    questions = writer.questions(QUESTION_SYSTEM, ask)
+
+    def problems(q) -> list:
+        return analyse(" ".join([q.prompt, *q.options, q.answer]), lex, unlocked)[1].grammar
+
+    bad = [(q, problems(q)) for q in questions]
+    bad = [(q, p) for q, p in bad if p]
+    if bad:
+        notes = "\n".join(f"- \"{q.prompt}\" uses forbidden grammar ({p[0].code} at '{p[0].text}')" for q, p in bad)
+        questions = writer.questions(QUESTION_SYSTEM, f"{ask}\n\nA checker rejected earlier questions:\n{notes}\n"
+                                                      "Rewrite all 5 without these structures.")
+    return [q for q in questions if not problems(q)]
 
 
 # ---- after reading ---------------------------------------------------------------------

@@ -27,6 +27,8 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
   plural/Partizip forms, pronoun/modal forms, strong-verb vowel swaps); targets win lookups; grammar
   checks map to `grammar_point.code`. `tests/fixtures/lesson_texts.py` holds one text per lesson that must pass.
 - `app/generator.py` pipeline; `app/llm.py` is the only place that calls Claude (`Writer` protocol;
-  tests use a fake writer, never the API).
+  tests use a fake writer, never the API). Default writer is `ClaudeCodeWriter` (`claude -p` on the
+  learner's subscription; strips ANTHROPIC_API_KEY so it can never bill the API). The learner does not
+  want to pay for API usage: keep Claude Code the default.
 - `static/` front end (hash router in `app.js`), served by FastAPI; `sw.js` at root scope.
 - Tests: `uv run pytest`. Each test gets its own DB via `TRAINER_DB`.
