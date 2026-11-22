@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS settings (
     gloss_language      TEXT NOT NULL DEFAULT 'es',
     daily_new_word_cap  INTEGER NOT NULL DEFAULT 8,
     target_retention    REAL NOT NULL DEFAULT 0.9,
-    session_minutes     INTEGER NOT NULL DEFAULT 20,
+    session_minutes     INTEGER NOT NULL DEFAULT 30,
     current_lesson      INTEGER NOT NULL DEFAULT 1,
     umlaut_ascii_ok     INTEGER NOT NULL DEFAULT 0     -- accept "ae" for "ä" only if opted in
 );

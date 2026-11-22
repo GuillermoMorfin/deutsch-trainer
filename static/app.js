@@ -61,7 +61,9 @@ async function viewHome() {
   const errors = p.top_errors.filter((e) => e.grammar_code);
   const l = o.current_lesson;
   const d = p.done_today;
-  const steps = [["warmup", "Aufwärmen"], ["review", "Wortschatz"], ["text", "Lesen"], ["drill", "Grammatik"], ["write", "Schreiben"]];
+  const minutes = o.settings.session_minutes;
+  const steps = [["warmup", "Aufwärmen"], ["review", "Wortschatz"], ["text", "Lesen"], ["drill", "Grammatik"], ["write", "Schreiben"],
+    ...(minutes >= 30 ? [["speak", "Sprechen"]] : [])];
   const allDone = steps.every(([k]) => d[k] || (k === "warmup"));
   $app.innerHTML = `
     <p class="eyebrow">Momente ${esc(l.book || "A2.1")} · Deutsch-Trainer</p>
@@ -72,7 +74,7 @@ async function viewHome() {
       <div class="stat"><b>${p.streak}${p.streak ? " 🔥" : ""}</b><span>Tage Serie</span></div>
     </div>
     <div class="card hero session-card">
-      <p class="eyebrow">Heute · ca. 20 Minuten</p>
+      <p class="eyebrow">Heute · ca. ${minutes} Minuten</p>
       <h2>${allDone ? "Heute schon geschafft! 🎉" : "Deine Session"}</h2>
       <ul class="checklist">${steps.map(([k, label]) => `<li class="${d[k] ? "done" : ""}">${d[k] ? "✓" : "○"} ${label}</li>`).join("")}</ul>
       <a class="btn big" href="#/session/full">${allDone ? "Noch eine Session" : "Heutige Session starten"}</a>
@@ -466,6 +468,11 @@ async function viewSettings() {
         </select>
       </div>
       <div class="field">
+        <label for="minutes">Länge der täglichen Session</label>
+        <select id="minutes">${[[20, "20 Minuten · kompakt"], [30, "30 Minuten · mit Sprechen"], [40, "40 Minuten · intensiv"]].map(([v, l]) =>
+          `<option value="${v}" ${v === s.session_minutes ? "selected" : ""}>${l}</option>`).join("")}</select>
+      </div>
+      <div class="field">
         <label for="cap">Neue Wörter pro Tag</label>
         <input id="cap" type="number" min="0" max="50" value="${s.daily_new_word_cap}" inputmode="numeric">
       </div>
@@ -534,6 +541,7 @@ async function viewSettings() {
   $app.querySelector("#save").addEventListener("click", async () => {
     await api("/settings", { method: "PUT", body: {
       current_lesson: +$app.querySelector("#cur").value,
+      session_minutes: +$app.querySelector("#minutes").value,
       daily_new_word_cap: +$app.querySelector("#cap").value,
       target_retention: +$app.querySelector("#ret").value,
       umlaut_ascii_ok: $app.querySelector("#ascii").checked,
@@ -1077,11 +1085,11 @@ async function viewWrite(opts = {}) {
 
 // ---- new words: quick in-session recall before they enter spaced review ------------------
 
-async function viewNewWords(textId, onDone) {
+async function viewNewWords(textId, onDone, rounds = 2) {
   const d = await api(`/texts/${textId}`);
   const words = d.text.target_lemma_ids.map((id) => d.lemmas[id]).filter(Boolean);
   if (!words.length) return onDone();
-  const ROUNDS = 2;
+  const ROUNDS = rounds;
   let round = 1, queue = [...words], retry = [];
   const sentence = (w) => {
     // the sentence from the text, for context
@@ -1149,7 +1157,9 @@ async function viewSession(mode) {
   const renderBar = () => {
     $bar.hidden = false;
     $bar.innerHTML = `<div class="session-steps">${steps.map((st, n) =>
-      `<span class="step ${n < i ? "done" : n === i ? "on" : ""}">${n < i ? "✓ " : ""}${esc(st.label)}</span>`).join("")}</div>`;
+      `<span class="step ${n < i ? "done" : n === i ? "on" : ""}">${n < i ? "✓ " : ""}${esc(st.label)}</span>`).join("")}
+      <button class="skip-step" title="Diesen Schritt überspringen">Überspringen ›</button></div>`;
+    $bar.querySelector(".skip-step").addEventListener("click", () => { stopSpeaking(); keyHandler = null; next(); });
   };
   const next = () => { i += 1; run(); };
 
@@ -1191,9 +1201,10 @@ async function viewSession(mode) {
       if (!textId) { steps.splice(i, 2); return run(); } // skip text + new words
       return viewText(textId, { onDone: next });
     }
-    if (st.kind === "newwords") return textId ? viewNewWords(textId, next) : next();
+    if (st.kind === "newwords") return textId ? viewNewWords(textId, next, st.rounds) : next();
     if (st.kind === "drill") return viewDrill(null, { n: st.n, onDone: next });
     if (st.kind === "write") return viewWrite({ onDone: next });
+    if (st.kind === "speak") return viewSpeak({ onDone: next });
     next();
   };
 
@@ -1202,7 +1213,7 @@ async function viewSession(mode) {
     const p = await api("/progress");
     const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
     $app.innerHTML = `<div class="card hero review-done">
-      <p class="eyebrow">${mode === "quick" ? "Quick 5" : "Heutige Session"}</p>
+      <p class="eyebrow">${mode === "quick" ? "Quick 5" : `Heutige Session · ${plan.minutes} Minuten geplant`}</p>
       <h1>Geschafft! 🎉</h1>
       <p>${mins} Minuten · Serie: <strong>${p.streak} ${p.streak === 1 ? "Tag" : "Tage"}</strong></p>
       <a class="btn" href="#/progress">Fortschritt ansehen</a>
@@ -1342,9 +1353,14 @@ function recorder(onText, onState) {
   return { start, stop };
 }
 
-async function viewSpeak() {
+// writing tasks reused for speaking: "Schreib …" → "Sag …"
+const asSpoken = (t) => ({ ...t,
+  prompt: t.prompt.replace(/\bSchreib\b/g, "Sag").replace(/\bschreib\b/g, "sag"),
+  prompt_es: t.prompt_es.replace(/\bEscribe\b/g, "Di").replace(/\bescribe\b/g, "di") });
+
+async function viewSpeak(opts = {}) {
   const [task, hist] = await Promise.all([api("/writing/prompt"), api("/writing?limit=5&kind=speak")]);
-  let current = task;
+  let current = asSpoken(task);
   const render = () => {
     $app.innerHTML = `
       <h1>Sprechen</h1>
@@ -1379,7 +1395,7 @@ async function viewSpeak() {
     });
     $mic?.addEventListener("click", () => ($mic.classList.contains("on") ? rec.stop() : rec.start()));
     $app.querySelector("#other").addEventListener("click", async () => {
-      current = await api(`/writing/prompt?exclude=${encodeURIComponent(current.prompt)}`); render();
+      current = asSpoken(await api(`/writing/prompt?exclude=${encodeURIComponent(task.prompt)}`)); render();
     });
     $send.addEventListener("click", async () => {
       rec?.stop();
@@ -1395,7 +1411,7 @@ async function viewSpeak() {
             <div class="toolbar"><button class="btn secondary" id="listen">▶ Anhören</button>
               ${SpeechRec ? `<button class="btn secondary" id="shadow">🎙 Nachsprechen</button>` : ""}</div>
             <p class="diff" id="shadow-out"></p></div>
-          <button class="btn" id="again">Neue Aufgabe</button>`;
+          ${doneButton(opts, `<button class="btn" id="again">Neue Aufgabe</button>`)}`;
         $r.querySelector("#listen").addEventListener("click", () => speak(r.corrected));
         const $out = $r.querySelector("#shadow-out");
         const shadow = recorder((t) => { $out.innerHTML = diffHTML(t, r.corrected, true); }, (on) => {
@@ -1406,7 +1422,8 @@ async function viewSpeak() {
           }
         });
         $r.querySelector("#shadow")?.addEventListener("click", (e) => (e.target.textContent.startsWith("■") ? shadow.stop() : shadow.start()));
-        $r.querySelector("#again").addEventListener("click", () => route());
+        $r.querySelector("#again")?.addEventListener("click", () => route());
+        wireDone(opts);
         $r.scrollIntoView({ behavior: "smooth" });
       } catch (err) {
         $st.textContent = `Das hat nicht geklappt: ${err.message.replace(/^\d+ /, "")}`; $send.disabled = false;
@@ -1425,7 +1442,7 @@ const routes = [
   [/^#\/review$/, "home", () => viewReview()],
   [/^#\/read$/, "read", viewReadList],
   [/^#\/write$/, "home", () => viewWrite()],
-  [/^#\/speak$/, "home", viewSpeak],
+  [/^#\/speak$/, "home", () => viewSpeak()],
   [/^#\/session\/(full|quick)$/, "home", (m) => viewSession(m[1])],
   [/^#\/progress$/, "progress", viewProgress],
   [/^#\/listen$/, "read", viewListen],

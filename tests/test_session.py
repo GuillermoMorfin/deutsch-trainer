@@ -59,7 +59,7 @@ def test_done_today_flags(conn):
 
 def test_full_plan_without_history_skips_warmup(conn):
     p = session.plan(conn, "full")
-    assert [s["kind"] for s in p["steps"]] == ["review", "text", "newwords", "drill", "write"]
+    assert [s["kind"] for s in p["steps"]] == ["review", "text", "newwords", "drill", "write", "speak"]
     assert [s["kind"] for s in session.plan(conn, "quick")["steps"]] == ["review", "drill"]
 
 
@@ -114,3 +114,31 @@ def test_concurrent_requests_do_not_share_a_connection(client):
     with ThreadPoolExecutor(max_workers=8) as pool:
         codes = list(pool.map(lambda p: client.get(p).status_code, paths))
     assert set(codes) == {200}
+
+
+@pytest.mark.parametrize("minutes, review, rounds, drills, speak", [
+    (20, 40, 2, 8, False), (30, 60, 3, 12, True), (40, 80, 3, 16, True)])
+def test_plan_scales_with_session_length(conn, minutes, review, rounds, drills, speak):
+    conn.execute("UPDATE settings SET session_minutes = ?", (minutes,))
+    p = session.plan(conn, "full")
+    by = {s["kind"]: s for s in p["steps"]}
+    assert p["minutes"] == minutes
+    assert by["review"]["limit"] == review and by["newwords"]["rounds"] == rounds and by["drill"]["n"] == drills
+    assert ("speak" in by) is speak
+
+
+def test_default_session_is_30_minutes(conn):
+    assert conn.execute("SELECT session_minutes FROM settings").fetchone()[0] == 30
+
+
+def test_speaking_counts_for_today(conn):
+    from tests.test_writing import FakeTeacher
+    from app import writing
+    writing.submit(conn, FakeTeacher([]), task="t", text="ich bin gelaufen", kind="speak")
+    d = progress.done_today(conn)
+    assert d["speak"] and not d["write"]
+
+
+def test_session_minutes_setting_validated(client):
+    assert client.put("/api/settings", json={"session_minutes": 30}).status_code == 200
+    assert client.put("/api/settings", json={"session_minutes": 25}).status_code == 422

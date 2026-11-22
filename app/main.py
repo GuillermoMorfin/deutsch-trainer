@@ -154,7 +154,7 @@ class SettingsUpdate(BaseModel):
     current_lesson: int | None = Field(None, ge=1, le=99)
     daily_new_word_cap: int | None = Field(None, ge=0, le=50)
     target_retention: float | None = Field(None, ge=0.7, le=0.97)
-    session_minutes: int | None = Field(None, ge=5, le=60)
+    session_minutes: Literal[20, 30, 40] | None = None
     umlaut_ascii_ok: bool | None = None
 
 

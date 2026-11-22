@@ -378,3 +378,6 @@ code { font-size: .85em; background: var(--cream-200); padding: 1px 5px; border-
 .typo-diff { font: 1.15rem var(--font-read); letter-spacing: .02em; margin-top: 6px; color: var(--ink-900); }
 .typo-diff del { color: var(--bad); background: var(--bad-bg); text-decoration-thickness: 2px; }
 .typo-diff ins { color: var(--ok); background: var(--ok-bg); text-decoration: none; font-weight: 700; }
+.session-steps { align-items: center; }
+.skip-step { margin-left: auto; flex: 0 0 auto; border: 0; background: transparent; color: var(--accent-strong);
+  font: 600 .75rem var(--font-ui); cursor: pointer; padding: 4px 6px; white-space: nowrap; }

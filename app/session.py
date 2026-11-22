@@ -70,8 +70,23 @@ def prepare_text(conn: sqlite3.Connection, writer_factory: Callable[[], Writer],
     return text_status(conn)
 
 
+# Session sizes by length. The extra time goes where it helps most: more cards, an extra recall
+# round, more drills, and a speaking task (output), keeping the four strands roughly balanced.
+SIZES = {
+    20: {"review": 40, "rounds": 2, "drills": 8, "speak": False},
+    30: {"review": 60, "rounds": 3, "drills": 12, "speak": True},
+    40: {"review": 80, "rounds": 3, "drills": 16, "speak": True},
+}
+
+
+def size_for(minutes: int) -> tuple[int, dict]:
+    m = min(SIZES, key=lambda k: abs(k - minutes))
+    return m, SIZES[m]
+
+
 def plan(conn: sqlite3.Connection, mode: str = "full") -> dict:
     due = srs.due_count(conn)
+    minutes, size = size_for(conn.execute("SELECT session_minutes FROM settings WHERE id = 1").fetchone()[0])
     if mode == "quick":
         steps = [{"kind": "review", "label": "Wortschatz", "limit": 20, "due": due},
                  {"kind": "drill", "label": "Grammatik", "n": 3}]
@@ -81,10 +96,12 @@ def plan(conn: sqlite3.Connection, mode: str = "full") -> dict:
         if warm:
             steps.append({"kind": "warmup", "label": "Aufwärmen", "text_id": warm["id"], "title": warm["title"]})
         steps += [
-            {"kind": "review", "label": "Wortschatz", "limit": 40, "due": due},
+            {"kind": "review", "label": "Wortschatz", "limit": size["review"], "due": due},
             {"kind": "text", "label": "Neuer Text"},
-            {"kind": "newwords", "label": "Neue Wörter"},
-            {"kind": "drill", "label": "Grammatik", "n": 8},
+            {"kind": "newwords", "label": "Neue Wörter", "rounds": size["rounds"]},
+            {"kind": "drill", "label": "Grammatik", "n": size["drills"]},
             {"kind": "write", "label": "Schreiben"},
         ]
-    return {"mode": mode, "steps": steps, **text_status(conn)}
+        if size["speak"]:
+            steps.append({"kind": "speak", "label": "Sprechen"})
+    return {"mode": mode, "minutes": minutes if mode == "full" else 5, "steps": steps, **text_status(conn)}

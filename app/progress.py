@@ -48,8 +48,11 @@ def done_today(conn: sqlite3.Connection) -> dict[str, bool]:
                              AND date(ts, 'localtime') = date('now', 'localtime') LIMIT 1""").fetchone() is not None
     read = conn.execute("""SELECT 1 FROM reading_log WHERE kind = 'read'
                            AND date(ts, 'localtime') = date('now', 'localtime') LIMIT 1""").fetchone() is not None
+    wrote = lambda kind: conn.execute(  # noqa: E731
+        """SELECT 1 FROM writing WHERE kind = ? AND date(ts, 'localtime') = date('now', 'localtime')
+           LIMIT 1""", (kind,)).fetchone() is not None
     return {"warmup": reread, "review": q("review_log"), "text": read, "drill": q("drill_attempt"),
-            "write": q("writing")}
+            "write": wrote("write"), "speak": wrote("speak")}
 
 
 def lesson_mastery(conn: sqlite3.Connection) -> list[dict]:
