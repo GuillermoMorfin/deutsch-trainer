@@ -29,8 +29,19 @@ def connect(path: Path | str | None = None) -> sqlite3.Connection:
     return conn
 
 
+# Columns added after the first release; CREATE TABLE IF NOT EXISTS doesn't add them to old DBs.
+MIGRATIONS = [
+    ("text", "summary", "TEXT"),
+    ("text", "report_json", "TEXT"),
+]
+
+
 def init_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+    for table, column, decl in MIGRATIONS:
+        cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+        if column not in cols:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
     conn.execute("INSERT OR IGNORE INTO settings (id) VALUES (1)")
     conn.commit()
 
@@ -46,7 +57,7 @@ def transaction(conn: sqlite3.Connection) -> Iterator[sqlite3.Connection]:
 
 
 JSON_FIELDS = {"grammar_points", "redemittel", "target_lemma_ids", "wpm_log",
-               "options", "feedback_json", "missed_exercise_ids", "annotations"}
+               "options", "feedback_json", "missed_exercise_ids", "annotations", "report_json"}
 
 
 def row_to_dict(row: sqlite3.Row | None) -> dict | None:

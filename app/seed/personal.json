@@ -1,0 +1,12 @@
+{
+  "_comment": "Personal context for generated texts. Edit freely; the app reads it on every generation.",
+  "narrator": "Ich (the learner): studies in the MAAI programme at ESMT in Berlin-Mitte, trains for a marathon, cycles everywhere, native Spanish speaker learning German",
+  "partner_name": "",
+  "partner_noun": "",
+  "friends": ["Marco"],
+  "recurring_characters": {
+    "Marco": "a friend from the A1 stories; outgoing, moved to Berlin, lives in a WG in Prenzlauer Berg, likes football and cooking"
+  },
+  "places": ["Berlin-Mitte", "Prenzlauer Berg", "die Spree", "der Tiergarten", "die ESMT", "Tempelhofer Feld"],
+  "interests": ["running and marathon training", "cycling", "cooking", "studying"]
+}

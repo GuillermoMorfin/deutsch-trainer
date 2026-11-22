@@ -214,6 +214,7 @@ X ADV abends | por las noches | in the evenings
 N die Einheit Einheiten | la sesión / la unidad | session / unit
 V verdoppeln haben verdoppelt | duplicar | to double
 X PHRASE an deiner Stelle | yo que tú | if I were you
+N die Stelle Stellen | el lugar / el puesto | place / position
 X PRON niemand | nadie | nobody
 X ADJ häufig | frecuente | frequent
 N das Kilogramm Kilogramm | el kilogramo | kilogram

@@ -33,7 +33,9 @@ function wordHTML(w) {
   if (w.pos === "NOUN" && w.plural) extras.push(w.plural === "-" ? "kein Plural" : `Pl. die ${esc(w.plural)}`);
   if (w.pos === "VERB" && w.partizip2) extras.push(`${w.aux === "sein" ? "ist" : "hat"} ${esc(w.partizip2)}`);
   return `<li class="word">
-    <div><span class="state-dot ${esc(w.state)}" title="${esc(w.state)}"></span><span class="de">${art}${esc(w.lemma)}</span>
+    <div><button class="state-dot ${esc(w.state)}" data-word="${w.id}" data-state="${esc(w.state)}"
+      title="${w.state === "known" ? "bekannt (tippen zum Zurücksetzen)" : "Als bekannt markieren"}"
+      aria-label="Status: ${esc(w.state)}"></button><span class="de">${art}${esc(w.lemma)}</span>
       ${extras.length ? `<div class="extra">${extras.join(" · ")}</div>` : ""}</div>
     <div class="es">${esc(w.gloss_es || "")}</div>
   </li>`;
@@ -77,8 +79,9 @@ async function viewHome() {
       <a class="btn" href="#/review">Jetzt wiederholen</a>
     </div>
     <div class="card">
-      <h3>Heutige Session</h3>
-      <p class="small muted">Lesen, Grammatik und Schreiben kommen in den nächsten Bauphasen.</p>
+      <h3>Lesen</h3>
+      <p class="small muted">Kurze Texte über dein Leben in Berlin, fast nur mit Wörtern, die du kennst.</p>
+      <a class="btn secondary" href="#/read">Zum Lesen</a>
     </div>`;
 }
 
@@ -240,6 +243,17 @@ async function viewReview() {
 }
 
 let keyHandler = null;
+
+// Word lists: tap the dot to mark a word as already known (or undo it).
+document.addEventListener("click", async (e) => {
+  const dot = e.target.closest("[data-word]");
+  if (!dot) return;
+  const next = dot.dataset.state === "known" ? "new" : "known";
+  await api(`/words/${dot.dataset.word}/state`, { method: "PUT", body: { state: next } });
+  dot.dataset.state = next;
+  dot.className = `state-dot ${next}`;
+  toast(next === "known" ? "Als bekannt markiert" : "Zurückgesetzt");
+});
 document.addEventListener("keydown", (e) => {
   if (keyHandler && !(e.target instanceof HTMLInputElement)) keyHandler(e);
 });
@@ -394,6 +408,163 @@ async function viewSettings() {
   });
 }
 
+// ---- reader -----------------------------------------------------------------
+
+async function viewReadList() {
+  const [o, status] = await Promise.all([api("/overview"), api("/llm/status")]);
+  const n = o.current_lesson.number;
+  const texts = await api("/texts");
+  const mine = texts.filter((t) => t.lesson_number === n);
+  const older = texts.filter((t) => t.lesson_number !== n);
+  const row = (t) => `<li><a class="lesson-row" href="#/text/${t.id}">
+      <span class="num">${t.lesson_number}</span>
+      <span class="body"><span class="title">${esc(t.title)}</span>
+        <span class="meta">${pct(t.coverage)} bekannt · ${t.read_count ? `${t.read_count}× gelesen` : "neu"}</span></span></a></li>`;
+  $app.innerHTML = `
+    <h1>Lesen</h1>
+    <div class="card hero">
+      <p class="eyebrow">Lektion ${n} · ${esc(o.current_lesson.theme)}</p>
+      <p class="small">Ein neuer Text über dein Leben in Berlin, mit ca. 96–98 % bekannten Wörtern und 4 neuen Wörtern aus der Lektion.</p>
+      ${status.configured ? `<button class="btn" id="gen">Neuen Text schreiben</button>`
+        : `<p class="small warning-box">${esc(status.message)}</p>`}
+      <p class="small muted" id="gen-status" hidden></p>
+    </div>
+    <h2>Lektion ${n}</h2>
+    ${mine.length ? `<ul class="lesson-list">${mine.map(row).join("")}</ul>` : `<p class="empty">Noch keine Texte für diese Lektion.</p>`}
+    ${older.length ? `<h2>Frühere Lektionen</h2><ul class="lesson-list">${older.map(row).join("")}</ul>` : ""}`;
+  const btn = $app.querySelector("#gen");
+  if (btn) btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    const st = $app.querySelector("#gen-status");
+    st.hidden = false;
+    const steps = ["Claude schreibt den Text…", "Wörter und Grammatik werden geprüft…", "Unbekannte Wörter werden ersetzt…", "Fragen werden geschrieben…"];
+    let i = 0;
+    st.textContent = steps[0];
+    const tick = setInterval(() => { i = Math.min(i + 1, steps.length - 1); st.textContent = steps[i]; }, 15000);
+    try {
+      const r = await api("/texts/generate", { method: "POST", body: {} });
+      location.hash = `#/text/${r.text_id}`;
+    } catch (e) {
+      st.textContent = `Das hat nicht geklappt: ${e.message.replace(/^\d+ /, "")}`;
+      btn.disabled = false;
+    } finally { clearInterval(tick); }
+  });
+}
+
+function speak(text, onEnd) {
+  if (!("speechSynthesis" in window)) { toast("Vorlesen wird hier nicht unterstützt"); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "de-DE";
+  u.rate = 0.9;
+  const voice = speechSynthesis.getVoices().find((v) => v.lang.startsWith("de"));
+  if (voice) u.voice = voice;
+  u.onend = onEnd;
+  speechSynthesis.speak(u);
+}
+
+async function viewText(id) {
+  const d = await api(`/texts/${id}`);
+  const { text: t, tokens, lemmas, questions } = d;
+  const started = Date.now();
+  const paragraphs = [[]];
+  tokens.forEach((tok, i) => tok.br ? (paragraphs.at(-1).length && paragraphs.push([])) : paragraphs.at(-1).push([tok, i]));
+  const plain = tokens.map((tk) => tk.br ? "\n" : tk.t + tk.ws).join("");
+
+  $app.innerHTML = `
+    <p class="eyebrow"><a href="#/read">← Lesen</a> · Lektion ${t.lesson_number} · ${pct(t.coverage)} bekannt</p>
+    <h1>${esc(t.title)}</h1>
+    <div class="toolbar">
+      <button class="btn secondary" id="speak">▶ Vorlesen</button>
+      <span class="small muted" style="align-self:center">Tippe auf ein Wort für die Übersetzung.</span>
+    </div>
+    <article class="reading">${paragraphs.filter((p) => p.length).map((p) => `<p>${p.map(([tok, i]) =>
+      tok.id ? `<span class="tok${tok.target ? " target" : ""}" data-i="${i}" role="button" tabindex="0">${esc(tok.t)}</span>${esc(tok.ws)}`
+             : `${esc(tok.t)}${esc(tok.ws)}`).join("")}</p>`).join("")}</article>
+    <button class="btn" id="done-reading">Fertig gelesen</button>
+    <section id="questions" hidden></section>
+    <div class="sheet" id="sheet" hidden></div>`;
+
+  // tap-to-gloss
+  const $sheet = $app.querySelector("#sheet");
+  const show = (i) => {
+    const tok = tokens[i], w = lemmas[tok.id];
+    if (!w) return;
+    $app.querySelectorAll(".tok.on").forEach((e) => e.classList.remove("on"));
+    $app.querySelector(`[data-i="${i}"]`).classList.add("on");
+    $sheet.hidden = false;
+    $sheet.innerHTML = `
+      <button class="sheet-close" aria-label="Schließen">✕</button>
+      <div class="flash-word small-word">${w.article ? `<span class="art ${w.article}">${w.article}</span> ` : ""}${esc(w.lemma)}</div>
+      ${formsHTML(w) ? `<div class="small muted">${formsHTML(w)}</div>` : ""}
+      <div class="flash-gloss">${esc(w.gloss_es || "—")}</div>
+      <div class="small muted">${esc(w.gloss_en || "")}</div>
+      ${tok.note ? `<p class="small note">${esc(tok.note)}</p>` : ""}
+      ${tok.target ? `<span class="chip amber">Neues Wort dieser Lektion</span>` : `<span class="chip">${esc(w.state)}</span>`}`;
+    $sheet.querySelector(".sheet-close").addEventListener("click", () => { $sheet.hidden = true; });
+  };
+  $app.querySelectorAll(".tok").forEach((el) => {
+    el.addEventListener("click", () => show(+el.dataset.i));
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter") show(+el.dataset.i); });
+  });
+
+  // audio
+  const $speak = $app.querySelector("#speak");
+  let speaking = false;
+  $speak.addEventListener("click", () => {
+    if (speaking) { speechSynthesis.cancel(); speaking = false; $speak.textContent = "▶ Vorlesen"; return; }
+    speaking = true; $speak.textContent = "■ Stopp";
+    speak(plain, () => { speaking = false; $speak.textContent = "▶ Vorlesen"; });
+  });
+
+  // comprehension
+  const $q = $app.querySelector("#questions");
+  $app.querySelector("#done-reading").addEventListener("click", (ev) => {
+    ev.target.hidden = true;
+    $sheet.hidden = true;
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    const seconds = (Date.now() - started) / 1000;
+    $q.hidden = false;
+    $q.innerHTML = `<h2>Verstanden?</h2>${questions.map((q, n) => `
+      <div class="card question" data-q="${q.id}">
+        <p><strong>${n + 1}.</strong> ${esc(q.prompt)}</p>
+        ${q.type === "short_answer"
+          ? `<textarea rows="2" lang="de" spellcheck="false" placeholder="Antwort auf Deutsch…"></textarea>
+             <button class="btn secondary check">Lösung zeigen</button>`
+          : `<div class="options">${q.options.map((o) => `<button class="opt" data-a="${esc(o)}">${esc(o)}</button>`).join("")}</div>`}
+        <p class="small q-feedback" hidden></p>
+      </div>`).join("")}
+      <button class="btn" id="finish">Abschließen</button>`;
+    $q.querySelectorAll(".question").forEach((box) => {
+      const qid = box.dataset.q, fb = box.querySelector(".q-feedback");
+      box.querySelectorAll(".opt").forEach((b) => b.addEventListener("click", async () => {
+        if (box.dataset.answered) return;
+        box.dataset.answered = "1";
+        const r = await api(`/questions/${qid}/check`, { method: "POST", body: { answer: b.dataset.a } });
+        b.classList.add(r.correct ? "right" : "wrong");
+        if (!r.correct) box.querySelector(`.opt[data-a="${CSS.escape(r.answer)}"]`)?.classList.add("right");
+        fb.hidden = false;
+        fb.textContent = r.correct ? "Richtig!" : `Richtig wäre: ${r.answer}`;
+      }));
+      box.querySelector(".check")?.addEventListener("click", async () => {
+        const r = await api(`/questions/${qid}/check`, { method: "POST", body: { answer: box.querySelector("textarea").value } });
+        fb.hidden = false;
+        fb.textContent = `Mögliche Antwort: ${r.answer}`;
+      });
+    });
+    $q.querySelector("#finish").addEventListener("click", async (e2) => {
+      e2.target.disabled = true;
+      const r = await api(`/texts/${id}/finish`, { method: "POST", body: { seconds } });
+      $q.insertAdjacentHTML("beforeend", `<div class="card hero" style="margin-top:14px">
+        <h3>Super! 🎉</h3>
+        <p class="small">${r.introduced ? `${r.introduced} neue Wörter sind jetzt in deinen Karten.` : "Alle Wörter sind schon in deinen Karten."}
+          ${r.wpm ? ` Lesetempo: ${r.wpm} Wörter/Minute.` : ""}</p>
+        <a class="btn" href="#/review">Neue Wörter üben</a></div>`);
+    });
+    $q.scrollIntoView({ behavior: "smooth" });
+  });
+}
+
 // ---- router ----------------------------------------------------------------
 
 const routes = [
@@ -401,6 +572,8 @@ const routes = [
   [/^#\/lessons$/, "lessons", viewLessons],
   [/^#\/lesson\/(\d+)$/, "lessons", (m) => viewLesson(m[1])],
   [/^#\/review$/, "home", viewReview],
+  [/^#\/read$/, "read", viewReadList],
+  [/^#\/text\/(\d+)$/, "read", (m) => viewText(m[1])],
   [/^#\/words$/, "words", viewWords],
   [/^#\/settings$/, "settings", viewSettings],
 ];

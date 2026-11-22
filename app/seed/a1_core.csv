@@ -462,3 +462,44 @@ hallo,INTJ,,,,,hola,hello
 danke,INTJ,,,,,gracias,thanks
 bitte,INTJ,,,,,por favor,please
 tschüss,INTJ,,,,,adiós,bye
+so,ADV,,,,,so / tan,so
+doch,ADV,,,,,sí (contradiciendo) / pues,yes (contradicting) / after all
+mal,ADV,,,,,una vez / (partícula),once / just
+als,CONJ,,,,,que (comparativo) / como,than / as
+mehr,ADV,,,,,más,more
+alle,DET,,,,,todos,all
+ander,ADJ,,,,,otro,other
+einmal,ADV,,,,,una vez,once
+paar,DET,,,,,un par de (ein paar),a few
+zurück,ADV,,,,,de vuelta,back
+fast,ADV,,,,,casi,almost
+gleich,ADV,,,,,enseguida / igual,right away / same
+bald,ADV,,,,,pronto,soon
+erst,ADV,,,,,solo / primero,only / first
+sofort,ADV,,,,,inmediatamente,immediately
+unterwegs,ADV,,,,,de camino,on the way
+also,ADV,,,,,entonces / o sea,so / therefore
+noch einmal,PHRASE,,,,,otra vez,once more
+viel,DET,,,,,mucho,a lot of
+unser,DET,,,,,nuestro,our
+euer,DET,,,,,vuestro,your (pl.)
+dieser,DET,,,,,este,this
+ein bisschen,PHRASE,,,,,un poco,a little
+bisschen,DET,,,,,poco,bit
+Spaziergang,NOUN,der,Spaziergänge,,,el paseo,walk
+spazieren gehen,PHRASE,,,,,ir de paseo,to go for a walk
+freuen,VERB,,,haben,gefreut,alegrarse,to be pleased
+Januar,NOUN,der,-,,,enero,Januar
+Februar,NOUN,der,-,,,febrero,Februar
+März,NOUN,der,-,,,marzo,March
+April,NOUN,der,-,,,abril,April
+Mai,NOUN,der,-,,,mayo,Mai
+Juni,NOUN,der,-,,,junio,Juni
+Juli,NOUN,der,-,,,julio,Juli
+August,NOUN,der,-,,,agosto,August
+September,NOUN,der,-,,,septiembre,September
+Oktober,NOUN,der,-,,,octubre,Oktober
+November,NOUN,der,-,,,noviembre,November
+Dezember,NOUN,der,-,,,diciembre,Dezember
+genug,ADV,,,,,suficiente,enough
+hoch,ADJ,,,,,alto,high

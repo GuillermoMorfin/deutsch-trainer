@@ -14,6 +14,10 @@ uv run pytest
 To open it on your phone on home Wi-Fi, start it with `--host 0.0.0.0` and visit
 `http://<laptop-ip>:8000`, then "Add to Home Screen".
 
+## Claude API
+
+Copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY`. Models: `TRAINER_GEN_MODEL` (default `claude-sonnet-5-5`, with server-side refusal fallback) and `TRAINER_GLOSS_MODEL` (default `claude-haiku-5-5`). Personal story context lives in `app/seed/personal.json`.
+
 ## Data
 
 - `data/trainer.db`: SQLite, created and seeded on first start (git-ignored).
@@ -30,7 +34,7 @@ Import a word list: `uv run python -m app.seed --import words.csv --lesson 3`
 
 1. ✅ Foundation: schema, seeds, lesson/word browser, design tokens, PWA shell
 2. ✅ Vocab SRS: FSRS cards, recognise (reveal + self-rate) → produce (typed, article + umlaut checked)
-3. Reader + verifier (Claude generation → spaCy coverage check → repair loop)
+3. ✅ Reader + verifier: Claude (Sonnet 5.5) writes → spaCy verifier checks coverage + blocked grammar → up to 3 repairs → Haiku glosses new words → tap-to-gloss reader, audio, comprehension questions
 4. Grammar drills + error log
 5. Writing feedback
 6. Daily session + progress dashboard + audio

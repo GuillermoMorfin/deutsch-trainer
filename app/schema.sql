@@ -87,6 +87,8 @@ CREATE TABLE IF NOT EXISTS text (
     title             TEXT NOT NULL,
     body              TEXT NOT NULL,
     annotations       TEXT,                           -- JSON token annotations for tap-to-gloss
+    summary           TEXT,                           -- one-line English summary for series continuity
+    report_json       TEXT,                           -- verifier report of the accepted draft
     coverage          REAL,
     target_lemma_ids  TEXT NOT NULL DEFAULT '[]',
     audio_url         TEXT,

@@ -228,3 +228,36 @@ input:focus, select:focus, textarea:focus, .btn:focus-visible { outline: 2px sol
 .feedback.bad { background: var(--die-bg); color: var(--die); }
 .feedback .muted { color: var(--ink-500); }
 .review-done { text-align: center; }
+
+/* Word state dot doubles as a "mark as known" button */
+button.state-dot { border: 0; padding: 0; cursor: pointer; width: 12px; height: 12px; position: relative; }
+button.state-dot::after { content: ""; position: absolute; inset: -14px; } /* 40px tap target */
+
+/* Reader */
+.reading { font: 1.15rem/1.85 var(--font-read); margin: 8px 0 20px; }
+.reading p { margin: 0 0 1em; }
+.tok { cursor: pointer; border-radius: 4px; transition: background .15s; }
+.tok:hover, .tok:focus-visible { background: var(--cream-200); outline: none; }
+.tok.target { text-decoration: underline; text-decoration-color: var(--amber-400);
+  text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.tok.on { background: var(--amber-400); color: var(--ink-900); }
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: calc(var(--nav-h) + env(safe-area-inset-bottom)); z-index: 20;
+  max-width: 720px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg) var(--r-lg) 0 0; box-shadow: 0 -6px 24px rgba(43, 33, 24, .14);
+  padding: 18px var(--gutter) 20px; text-align: center;
+}
+.sheet .flash-gloss { margin-top: 6px; }
+.sheet .note { margin: 8px 0; color: var(--ink-700); }
+.sheet-close { position: absolute; top: 8px; right: 10px; width: 40px; height: 40px; border: 0;
+  background: transparent; font-size: 1.1rem; cursor: pointer; color: var(--muted); }
+.question p { margin-bottom: 8px; }
+.options { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { min-height: 44px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--border);
+  background: var(--cream-50); cursor: pointer; font-weight: 600; color: var(--ink-900); }
+.opt.right { background: var(--das-bg); border-color: var(--das); color: var(--das); }
+.opt.wrong { background: var(--die-bg); border-color: var(--die); color: var(--die); }
+.question textarea { width: 100%; margin-bottom: 8px; }
+.q-feedback { margin-top: 8px; font-weight: 600; }
+.warning-box { background: var(--cream-200); border-left: 4px solid var(--amber-500); padding: 8px 12px; border-radius: var(--r-sm); }
+.nav a { font-size: .68rem; }

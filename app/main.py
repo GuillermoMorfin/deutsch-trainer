@@ -13,8 +13,13 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import srs
-from .db import connect, row_to_dict, rows_to_dicts, transaction
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+from . import generator, srs  # noqa: E402
+from .db import connect, row_to_dict, rows_to_dicts, transaction  # noqa: E402
+from .llm import ClaudeWriter, GenerationError, LLMUnavailable, Writer  # noqa: E402
 from .seed import seed_all
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
@@ -225,6 +230,111 @@ def review_card(card_id: int, body: ReviewAnswer, db: sqlite3.Connection = Depen
         raise HTTPException(404, f"Card {card_id} not found")
     except ValueError as e:
         raise HTTPException(422, str(e))
+
+
+# ---- reader ---------------------------------------------------------------------------
+
+def get_writer() -> Writer:
+    return ClaudeWriter()
+
+
+@app.get("/api/llm/status")
+def llm_status():
+    try:
+        get_writer()
+        return {"configured": True}
+    except LLMUnavailable as e:
+        return {"configured": False, "message": str(e)}
+
+
+class GenerateRequest(BaseModel):
+    lesson: int | None = Field(None, ge=1, le=12)
+
+
+@app.post("/api/texts/generate")
+def generate_text(body: GenerateRequest, db: sqlite3.Connection = Depends(get_db)):
+    """Slow (30-90 s): writes, verifies and repairs a text, then writes its questions."""
+    try:
+        writer = app.dependency_overrides.get(get_writer, get_writer)()
+        result = generator.generate_text(db, writer, lesson_number=body.lesson)
+    except LLMUnavailable as e:
+        raise HTTPException(503, str(e))
+    except GenerationError as e:
+        raise HTTPException(502, str(e))
+    return {"text_id": result.text_id, "coverage": result.report.coverage, "attempts": result.attempts}
+
+
+@app.get("/api/texts")
+def list_texts(lesson: int | None = None, db: sqlite3.Connection = Depends(get_db)):
+    sql = """SELECT t.id, t.title, t.summary, t.coverage, t.read_count, t.created_at, l.number AS lesson_number
+             FROM text t JOIN lesson l ON l.id = t.lesson_id"""
+    args: list = []
+    if lesson is not None:
+        sql += " WHERE l.number = ?"
+        args.append(lesson)
+    return rows_to_dicts(db.execute(sql + " ORDER BY t.id DESC", args).fetchall())
+
+
+@app.get("/api/texts/{text_id}")
+def get_text(text_id: int, db: sqlite3.Connection = Depends(get_db)):
+    t = row_to_dict(db.execute(
+        """SELECT t.*, l.number AS lesson_number, l.theme FROM text t JOIN lesson l ON l.id = t.lesson_id
+           WHERE t.id = ?""", (text_id,)).fetchone())
+    if t is None:
+        raise HTTPException(404, f"Text {text_id} not found")
+    ids = sorted({tok["id"] for tok in t["annotations"] if tok.get("id")})
+    lemmas = {r["id"]: r for r in rows_to_dicts(db.execute(
+        f"""SELECT m.id, m.lemma, m.pos, m.article, m.plural, m.aux, m.partizip2, m.gloss_es, m.gloss_en,
+                   COALESCE(k.state, 'unseen') AS state
+            FROM lemma m LEFT JOIN known_word k ON k.lemma_id = m.id
+            WHERE m.id IN ({','.join('?' * len(ids))})""", ids).fetchall())} if ids else {}
+    questions = [{k: q[k] for k in ("id", "type", "prompt", "options")} for q in rows_to_dicts(
+        db.execute("SELECT * FROM question WHERE text_id = ? ORDER BY id", (text_id,)).fetchall())]
+    return {"text": {k: t[k] for k in ("id", "title", "lesson_number", "theme", "coverage", "read_count",
+                                       "target_lemma_ids", "wpm_log", "created_at")},
+            "tokens": t["annotations"], "lemmas": lemmas, "questions": questions}
+
+
+class QuestionAnswer(BaseModel):
+    answer: str = Field(..., max_length=500)
+
+
+@app.post("/api/questions/{question_id}/check")
+def check_question(question_id: int, body: QuestionAnswer, db: sqlite3.Connection = Depends(get_db)):
+    q = row_to_dict(db.execute("SELECT * FROM question WHERE id = ?", (question_id,)).fetchone())
+    if q is None:
+        raise HTTPException(404, f"Question {question_id} not found")
+    if q["type"] == "short_answer":
+        return {"correct": None, "answer": q["answer"]}  # learner compares with the model answer
+    norm = lambda s: s.strip().lower().rstrip(".!")
+    return {"correct": norm(body.answer) == norm(q["answer"]), "answer": q["answer"]}
+
+
+class FinishReading(BaseModel):
+    seconds: float | None = Field(None, ge=0)
+
+
+@app.post("/api/texts/{text_id}/finish")
+def finish_text(text_id: int, body: FinishReading, db: sqlite3.Connection = Depends(get_db)):
+    try:
+        return generator.finish_reading(db, text_id, seconds=body.seconds)
+    except KeyError:
+        raise HTTPException(404, f"Text {text_id} not found")
+
+
+class WordState(BaseModel):
+    state: Literal["known", "learning", "new"]
+
+
+@app.put("/api/words/{lemma_id}/state")
+def set_word_state(lemma_id: int, body: WordState, db: sqlite3.Connection = Depends(get_db)):
+    """Manual override, e.g. 'I already know this word' from the word list."""
+    if not db.execute("SELECT 1 FROM lemma WHERE id = ?", (lemma_id,)).fetchone():
+        raise HTTPException(404, f"Word {lemma_id} not found")
+    with transaction(db):
+        db.execute("""INSERT INTO known_word (lemma_id, state) VALUES (?, ?)
+                      ON CONFLICT(lemma_id) DO UPDATE SET state = excluded.state""", (lemma_id, body.state))
+    return {"lemma_id": lemma_id, "state": body.state}
 
 
 @app.get("/api/health")
