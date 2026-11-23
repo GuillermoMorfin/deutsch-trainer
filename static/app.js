@@ -114,7 +114,7 @@ async function viewHome() {
   const d = p.done_today;
   const minutes = o.settings.session_minutes;
   const steps = [["warmup", "Aufwärmen", "sun"], ["review", "Wortschatz", "cards"], ["text", "Lesen", "book"],
-    ["drill", "Grammatik", "puzzle"], ["write", "Schreiben", "pen"], ...(minutes >= 30 ? [["speak", "Sprechen", "mic"]] : [])];
+    ["drill", "Grammatik", "puzzle"], ["write", "Schreiben", "pen"]];
   const doneCount = steps.filter(([k]) => d[k]).length;
   const allDone = steps.every(([k]) => d[k] || k === "warmup");
   $app.innerHTML = `
@@ -156,7 +156,7 @@ async function viewHome() {
     <p class="section-title">Einzeln üben</p>
     <div class="tile-grid">
       ${[["#/review", "cards", "Karten"], ["#/read", "book", "Lesen"], ["#/drill", "puzzle", "Grammatik"], ["#/write", "pen", "Schreiben"],
-         ["#/speak", "mic", "Sprechen"], ["#/listen", "headphones", "Hören"]].map(([href, ic, label]) =>
+         ["#/listen", "headphones", "Hören"]].map(([href, ic, label]) =>
         `<a class="tile" href="${href}"><span class="tile-ico">${icon(ic)}</span>${label}</a>`).join("")}
     </div>`;
 }
@@ -584,7 +584,7 @@ async function viewSettings() {
       </div>
       <div class="field">
         <label for="minutes">Länge der täglichen Session</label>
-        <select id="minutes">${[[20, "20 Minuten · kompakt"], [30, "30 Minuten · mit Sprechen"], [40, "40 Minuten · intensiv"]].map(([v, l]) =>
+        <select id="minutes">${[[20, "20 Minuten · kompakt"], [30, "30 Minuten · ausführlich"], [40, "40 Minuten · intensiv"]].map(([v, l]) =>
           `<option value="${v}" ${v === s.session_minutes ? "selected" : ""}>${l}</option>`).join("")}</select>
       </div>
       <div class="field">
@@ -1183,7 +1183,7 @@ function feedbackHTML(r) {
   return `
     <div class="card">
       <h3>Korrigiert</h3>
-      <p class="diff">${diffHTML(r.submission, r.corrected, r.kind === "speak")}</p>
+      <p class="diff">${diffHTML(r.submission, r.corrected)}</p>
       ${r.praise ? `<p class="praise">${esc(r.praise)}</p>` : ""}
     </div>
     ${r.corrections.length ? `<h3>Die wichtigsten Punkte</h3>` : `<p class="empty">Keine Fehler gefunden. Super!</p>`}
@@ -1389,7 +1389,6 @@ async function viewSession(mode) {
     if (st.kind === "newwords") return viewNewWords(textId, next, st.rounds);
     if (st.kind === "drill") return viewDrill(null, { n: st.n, onDone: next });
     if (st.kind === "write") return viewWrite({ onDone: next });
-    if (st.kind === "speak") return viewSpeak({ onDone: next });
     next();
   };
 
@@ -1733,114 +1732,6 @@ async function viewListenTask(id) {
   };
 }
 
-// ---- speaking: browser speech-to-text → Claude feedback → listen & repeat -----------------
-
-const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-function recorder(onText, onState) {
-  // returns { start, stop } around the browser's speech recognition (de-DE)
-  if (!SpeechRec) return null;
-  let rec = null, finalText = "", running = false;
-  const start = () => {
-    finalText = "";
-    rec = new SpeechRec();
-    rec.lang = "de-DE"; rec.continuous = true; rec.interimResults = true;
-    rec.onresult = (e) => {
-      let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) finalText += e.results[i][0].transcript + " ";
-        else interim += e.results[i][0].transcript;
-      }
-      onText((finalText + interim).replace(/\s+/g, " ").trim());
-    };
-    rec.onerror = (e) => { if (e.error === "not-allowed") toast("Mikrofon nicht erlaubt"); };
-    rec.onend = () => { running = false; onState(false); };
-    rec.start(); running = true; onState(true);
-  };
-  const stop = () => { if (running && rec) rec.stop(); };
-  return { start, stop };
-}
-
-// writing tasks reused for speaking: "Schreib …" → "Sag …"
-const asSpoken = (t) => ({ ...t,
-  prompt: t.prompt.replace(/\bSchreib\b/g, "Sag").replace(/\bschreib\b/g, "sag"),
-  prompt_es: t.prompt_es.replace(/\bEscribe\b/g, "Di").replace(/\bescribe\b/g, "di") });
-
-async function viewSpeak(opts = {}) {
-  const [task, hist] = await Promise.all([api("/writing/prompt"), api("/writing?limit=5&kind=speak")]);
-  let current = asSpoken(task);
-  const render = () => {
-    $app.innerHTML = `
-      <h1>Sprechen</h1>
-      <div class="card hero">
-        <p class="eyebrow">Lektion ${current.lesson_number} · ${esc(current.theme)}</p>
-        <h2 class="task">${esc(current.prompt)}</h2>
-        <p class="small muted">${esc(current.prompt_es)}</p>
-        <div class="redemittel">${current.redemittel.map((r) => `<span class="chip">${esc(r)}</span>`).join("")}</div>
-        <button class="btn secondary small-btn" id="other">Andere Aufgabe</button>
-      </div>
-      <div class="card speak-card">
-        ${SpeechRec ? `<button class="mic" id="mic" aria-label="Aufnahme starten">🎙</button>
-          <p class="small muted" id="mic-state">Tippe auf das Mikrofon und sprich 2–4 Sätze.</p>`
-          : `<p class="small warning-box">Dein Browser kann keine Sprache erkennen (Chrome oder Safari können es). Du kannst deine Antwort auch tippen.</p>`}
-        <textarea id="said" rows="4" lang="de" spellcheck="false" placeholder="${SpeechRec ? "Hier erscheint, was du sagst…" : "Deine Antwort…"}"></textarea>
-        <button class="btn" id="send" disabled>Korrigieren</button>
-        <p class="small muted" id="status" hidden></p>
-        <p class="tiny muted">Die Spracherkennung läuft über deinen Browser (Chrome: Google, Safari: Apple). Gespeichert wird nur der Text.</p>
-      </div>
-      <section id="result"></section>
-      ${hist.length ? `<h2>Zuletzt gesprochen</h2>${hist.map((h) => `
-        <details class="card history"><summary><strong>${esc(h.prompt)}</strong>
-          <span class="small muted"> · ${esc(h.ts.slice(0, 10))}</span></summary>${feedbackHTML({ ...h, grammar: {} })}</details>`).join("")}` : ""}`;
-
-    const $said = $app.querySelector("#said"), $send = $app.querySelector("#send"), $mic = $app.querySelector("#mic");
-    const sync = () => { $send.disabled = !$said.value.trim(); };
-    $said.addEventListener("input", sync);
-    const rec = recorder((t) => { $said.value = t; sync(); }, (on) => {
-      if (!$mic) return;
-      $mic.classList.toggle("on", on);
-      $app.querySelector("#mic-state").textContent = on ? "Ich höre zu… Tippe nochmal zum Beenden." : "Fertig? Dann „Korrigieren“. Oder nochmal sprechen.";
-    });
-    $mic?.addEventListener("click", () => ($mic.classList.contains("on") ? rec.stop() : rec.start()));
-    $app.querySelector("#other").addEventListener("click", async () => {
-      current = asSpoken(await api(`/writing/prompt?exclude=${encodeURIComponent(task.prompt)}`)); render();
-    });
-    $send.addEventListener("click", async () => {
-      rec?.stop();
-      const $st = $app.querySelector("#status");
-      $send.disabled = true; $st.hidden = false; $st.textContent = "Claude hört sich deinen Text an (ca. 20 s)…";
-      try {
-        const r = await api("/writing", { method: "POST", body: { prompt: current.prompt, text: $said.value, kind: "speak" } });
-        $st.hidden = true; $send.hidden = true; $said.readOnly = true;
-        const $r = $app.querySelector("#result");
-        $r.innerHTML = feedbackHTML(r) + `
-          <div class="card"><h3>Jetzt du: Nachsprechen</h3>
-            <p class="small muted">Hör dir die korrigierte Version an und sprich sie nach.</p>
-            <div class="toolbar"><button class="btn secondary" id="listen">▶ Anhören</button>
-              ${SpeechRec ? `<button class="btn secondary" id="shadow">🎙 Nachsprechen</button>` : ""}</div>
-            <p class="diff" id="shadow-out"></p></div>
-          ${doneButton(opts, `<button class="btn" id="again">Neue Aufgabe</button>`)}`;
-        $r.querySelector("#listen").addEventListener("click", () => speak(r.corrected));
-        const $out = $r.querySelector("#shadow-out");
-        const shadow = recorder((t) => { $out.innerHTML = diffHTML(t, r.corrected, true); }, (on) => {
-          const b = $r.querySelector("#shadow"); b.textContent = on ? "■ Stopp" : "🎙 Nachsprechen";
-          if (!on && $out.textContent) {
-            const same = !$out.querySelector("del, ins");
-            $out.insertAdjacentHTML("beforeend", `<span class="small"> ${same ? "✓ Perfekt nachgesprochen!" : ""}</span>`);
-          }
-        });
-        $r.querySelector("#shadow")?.addEventListener("click", (e) => (e.target.textContent.startsWith("■") ? shadow.stop() : shadow.start()));
-        $r.querySelector("#again")?.addEventListener("click", () => route());
-        wireDone(opts);
-        $r.scrollIntoView({ behavior: "smooth" });
-      } catch (err) {
-        $st.textContent = `Das hat nicht geklappt: ${err.message.replace(/^\d+ /, "")}`; $send.disabled = false;
-      }
-    });
-  };
-  render();
-}
-
 // ---- router ----------------------------------------------------------------
 
 const routes = [
@@ -1850,7 +1741,6 @@ const routes = [
   [/^#\/review$/, "home", () => viewReview()],
   [/^#\/read$/, "read", viewReadList],
   [/^#\/write$/, "home", () => viewWrite()],
-  [/^#\/speak$/, "home", () => viewSpeak()],
   [/^#\/session\/(full|quick)$/, "home", (m) => viewSession(m[1])],
   [/^#\/progress$/, "progress", viewProgress],
   [/^#\/listen$/, "read", viewListen],

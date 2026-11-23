@@ -53,7 +53,7 @@ def done_today(conn: sqlite3.Connection) -> dict[str, bool]:
         """SELECT 1 FROM writing WHERE kind = ? AND date(ts, 'localtime') = date('now', 'localtime')
            LIMIT 1""", (kind,)).fetchone() is not None
     return {"warmup": reread, "review": q("review_log"), "text": read, "drill": q("drill_attempt"),
-            "write": wrote("write"), "speak": wrote("speak"), "listen": q("listen_log")}
+            "write": wrote("write"), "listen": q("listen_log")}
 
 
 def lesson_mastery(conn: sqlite3.Connection) -> list[dict]:

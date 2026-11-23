@@ -357,16 +357,6 @@ button.state-dot::after { content: ""; position: absolute; inset: -14px; } /* 40
 .lesson-row .title, .lesson-row .meta { display: block; }
 .lesson-row .meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* Speaking */
-.speak-card { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
-.speak-card textarea { width: 100%; font: 1.1rem/1.6 var(--font-read); }
-.speak-card .btn { width: 100%; }
-.mic { width: 84px; height: 84px; border-radius: 50%; border: 0; font-size: 2rem; cursor: pointer;
-  background: var(--accent); color: #fff; box-shadow: 0 6px 18px rgba(212, 138, 28, .35); }
-.mic.on { background: var(--bad); animation: pulse 1.2s ease-in-out infinite; }
-@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, .45); } 50% { box-shadow: 0 0 0 14px rgba(192, 57, 43, 0); } }
-@media (prefers-reduced-motion: reduce) { .mic.on { animation: none; } }
-.tiny { font-size: .72rem; }
 .quizlet em { font-style: normal; font-weight: 600; }
 code { font-size: .85em; background: var(--cream-200); padding: 1px 5px; border-radius: 4px; }
 

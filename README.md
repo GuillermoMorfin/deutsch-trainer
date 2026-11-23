@@ -45,7 +45,7 @@ Import a word list: `uv run python -m app.seed --import words.csv --lesson 3`
 4. ✅ Grammar drills + error log: gap / choice / word-order items (109 hand-written, more via Claude Code, all verifier-checked), error-weighted sessions, rule → bridge → example → warning feedback, missed book exercises boost their lesson
 5. ✅ Writing feedback: 3 tasks per lesson, Claude Code corrects minimally, max 3 points (lesson grammar first) with Spanish explanations, word diff, errors feed drills and word cards
 6. ✅ Daily session + progress + audio: one-button 20-min flow (warm-up re-read → cards → new text → new-word recall → drills → writing; the text is prepared in the background), Quick 5, progress page (streak, mastery, errors, WPM, 14-day activity), listening playlist
-7. ✅ Speaking practice, FSRS optimisation on your own reviews, Quizlet export; ready for Momente A2.2 (see below)
+7. ✅ FSRS optimisation on your own reviews, Quizlet export; ready for Momente A2.2 (see below). Speaking practice was built and later removed at the learner's request (speaks with a roommate instead).
 
 ## Adding Momente A2.2 (or another book)
 
@@ -62,9 +62,6 @@ The tests (`uv run pytest`) check that every Redemittel, drill and fixture only 
 
 ## Phase 7 extras
 
-- **Speaking** (`#/speak`): the browser's speech recognition (Chrome/Safari, `de-DE`) transcribes; Claude Code gives
-  the same focused feedback as for writing, told that the text is a transcript; listen to the corrected version and
-  repeat it with an instant word-by-word comparison.
 - **Quizlet**: copy or download any lesson's words (or all words you're learning) from the lesson page or *Wörter*.
 - **FSRS optimisation**: after 512 reviews, *Einstellungen → Wiederholungsplan anpassen* fits the scheduler to your
   own history. Needs `uv sync --extra optimizer` (PyTorch). CLI: `uv run python -m app.optimize`.

@@ -71,11 +71,11 @@ def prepare_text(conn: sqlite3.Connection, writer_factory: Callable[[], Writer],
 
 
 # Session sizes by length. The extra time goes where it helps most: more cards, an extra recall
-# round, more drills, and a speaking task (output), keeping the four strands roughly balanced.
+# round and more drills, keeping the four strands roughly balanced.
 SIZES = {
-    20: {"review": 40, "rounds": 2, "drills": 8, "speak": False},
-    30: {"review": 60, "rounds": 3, "drills": 12, "speak": True},
-    40: {"review": 80, "rounds": 3, "drills": 16, "speak": True},
+    20: {"review": 40, "rounds": 2, "drills": 8},
+    30: {"review": 60, "rounds": 3, "drills": 12},
+    40: {"review": 80, "rounds": 3, "drills": 16},
 }
 
 
@@ -108,6 +108,4 @@ def plan(conn: sqlite3.Connection, mode: str = "full") -> dict:
             {"kind": "drill", "label": "Grammatik", "n": size["drills"]},
             {"kind": "write", "label": "Schreiben"},
         ]
-        if size["speak"]:
-            steps.append({"kind": "speak", "label": "Sprechen"})
     return {"mode": mode, "minutes": minutes if mode == "full" else 5, "steps": steps, **text_status(conn)}

@@ -436,7 +436,6 @@ def writing_prompt(exclude: str | None = None, db: sqlite3.Connection = Depends(
 class WritingSubmit(BaseModel):
     prompt: str = Field(..., max_length=400)
     text: str = Field(..., max_length=writing.MAX_CHARS + 200)
-    kind: Literal["write", "speak"] = "write"
 
 
 @app.post("/api/writing")
@@ -444,7 +443,7 @@ def writing_submit(body: WritingSubmit, db: sqlite3.Connection = Depends(get_db)
     """Slow (~15-30 s): Claude corrects the text; errors go to the error log."""
     try:
         writer = app.dependency_overrides.get(get_writer, get_writer)()
-        return writing.submit(db, writer, task=body.prompt, text=body.text, kind=body.kind)
+        return writing.submit(db, writer, task=body.prompt, text=body.text)
     except ValueError as e:
         raise HTTPException(422, str(e))
     except LLMUnavailable as e:
@@ -454,9 +453,8 @@ def writing_submit(body: WritingSubmit, db: sqlite3.Connection = Depends(get_db)
 
 
 @app.get("/api/writing")
-def writing_history(limit: int = Query(10, ge=1, le=50), kind: Literal["write", "speak"] = "write",
-                    db: sqlite3.Connection = Depends(get_db)):
-    return writing.history(db, limit, kind)
+def writing_history(limit: int = Query(10, ge=1, le=50), db: sqlite3.Connection = Depends(get_db)):
+    return writing.history(db, limit)
 
 
 # ---- daily session + progress -------------------------------------------------------------

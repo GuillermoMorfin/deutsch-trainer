@@ -77,18 +77,6 @@ def test_ready_for_next_uses_last_lesson_in_db(conn):
     assert progress.summary(conn)["ready_for_next"] is True
 
 
-# ---- speaking ----------------------------------------------------------------------
-
-def test_speaking_feedback_is_flagged_as_transcript(conn):
-    t = FakeTeacher([])
-    writing.submit(conn, t, task="Erzähl von gestern.", text="gestern ich habe gelaufen", kind="speak")
-    assert "speech-to-text transcript" in t.prompts[0][1]
-    writing.submit(conn, t, task="t", text="Ich bin gelaufen.")
-    assert "transcript" not in t.prompts[1][1]
-    assert [h["kind"] for h in writing.history(conn, kind="speak")] == ["speak"]
-    assert [h["kind"] for h in writing.history(conn, kind="write")] == ["write"]
-
-
 # ---- FSRS optimisation ----------------------------------------------------------------
 
 def test_status_before_enough_reviews(conn):
