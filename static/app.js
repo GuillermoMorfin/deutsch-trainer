@@ -154,7 +154,7 @@ async function viewReview(opts = {}) {
   const start = await api("/review/start", { method: "POST", body: {
     new_words: opts.newWords ?? true, new_limit: opts.newLimit ?? null, limit } });
   let queue = start.queue;
-  let done = 0, correct = 0;
+  let done = 0, correct = 0, checksKnown = 0, checksNew = 0;
 
   const finish = () => {
     $app.innerHTML = `
@@ -162,6 +162,7 @@ async function viewReview(opts = {}) {
         <p class="eyebrow">Fertig für jetzt</p>
         <h1>Gut gemacht! 🎉</h1>
         <p>${done} Karten wiederholt${done ? ` · ${Math.round((correct / done) * 100)} % richtig` : ""}.</p>
+        ${checksKnown + checksNew ? `<p class="small">Alltagswörter: ${checksKnown} kanntest du schon, ${checksNew} lernst du jetzt.</p>` : ""}
         <p class="small muted">${done ? `Neue Wörter heute: ${start.new_today}. Die nächsten Karten plant FSRS für dich.` : "Gerade ist keine Karte fällig."}</p>
         ${doneButton(opts)}
       </div>`;
@@ -186,7 +187,8 @@ async function viewReview(opts = {}) {
     </div>
     <div class="progress"><i style="width:${pct(done / (done + queue.length + 1))}"></i></div>
     <p class="eyebrow">${c.direction === "produce" ? "Español → Deutsch" : "Deutsch → Español"}
-      ${c.lesson_number ? ` · Lektion ${c.lesson_number}` : " · A1"}${c.reps === 0 ? ' · <span class="chip amber">neu</span>' : ""}</p>`;
+      ${c.mode === "check" ? ' · <span class="chip amber">Alltag · Kennst du das?</span>'
+        : `${c.lesson_number ? ` · Lektion ${c.lesson_number}` : c.deck ? " · Alltag" : " · A1"}${c.reps === 0 ? ' · <span class="chip amber">neu</span>' : ""}`}</p>`;
 
   // Each card is graded exactly once: ignore double taps and keys pressed while saving.
   const graded = new Set();
@@ -284,8 +286,16 @@ async function viewReview(opts = {}) {
       }[r.check.verdict] || "✗ Leider falsch";
       const showLetters = ["typo", "umlaut"].includes(r.check.verdict) ||
         (r.check.verdict === "wrong_article" && r.check.given.trim());
-      fb.innerHTML = `<strong>${verdictLine}</strong>
-        ${showLetters ? `<div class="typo-diff" aria-label="Unterschied">${charDiffHTML(r.check.given.trim(), r.check.expected)}</div>` : ""}
+      const checkLine = r.check_result === "known"
+        ? `<div class="small check-note">Kennst du! Kommt erst in ca. ${r.interval_days >= 60 ? "3 Monaten" : "3 Wochen"} wieder.</div>`
+        : r.check_result === "learn" ? `<div class="small check-note">Neu für dich: wir üben es jetzt öfter.</div>` : "";
+      if (r.check_result === "known") checksKnown += 1;
+      if (r.check_result === "learn") checksNew += 1;
+      fb.innerHTML = `<strong>${verdictLine}</strong>${checkLine}
+        ${showLetters ? `<div class="typo-diff" aria-label="Unterschied">${r.check.verdict === "wrong_article"
+          // whole-word swap for articles: ~~der~~ das Fenster
+          ? `<del>${esc(r.check.given.trim().split(/\s+/)[0])}</del> <ins>${esc(c.article)}</ins> ${esc(c.lemma)}`
+          : charDiffHTML(r.check.given.trim(), r.check.expected)}</div>` : ""}
         <div class="flash-word small-word">${nounHTML(c)}</div>
         ${formsHTML(c) ? `<div class="small muted">${formsHTML(c)}</div>` : ""}`;
       $app.querySelector(".umlauts").hidden = true;
@@ -448,6 +458,7 @@ async function viewWords() {
       <select id="lesson" aria-label="Lektion">
         <option value="">Alle</option>
         <option value="0">A1 Basis</option>
+        <option value="-1">Alltag</option>
         ${lessons.map((l) => `<option value="${l.number}">Lektion ${l.number}</option>`).join("")}
       </select>
       <select id="pos" aria-label="Wortart">
@@ -495,6 +506,12 @@ async function viewSettings() {
         <label for="minutes">Länge der täglichen Session</label>
         <select id="minutes">${[[20, "20 Minuten · kompakt"], [30, "30 Minuten · mit Sprechen"], [40, "40 Minuten · intensiv"]].map(([v, l]) =>
           `<option value="${v}" ${v === s.session_minutes ? "selected" : ""}>${l}</option>`).join("")}</select>
+      </div>
+      <div class="field">
+        <label for="everyday">Alltagswörter pro Tag (Kurzcheck)</label>
+        <select id="everyday">${[[0, "keine"], [10, "10"], [15, "15"], [25, "25"]].map(([v, l]) =>
+          `<option value="${v}" ${v === s.everyday_per_day ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <span class="small muted">Wörter wie Tür, Heizung, Kaution. Richtig beim ersten Mal = kommt erst in 3 Monaten wieder.</span>
       </div>
       <div class="field">
         <label for="cap">Neue Wörter pro Tag</label>
@@ -567,6 +584,7 @@ async function viewSettings() {
       current_lesson: +$app.querySelector("#cur").value,
       session_minutes: +$app.querySelector("#minutes").value,
       daily_new_word_cap: +$app.querySelector("#cap").value,
+      everyday_per_day: +$app.querySelector("#everyday").value,
       target_retention: +$app.querySelector("#ret").value,
       umlaut_ascii_ok: $app.querySelector("#ascii").checked,
     }});

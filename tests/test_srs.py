@@ -112,7 +112,7 @@ def test_recognise_card_requires_rating(conn):
 
 def test_review_api_roundtrip(client):
     start = client.post("/api/review/start", json={}).json()
-    assert start["introduced"] == 12 and len(start["queue"]) == 12
+    assert start["introduced"] == 12 and start["checks"] == 15 and len(start["queue"]) == 27
     card = start["queue"][0]
     r = client.post(f"/api/review/{card['id']}", json={"rating": 3, "duration_ms": 1200}).json()
     assert r["rating"] == 3

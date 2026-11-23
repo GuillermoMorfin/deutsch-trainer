@@ -121,7 +121,7 @@ def check_answer(given: str, *, lemma: str, pos: str, article: str | None,
             return Check(True, "typo", exp, given, f"Fast! Genau: {exp}")
         return Check(True, "exact", exp, given, "Richtig!")
 
-    result = _compare_stem(lemma, raw, ascii_ok=ascii_ok)
+    result = _compare_stem(_norm(lemma), raw, ascii_ok=ascii_ok)
     if result == "exact":
         return Check(True, "exact", exp, given, "Richtig!")
     if result == "typo":

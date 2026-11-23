@@ -38,6 +38,11 @@ MIGRATIONS = [
     ("settings", "fsrs_parameters", "TEXT"),              # JSON list of 21 floats once optimised
     ("settings", "fsrs_optimized_at", "TEXT"),
     ("settings", "fsrs_optimized_reviews", "INTEGER"),
+    ("lemma", "deck", "TEXT"),                            # 'alltag' = everyday words for life in Germany
+    ("lemma", "deck_order", "INTEGER"),
+    ("card", "mode", "TEXT"),                             # 'check' until the first answer, then 'checked'/'learn'
+    ("card", "created_at", "TEXT"),
+    ("settings", "everyday_per_day", "INTEGER NOT NULL DEFAULT 15"),
 ]
 
 

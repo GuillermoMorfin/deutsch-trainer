@@ -40,6 +40,10 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
   (`GRAMMAR_WORDS`) and places/people from personal.json count as known.
 - `progress.lesson_check` = the plan's per-lesson ingredients (texts read ≥ 3, words met, words known ≥ 80 %,
   grammar drilled, writing tasks); next lesson is suggested only when ready.
+- Everyday deck (`app/seed/everyday.txt`, lemma.deck = 'alltag'): starts as a typing *check* card;
+  right first time → known, due in 90 days (typo: 21); wrong → normal learning in both directions.
+  'Leicht' on a new recognition card unlocks the typing card immediately. The learner asked not to be
+  drilled on words they already know.
 - `app/session.py` plans the daily flow and writes the day's text in a background thread with its own
   DB connection; `app/progress.py` computes streak (local days), mastery, errors, WPM.
 - `get_db` opens one sqlite connection per request; never share a connection across threads.

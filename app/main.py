@@ -125,6 +125,8 @@ def list_words(
     where, args = [], []
     if lesson == 0:
         where.append("m.lesson_id IS NULL")
+    elif lesson == -1:   # everyday deck
+        where.append("m.deck = 'alltag'")
     elif lesson is not None:
         where.append("m.lesson_id = (SELECT id FROM lesson WHERE number = ?)")
         args.append(lesson)
@@ -157,6 +159,7 @@ class SettingsUpdate(BaseModel):
     target_retention: float | None = Field(None, ge=0.7, le=0.97)
     session_minutes: Literal[20, 30, 40] | None = None
     umlaut_ascii_ok: bool | None = None
+    everyday_per_day: Literal[0, 10, 15, 25] | None = None
 
 
 @app.put("/api/settings")
@@ -205,6 +208,7 @@ def update_book_progress(number: int, body: BookProgressUpdate, db: sqlite3.Conn
 class ReviewStart(BaseModel):
     new_words: bool = True
     new_limit: int | None = Field(None, ge=0, le=50)   # at most this many new words now (still within the daily cap)
+    everyday: bool = True                               # add today's everyday-word checks
     limit: int = Field(srs.MAX_REVIEWS_PER_SESSION, ge=1, le=100)
 
 
@@ -213,7 +217,9 @@ def review_start(body: ReviewStart, db: sqlite3.Connection = Depends(get_db)):
     """Introduce today's new lesson words (respecting the daily cap) and return the queue."""
     with transaction(db):
         introduced = srs.introduce_lesson_words(db, limit=body.new_limit) if body.new_words else []
-    return {"introduced": len(introduced), "queue": srs.queue(db, limit=body.limit), "due_count": srs.due_count(db),
+        checks = srs.introduce_everyday(db) if body.everyday else []
+    return {"introduced": len(introduced), "checks": len(checks),
+            "queue": srs.queue(db, limit=body.limit), "due_count": srs.due_count(db),
             "new_today": srs.new_cards_today(db)}
 
 

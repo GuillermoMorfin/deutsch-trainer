@@ -12,7 +12,9 @@ def test_seed_is_idempotent(tmp_path):
     second = seed_all(conn)
     assert first == second
     assert conn.execute("SELECT COUNT(*) FROM lesson").fetchone()[0] == 12
-    assert conn.execute("SELECT COUNT(*) FROM lemma").fetchone()[0] == first["a1_lemmas"] + first["lesson_lemmas"]
+    added_everyday = conn.execute("SELECT COUNT(*) FROM lemma WHERE source = 'manual' AND deck = 'alltag'").fetchone()[0]
+    assert conn.execute("SELECT COUNT(*) FROM lemma").fetchone()[0] == \
+        first["a1_lemmas"] + first["lesson_lemmas"] + added_everyday
 
 
 def test_every_a1_noun_has_an_article():

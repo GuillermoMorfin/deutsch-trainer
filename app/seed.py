@@ -164,6 +164,50 @@ def seed_lesson_wordlists(conn: sqlite3.Connection) -> int:
     return total
 
 
+def parse_compact(line: str) -> dict:
+    """'N die Tür Türen | es | en' / 'V lemma aux p2 | es | en' / 'X POS lemma | es | en' → lemma row."""
+    head, es, en = (p.strip() for p in line.split("|"))
+    kind, rest = head.split(" ", 1)
+    row = dict.fromkeys(LEMMA_COLUMNS, "")
+    row.update(gloss_es=es, gloss_en=en)
+    if kind == "N":
+        art, lemma, plural = rest.split(" ")
+        row.update(pos="NOUN", article=art, lemma=lemma, plural=plural)
+    elif kind == "V":
+        lemma, aux, p2 = rest.split(" ")
+        row.update(pos="VERB", lemma=lemma, aux=aux, partizip2=p2)
+    else:
+        pos, lemma = rest.split(" ", 1)
+        row.update(pos=pos, lemma=lemma)
+    return row
+
+
+def seed_everyday(conn: sqlite3.Connection) -> int:
+    """Tag everyday words (deck 'alltag'): existing A1 words are tagged, missing ones added.
+    Lesson words stay with their lesson, so nothing from later lessons is taught early."""
+    path = SEED_DIR / "everyday.txt"
+    if not path.exists():
+        return 0
+    order, n = 0, 0
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith(("#", "@")):
+            continue
+        order += 1
+        r = parse_compact(line)
+        art = r["article"] or None
+        existing = conn.execute("SELECT id, lesson_id FROM lemma WHERE lemma = ? AND pos = ? AND article IS ?",
+                                (r["lemma"], r["pos"], art)).fetchone()
+        if existing is None:
+            upsert_lemmas(conn, [r], lesson=None, source="manual", mark_known=False)
+            existing = conn.execute("SELECT id, lesson_id FROM lemma WHERE lemma = ? AND pos = ? AND article IS ?",
+                                    (r["lemma"], r["pos"], art)).fetchone()
+        if existing["lesson_id"] is None:
+            conn.execute("UPDATE lemma SET deck = 'alltag', deck_order = ? WHERE id = ?", (order, existing["id"]))
+            n += 1
+    return n
+
+
 def seed_exercises(conn: sqlite3.Connection) -> int:
     items = json.loads((SEED_DIR / "book_exercises.json").read_text(encoding="utf-8"))
     for it in items:
@@ -194,6 +238,7 @@ def seed_all(conn: sqlite3.Connection) -> dict[str, int]:
             "lesson_lemmas": seed_lesson_wordlists(conn),
             "book_exercises": seed_exercises(conn),
             "drills": seed_drills(conn),
+            "everyday": seed_everyday(conn),
         }
 
 

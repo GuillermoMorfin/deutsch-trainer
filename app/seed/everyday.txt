@@ -1,0 +1,163 @@
+# Everyday German for living in Germany (written for this app). Same compact format as lessons/_source.txt.
+# N art lemma plural | es | en   ·   V lemma aux partizip2 | es | en   ·   X POS lemma | es | en
+@Zuhause
+N die Tür Türen | la puerta | door
+N das Fenster Fenster | la ventana | window
+N der Schlüssel Schlüssel | la llave | key
+N die Klingel Klingeln | el timbre | doorbell
+V klingeln haben geklingelt | tocar el timbre | to ring
+N der Briefkasten Briefkästen | el buzón | letterbox
+N die Treppe Treppen | la escalera | stairs
+N der Aufzug Aufzüge | el ascensor | lift
+N der Keller Keller | el sótano | cellar
+N der Boden Böden | el suelo | floor
+N die Decke Decken | el techo / la manta | ceiling / blanket
+N die Heizung Heizungen | la calefacción | heating
+V heizen haben geheizt | calentar / poner la calefacción | to heat
+V lüften haben gelüftet | ventilar | to air the room
+N die Steckdose Steckdosen | el enchufe | socket
+N das Licht Lichter | la luz | light
+N der Lichtschalter Lichtschalter | el interruptor | light switch
+N der Strom - | la electricidad | electricity
+N das Waschbecken Waschbecken | el lavabo | sink
+N der Wasserhahn Wasserhähne | el grifo | tap
+N die Dusche Duschen | la ducha | shower
+N die Toilette Toiletten | el inodoro / el baño | toilet
+N der Spiegel Spiegel | el espejo | mirror
+N die Waschmaschine Waschmaschinen | la lavadora | washing machine
+N der Kühlschrank Kühlschränke | la nevera | fridge
+N der Herd Herde | la cocina (fogones) | stove
+N der Ofen Öfen | el horno | oven
+N die Spülmaschine Spülmaschinen | el lavavajillas | dishwasher
+V abschließen haben abgeschlossen | cerrar con llave | to lock
+V aufschließen haben aufgeschlossen | abrir con llave | to unlock
+V reparieren haben repariert | reparar | to repair
+X ADJ kaputt | roto / estropeado | broken
+N der Müll - | la basura | rubbish
+N der Mülleimer Mülleimer | el cubo de basura | bin
+N der Biomüll - | los residuos orgánicos | organic waste
+N das Altpapier - | el papel para reciclar | waste paper
+V trennen haben getrennt | separar | to separate
+N das Pfand - | el depósito (envase) | bottle deposit
+N die Flasche Flaschen | la botella | bottle
+N der Vermieter Vermieter | el casero | landlord
+N die Vermieterin Vermieterinnen | la casera | landlady
+N der Mietvertrag Mietverträge | el contrato de alquiler | rental contract
+N die Kaution Kautionen | la fianza | deposit
+N die Nebenkosten - | los gastos comunitarios | utility costs
+N der Hausmeister Hausmeister | el conserje | caretaker
+N die Hausverwaltung Hausverwaltungen | la administración de la finca | property management
+@Küche
+N der Apfel Äpfel | la manzana | apple
+N das Glas Gläser | el vaso / el cristal | glass
+N der Teller Teller | el plato | plate
+N die Tasse Tassen | la taza | cup
+N die Gabel Gabeln | el tenedor | fork
+N das Messer Messer | el cuchillo | knife
+N der Löffel Löffel | la cuchara | spoon
+N der Topf Töpfe | la olla | pot
+N die Pfanne Pfannen | la sartén | pan
+N das Salz - | la sal | salt
+N der Pfeffer - | la pimienta | pepper
+N das Öl Öle | el aceite | oil
+N die Zwiebel Zwiebeln | la cebolla | onion
+N die Tomate Tomaten | el tomate | tomato
+N das Hähnchen Hähnchen | el pollo | chicken
+N der Joghurt Joghurts | el yogur | yoghurt
+N die Wurst Würste | la salchicha / el embutido | sausage
+N das Mehl - | la harina | flour
+@Einkaufen
+N die Kasse Kassen | la caja | till
+N der Kassenbon Kassenbons | el tique de compra | receipt
+N die Tüte Tüten | la bolsa | bag
+N das Angebot Angebote | la oferta | offer
+N das Kleingeld - | el cambio / las monedas | change
+N der Geldautomat Geldautomaten | el cajero automático | cash machine
+X ADV bar | en efectivo | in cash
+X ADJ geöffnet | abierto | open
+X ADJ geschlossen | cerrado | closed
+X ADJ offen | abierto | open
+N die Öffnungszeiten - | el horario de apertura | opening hours
+N der Drogeriemarkt Drogeriemärkte | la droguería | drugstore
+N der Späti Spätis | la tienda de barrio (abierta tarde) | late-night shop
+@Ämter
+N das Bürgeramt Bürgerämter | la oficina de empadronamiento | citizens' office
+N der Termin Termine | la cita | appointment
+N das Formular Formulare | el formulario | form
+N die Unterschrift Unterschriften | la firma | signature
+N die Adresse Adressen | la dirección | address
+N die Postleitzahl Postleitzahlen | el código postal | postcode
+N das Geburtsdatum Geburtsdaten | la fecha de nacimiento | date of birth
+N die Steuer Steuern | el impuesto | tax
+N die Steuer-ID Steuer-IDs | el número fiscal | tax ID
+N die Versicherung Versicherungen | el seguro | insurance
+N die Krankenkasse Krankenkassen | la mutua / el seguro médico | health insurance fund
+N die Krankenversicherung Krankenversicherungen | el seguro de salud | health insurance
+N die Aufenthaltserlaubnis Aufenthaltserlaubnisse | el permiso de residencia | residence permit
+N die Behörde Behörden | la autoridad / la oficina pública | authority
+V anmelden haben angemeldet | empadronar / inscribir | to register
+V abmelden haben abgemeldet | darse de baja | to deregister
+V kündigen haben gekündigt | rescindir / dar de baja | to cancel (a contract)
+N die Kündigung Kündigungen | la rescisión | cancellation / notice
+N der Brief Briefe | la carta | letter
+N das Paket Pakete | el paquete | parcel
+N die Post - | el correo / Correos | mail / post office
+V abholen haben abgeholt | recoger | to pick up
+V schicken haben geschickt | enviar | to send
+@Bank
+N das Konto Konten | la cuenta | account
+N die Bank Banken | el banco | bank
+N die Überweisung Überweisungen | la transferencia | bank transfer
+V überweisen haben überwiesen | transferir | to transfer
+N die Rechnung Rechnungen | la factura / la cuenta | bill / invoice
+N die Gebühr Gebühren | la tasa / la comisión | fee
+@Gesundheit
+N die Apotheke Apotheken | la farmacia | pharmacy
+N der Hausarzt Hausärzte | el médico de cabecera | GP
+N die Hausärztin Hausärztinnen | la médica de cabecera | GP (f)
+N die Praxis Praxen | la consulta | doctor's practice
+N die Krankmeldung Krankmeldungen | la baja médica | sick note
+N das Medikament Medikamente | el medicamento | medicine
+N die Tablette Tabletten | la pastilla | tablet
+N der Schmerz Schmerzen | el dolor | pain
+N das Fieber - | la fiebre | fever
+N die Erkältung Erkältungen | el resfriado | cold
+N der Notruf Notrufe | la llamada de emergencia | emergency call
+N die Notaufnahme Notaufnahmen | urgencias | emergency room
+N die Polizei - | la policía | police
+N die Feuerwehr Feuerwehren | los bomberos | fire brigade
+@Unterwegs
+N die Ampel Ampeln | el semáforo | traffic light
+N die Kreuzung Kreuzungen | el cruce | crossroads
+N der Radweg Radwege | el carril bici | cycle path
+N das Gleis Gleise | la vía / el andén | platform / track
+N der Bahnsteig Bahnsteige | el andén | platform
+N die Verspätung Verspätungen | el retraso | delay
+N der Eingang Eingänge | la entrada | entrance
+N der Ausgang Ausgänge | la salida | exit
+N die Abfahrt Abfahrten | la salida (de un tren) | departure
+N die Ankunft Ankünfte | la llegada | arrival
+N die Monatskarte Monatskarten | el abono mensual | monthly pass
+V verpassen haben verpasst | perder (un tren) | to miss
+V entwerten haben entwertet | validar (un billete) | to validate (a ticket)
+@Alltag
+N der Feierabend Feierabende | el fin de la jornada | end of the working day
+N der Feiertag Feiertage | el día festivo | public holiday
+N die Ruhe - | la tranquilidad / el silencio | quiet / peace
+X ADJ pünktlich | puntual | punctual
+X ADJ besetzt | ocupado | taken / busy
+X ADJ frei | libre | free
+X PHRASE Entschuldigung! | ¡Perdón! | Excuse me!
+X PHRASE Wie bitte? | ¿Cómo? | Pardon?
+X PHRASE Keine Ahnung. | Ni idea. | No idea.
+X PHRASE Alles klar! | ¡Vale! | All right!
+X PHRASE Schönen Feierabend! | ¡Que disfrutes la tarde libre! | Have a nice evening!
+N der Regenschirm Regenschirme | el paraguas | umbrella
+N die Mütze Mützen | el gorro | woolly hat
+N der Handschuh Handschuhe | el guante | glove
+N der Schal Schals | la bufanda | scarf
+N die Brille Brillen | las gafas | glasses
+N das Ladekabel Ladekabel | el cable de carga | charging cable
+N der Akku Akkus | la batería | battery (device)
+N das WLAN - | el wifi | wifi
+N das Passwort Passwörter | la contraseña | password
