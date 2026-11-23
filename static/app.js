@@ -25,6 +25,57 @@ function toast(msg) {
   toast._t = setTimeout(() => $toast.classList.remove("show"), 1800);
 }
 
+// ---- UI building blocks: icons, progress rings, skeletons, celebration ---------------------
+
+const ICONS = {   // 24×24 line icons (stroke = currentColor)
+  cards: '<rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 2h12a2 2 0 0 1 2 2v12"/>',
+  book: '<path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2z"/><path d="M22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"/>',
+  puzzle: '<path d="M9 3h6v3a2 2 0 1 0 4 0V3h2v6h-3a2 2 0 1 0 0 4h3v8h-6v-3a2 2 0 1 0-4 0v3H3v-6h3a2 2 0 1 0 0-4H3V3z"/>',
+  pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/>',
+  headphones: '<path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="2" y="14" width="5" height="7" rx="2"/><rect x="17" y="14" width="5" height="7" rx="2"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  flame: '<path d="M12 22c4 0 7-2.7 7-6.8 0-3.6-2.4-5.9-4-7.7-.4 2-1.4 3.2-2.7 3.8.4-3.5-1.3-6.6-4.3-8.3.3 3.4-1.2 5.3-2.7 7.1C4.1 11.6 5 13.3 5 15.2 5 19.3 8 22 12 22z"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  warm: '<path d="M12 21a7 7 0 0 0 7-7c0-4-3-6-4-9-1.5 2-2 3-4 4-2-1.5-2.5-3-2.5-3C6 9 5 11.5 5 14a7 7 0 0 0 7 7z"/>',
+};
+function icon(name, cls = "") {
+  return `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ""}</svg>`;
+}
+
+function ring(value, { size = 64, stroke = 7, label = "", sub = "" } = {}) {
+  const v = Math.max(0, Math.min(1, value || 0)), r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  return `<span class="ring ${v >= 1 ? "done" : ""}" style="width:${size}px;height:${size}px" role="img"
+      aria-label="${esc(sub || "Fortschritt")}: ${Math.round(v * 100)} %">
+    <svg width="${size}" height="${size}"><circle class="track" cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke-width="${stroke}"/>
+      <circle class="val" cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke-width="${stroke}" stroke-linecap="round"
+        stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - v)}"/></svg>
+    <span class="ring-label">${label}${sub && size >= 80 ? `<small>${esc(sub)}</small>` : ""}</span></span>`;
+}
+
+function skeleton() {
+  return `<div class="skeleton" aria-label="Lädt…"><div class="skel" style="height:28px;width:45%"></div>
+    <div class="skel" style="height:170px"></div><div class="skel" style="height:90px"></div><div class="skel" style="height:90px"></div></div>`;
+}
+
+function celebrate() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const colors = ["#d48a1c", "#e9a23b", "#2f6db5", "#8e3a86", "#23744a", "#f3c77a"];
+  const box = document.createElement("div");
+  box.className = "confetti";
+  box.innerHTML = Array.from({ length: 44 }, () => {
+    const x = (Math.random() - .5) * 240, left = 10 + Math.random() * 80, d = 1.2 + Math.random() * 1.1;
+    return `<i style="left:${left}%;background:${colors[Math.floor(Math.random() * colors.length)]};--x:${x}px;--d:${d}s;
+      --r:${Math.round(Math.random() * 720)}deg;animation-delay:${Math.random() * .25}s"></i>`;
+  }).join("");
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 2800);
+}
+
+const today = () => new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+
 // ---- shared pieces ---------------------------------------------------------
 
 function wordHTML(w) {
@@ -32,7 +83,7 @@ function wordHTML(w) {
   const extras = [];
   if (w.pos === "NOUN" && w.plural) extras.push(w.plural === "-" ? "kein Plural" : `Pl. die ${esc(w.plural)}`);
   if (w.pos === "VERB" && w.partizip2) extras.push(`${w.aux === "sein" ? "ist" : "hat"} ${esc(w.partizip2)}`);
-  return `<li class="word">
+  return `<li class="word ${w.article ? `g-${w.article}` : ""}">
     <div><button class="state-dot ${esc(w.state)}" data-word="${w.id}" data-state="${esc(w.state)}"
       title="${w.state === "known" ? "bekannt (tippen zum Zurücksetzen)" : "Als bekannt markieren"}"
       aria-label="Status: ${esc(w.state)}"></button><span class="de">${art}${esc(w.lemma)}</span>
@@ -62,44 +113,51 @@ async function viewHome() {
   const l = o.current_lesson;
   const d = p.done_today;
   const minutes = o.settings.session_minutes;
-  const steps = [["warmup", "Aufwärmen"], ["review", "Wortschatz"], ["text", "Lesen"], ["drill", "Grammatik"], ["write", "Schreiben"],
-    ...(minutes >= 30 ? [["speak", "Sprechen"]] : [])];
-  const allDone = steps.every(([k]) => d[k] || (k === "warmup"));
+  const steps = [["warmup", "Aufwärmen", "sun"], ["review", "Wortschatz", "cards"], ["text", "Lesen", "book"],
+    ["drill", "Grammatik", "puzzle"], ["write", "Schreiben", "pen"], ...(minutes >= 30 ? [["speak", "Sprechen", "mic"]] : [])];
+  const doneCount = steps.filter(([k]) => d[k]).length;
+  const allDone = steps.every(([k]) => d[k] || k === "warmup");
   $app.innerHTML = `
-    <p class="eyebrow">Momente ${esc(l.book || "A2.1")} · Deutsch-Trainer</p>
-    <h1>Hallo! 👋</h1>
+    <header class="home-head">
+      <div><p class="eyebrow">${esc(today())}</p><h1>Dein Deutsch heute</h1></div>
+      <span class="streak-pill" title="Tage in Folge">${icon("flame")}${p.streak} ${p.streak === 1 ? "Tag" : "Tage"}</span>
+    </header>
+    <div class="card hero session-card">
+      ${ring(doneCount / steps.length, { size: 92, stroke: 9, label: `${doneCount}/${steps.length}`, sub: "Schritte" })}
+      <div>
+        <p class="eyebrow">Session · ca. ${minutes} Minuten</p>
+        <h2 style="margin:2px 0 0">${allDone ? "Heute geschafft" : doneCount ? "Weiter geht's" : "Bereit für heute?"}</h2>
+        <div class="step-chips">${steps.map(([k, label, ic]) =>
+          `<span class="step-chip ${d[k] ? "done" : ""}">${icon(d[k] ? "check" : ic)}${label}</span>`).join("")}</div>
+      </div>
+      <div class="session-actions">
+        <a class="btn" href="#/session/full">${icon("sparkle")}${allDone ? "Noch eine Session" : doneCount ? "Session fortsetzen" : "Heutige Session starten"}</a>
+        <a class="btn secondary" href="#/session/quick">Quick 5 · Karten + 3 Übungen</a>
+      </div>
+    </div>
     <div class="stats">
       <div class="stat"><b>${o.known_words}</b><span>Wörter sicher</span></div>
-      <div class="stat"><b>${o.cards_due}</b><span>heute fällig</span></div>
-      <div class="stat"><b>${p.streak}${p.streak ? " 🔥" : ""}</b><span>Tage Serie</span></div>
-    </div>
-    <div class="card hero session-card">
-      <p class="eyebrow">Heute · ca. ${minutes} Minuten</p>
-      <h2>${allDone ? "Heute schon geschafft! 🎉" : "Deine Session"}</h2>
-      <ul class="checklist">${steps.map(([k, label]) => `<li class="${d[k] ? "done" : ""}">${d[k] ? "✓" : "○"} ${label}</li>`).join("")}</ul>
-      <a class="btn big" href="#/session/full">${allDone ? "Noch eine Session" : "Heutige Session starten"}</a>
-      <a class="btn secondary" href="#/session/quick">Quick 5 · nur Karten + 3 Übungen</a>
+      <div class="stat"><b>${o.cards_due}</b><span>Karten fällig</span></div>
+      <div class="stat"><b>${p.current_check.texts_read}/3</b><span>Texte L${l.number}</span></div>
     </div>
     ${p.ready_for_next ? `<a class="card" href="#/progress" style="display:block;text-decoration:none;color:inherit">
-      <h3>Bereit für Lektion ${l.number + 1}! 🚀</h3>
+      <h3>Bereit für Lektion ${l.number + 1}</h3>
       <p class="small muted">${pct(l.mastery)} der Wörter sitzen und 3 Texte sind gelesen. Im Fortschritt kannst du wechseln.</p></a>` : ""}
-    <a class="card" href="#/lesson/${l.number}" style="display:block;text-decoration:none;color:inherit">
-      <p class="eyebrow">Aktuelle Lektion ${l.number} · ${esc(l.theme)}</p>
-      <h3>${esc(l.title)}</h3>
-      <div class="progress" aria-label="Fortschritt"><i style="width:${pct(l.mastery)}"></i></div>
-      <p class="small muted">${l.known_count} von ${l.word_count} Lektionswörtern sicher · Ziel 80 %</p>
+    <a class="card lesson-card" href="#/lesson/${l.number}">
+      ${ring(l.mastery, { size: 64, stroke: 7, label: `L${l.number}`, sub: "Wörter sicher" })}
+      <span class="body">
+        <span class="eyebrow">Aktuelle Lektion · ${esc(l.theme)}</span>
+        <h3>${esc(l.title)}</h3>
+        <span class="small muted">${l.known_count} von ${l.word_count} Wörtern sicher · Ziel 80 %</span>
+      </span>
     </a>
-    ${errors.length ? `<div class="card"><h3>Häufige Fehler</h3><p class="small">${errors.map((e) =>
-      `<a href="#/drill/${esc(e.grammar_code)}">${esc(e.name)}</a> (${e.count}×)`).join(" · ")}</p></div>` : ""}
-    <h2 style="margin-top:20px">Einzeln üben</h2>
+    ${errors.length ? `<p class="section-title">Häufige Fehler · üben</p><div class="error-chips">${errors.map((e) =>
+      `<a class="error-chip" href="#/drill/${esc(e.grammar_code)}">${icon("puzzle")}<span>${esc(e.name)}</span><b>${e.count}×</b></a>`).join("")}</div>` : ""}
+    <p class="section-title">Einzeln üben</p>
     <div class="tile-grid">
-      <a class="tile" href="#/review"><span>🃏</span>Karten</a>
-      <a class="tile" href="#/read"><span>📖</span>Lesen</a>
-      <a class="tile" href="#/drill"><span>🧩</span>Grammatik</a>
-      <a class="tile" href="#/write"><span>✍️</span>Schreiben</a>
-      <a class="tile" href="#/speak"><span>🎙</span>Sprechen</a>
-      <a class="tile" href="#/listen"><span>🎧</span>Hören</a>
-      <a class="tile" href="#/progress"><span>📈</span>Fortschritt</a>
+      ${[["#/review", "cards", "Karten"], ["#/read", "book", "Lesen"], ["#/drill", "puzzle", "Grammatik"], ["#/write", "pen", "Schreiben"],
+         ["#/speak", "mic", "Sprechen"], ["#/listen", "headphones", "Hören"]].map(([href, ic, label]) =>
+        `<a class="tile" href="${href}"><span class="tile-ico">${icon(ic)}</span>${label}</a>`).join("")}
     </div>`;
 }
 
@@ -145,11 +203,39 @@ function charDiffHTML(given, expected) {
   return out;
 }
 
+// Recognition card that flips over on "Zeigen": front = the German word, back = its meaning.
+function flipCardHTML(w, sentence) {
+  return `<div class="flip"><div class="flip-inner">
+    <div class="flash face front">
+      <div class="flash-word">${nounHTML(w)}</div>
+      ${sentence ? `<p class="flash-sentence">${esc(sentence)}</p>` : ""}
+    </div>
+    <div class="flash face back" aria-hidden="true">
+      <div class="flash-word small-word">${nounHTML(w)}</div>
+      <div class="flash-answer">
+        <div class="flash-gloss">${esc(w.gloss_es)}</div>
+        <div class="small muted">${esc(w.gloss_en || "")}${formsHTML(w) ? ` · ${formsHTML(w)}` : ""}</div>
+      </div>
+      ${sentence ? `<p class="flash-sentence small">${esc(sentence)}</p>` : ""}
+    </div>
+  </div></div>`;
+}
+function flipOver() {
+  const f = $app.querySelector(".flip");
+  f.classList.add("flipped");
+  f.querySelector(".front").setAttribute("aria-hidden", "true");
+  f.querySelector(".back").removeAttribute("aria-hidden");
+  // once turned, drop the 3D transform so the text renders crisp
+  const settle = () => f.classList.add("settled");
+  f.querySelector(".flip-inner").addEventListener("transitionend", settle, { once: true });
+  setTimeout(settle, 650);
+}
+
 const POS_HINT = { NOUN: "Nomen · mit Artikel", VERB: "Verb · Infinitiv", ADJ: "Adjektiv", ADV: "Adverb",
   PHRASE: "Ausdruck", CONJ: "Konjunktion", PRON: "Pronomen", ADP: "Präposition", DET: "Artikel/Begleiter", INTJ: "Ausruf" };
 
 async function viewReview(opts = {}) {
-  $app.innerHTML = `<p class="empty">Karten werden geladen…</p>`;
+  $app.innerHTML = skeleton();
   const limit = opts.limit || 40;
   const start = await api("/review/start", { method: "POST", body: {
     new_words: opts.newWords ?? true, new_limit: opts.newLimit ?? null, limit } });
@@ -160,13 +246,14 @@ async function viewReview(opts = {}) {
     $app.innerHTML = `
       <div class="card hero review-done">
         <p class="eyebrow">Fertig für jetzt</p>
-        <h1>Gut gemacht! 🎉</h1>
+        <h1>Gut gemacht!</h1>
         <p>${done} Karten wiederholt${done ? ` · ${Math.round((correct / done) * 100)} % richtig` : ""}.</p>
         ${checksKnown + checksNew ? `<p class="small">Alltagswörter: ${checksKnown} kanntest du schon, ${checksNew} lernst du jetzt.</p>` : ""}
         <p class="small muted">${done ? `Neue Wörter heute: ${start.new_today}. Die nächsten Karten plant FSRS für dich.` : "Gerade ist keine Karte fällig."}</p>
         ${doneButton(opts)}
       </div>`;
     wireDone(opts);
+    if (done && correct / done >= 0.6) celebrate();
   };
 
   const next = async () => {
@@ -213,21 +300,14 @@ async function viewReview(opts = {}) {
   function showRecognise(c) {
     const t0 = performance.now();
     $app.innerHTML = `${header(c)}
-      <div class="flash">
-        <div class="flash-word">${nounHTML(c)}</div>
-        ${c.source_sentence ? `<p class="flash-sentence">${esc(c.source_sentence)}</p>` : ""}
-        <div class="flash-answer" hidden>
-          <div class="flash-gloss">${esc(c.gloss_es)}</div>
-          <div class="small muted">${esc(c.gloss_en || "")}${formsHTML(c) ? ` · ${formsHTML(c)}` : ""}</div>
-        </div>
-      </div>
+      ${flipCardHTML(c, c.source_sentence)}
       <div class="review-actions">
         <button class="btn reveal">Zeigen</button>
         <div class="rate-row" hidden>${RATINGS.map(([v, label, cls]) =>
           `<button class="rate ${cls}" data-rating="${v}">${label}</button>`).join("")}</div>
       </div>`;
     const reveal = () => {
-      $app.querySelector(".flash-answer").hidden = false;
+      flipOver();
       $app.querySelector(".reveal").hidden = true;
       $app.querySelector(".rate-row").hidden = false;
     };
@@ -236,7 +316,7 @@ async function viewReview(opts = {}) {
       if (await submit(c, { rating: +b.dataset.rating, duration_ms: Math.round(performance.now() - t0) })) next();
     }));
     keyHandler = (e) => {
-      if (e.key === " " || e.key === "Enter") { e.preventDefault(); if (!$app.querySelector(".flash-answer").hidden) return; reveal(); }
+      if (e.key === " " || e.key === "Enter") { e.preventDefault(); if ($app.querySelector(".flip.flipped")) return; reveal(); }
       if (["1", "2", "3", "4"].includes(e.key) && !$app.querySelector(".rate-row").hidden)
         $app.querySelector(`[data-rating="${e.key}"]`).click();
     };
@@ -352,7 +432,7 @@ async function viewLessons() {
     <h1>Lektionen</h1>
     <ul class="lesson-list">${lessons.map((l) => `
       <li><a class="lesson-row ${l.status}" href="#/lesson/${l.number}">
-        <span class="num">${l.number}</span>
+        ${ring(l.mastery, { size: 44, stroke: 5, label: String(l.number), sub: `Lektion ${l.number}` })}
         <span class="body">
           <span class="title">${esc(l.title)}</span>
           <span class="meta">${esc(l.theme)} · ${l.word_count} Wörter${l.word_count ? ` · ${pct(l.mastery)}` : ""}</span>
@@ -857,7 +937,7 @@ async function viewText(id, opts = {}) {
       clearInterval(tick);
       const r = await api(`/texts/${id}/finish`, { method: "POST", body: { seconds, reread: true } });
       $q.hidden = false;
-      $q.innerHTML = `<div class="card hero"><h3>Aufgewärmt! 🔥</h3>
+      $q.innerHTML = `<div class="card hero"><h3>Aufgewärmt!</h3>
         <p class="small">${r.wpm ? `Lesetempo: <strong>${r.wpm} Wörter/Minute</strong>.` : "Zu kurz für eine Messung."}</p>
         ${doneButton(opts)}</div>`;
       wireDone(opts);
@@ -895,7 +975,7 @@ async function viewText(id, opts = {}) {
       e2.target.disabled = true;
       const r = await api(`/texts/${id}/finish`, { method: "POST", body: { seconds } });
       $q.insertAdjacentHTML("beforeend", `<div class="card hero" style="margin-top:14px">
-        <h3>Super! 🎉</h3>
+        <h3>Super!</h3>
         <p class="small">${r.introduced ? `${r.introduced} neue Wörter sind jetzt in deinen Karten.` : "Alle Wörter sind schon in deinen Karten."}
           ${r.wpm ? ` Lesetempo: ${r.wpm} Wörter/Minute.` : ""}</p>
         ${doneButton(opts, `<a class="btn" href="#/review">Neue Wörter üben</a>`)}</div>`);
@@ -910,7 +990,7 @@ async function viewText(id, opts = {}) {
 const UMLAUT_KEYS = ["ä", "ö", "ü", "ß"];
 
 async function viewDrill(code, opts = {}) {
-  $app.innerHTML = `<p class="empty">Übungen werden geladen…</p>`;
+  $app.innerHTML = skeleton();
   const { items } = await api(`/drills/session?n=${opts.n || 8}${code ? `&code=${encodeURIComponent(code)}` : ""}`);
   let idx = 0, right = 0;
   const missed = {};
@@ -946,7 +1026,7 @@ async function viewDrill(code, opts = {}) {
     $app.innerHTML = `
       <div class="card hero review-done">
         <p class="eyebrow">Grammatik</p>
-        <h1>${right === items.length ? "Perfekt! 🎉" : right / items.length >= 0.6 ? "Gut gemacht!" : "Dranbleiben! 💪"}</h1>
+        <h1>${right === items.length ? "Perfekt!" : right / items.length >= 0.6 ? "Gut gemacht!" : "Dranbleiben!"}</h1>
         <p>${right} von ${items.length} richtig.</p>
       </div>
       ${codes.length ? `<div class="card"><h3>Nochmal üben</h3>${codes.map(([c, name]) => `
@@ -958,6 +1038,7 @@ async function viewDrill(code, opts = {}) {
       ${doneButton(opts)}`;
     wireGenerate();
     wireDone(opts);
+    if (right / items.length >= 0.6) celebrate();
   };
 
   const header = () => `
@@ -1103,7 +1184,7 @@ function feedbackHTML(r) {
     <div class="card">
       <h3>Korrigiert</h3>
       <p class="diff">${diffHTML(r.submission, r.corrected, r.kind === "speak")}</p>
-      ${r.praise ? `<p class="praise">👏 ${esc(r.praise)}</p>` : ""}
+      ${r.praise ? `<p class="praise">${esc(r.praise)}</p>` : ""}
     </div>
     ${r.corrections.length ? `<h3>Die wichtigsten Punkte</h3>` : `<p class="empty">Keine Fehler gefunden. Super!</p>`}
     ${r.corrections.map((c, i) => {
@@ -1217,23 +1298,17 @@ async function viewNewWords(textId, onDone, rounds = 2) {
       else if (round < ROUNDS) { round += 1; queue = [...words].sort(() => Math.random() - 0.5); }
       else {
         $app.innerHTML = `<div class="card hero review-done"><p class="eyebrow">Neue Wörter</p>
-          <h1>Sitzt! ✨</h1><p class="small">${words.length} Wörter sind jetzt in deinen Karten und kommen bald wieder.</p>
+          <h1>Sitzt!</h1><p class="small">${words.length} Wörter sind jetzt in deinen Karten und kommen bald wieder.</p>
           <button class="btn session-next">Weiter →</button></div>`;
         $app.querySelector(".session-next").addEventListener("click", onDone);
+        celebrate();
         return;
       }
     }
     const w = queue.shift();
     $app.innerHTML = `
       <p class="eyebrow">Neue Wörter · Runde ${round} von ${ROUNDS}</p>
-      <div class="flash">
-        <div class="flash-word">${nounHTML(w)}</div>
-        <p class="flash-sentence">${esc(sentence(w))}</p>
-        <div class="flash-answer" hidden>
-          <div class="flash-gloss">${esc(w.gloss_es)}</div>
-          <div class="small muted">${esc(w.gloss_en || "")}${formsHTML(w) ? ` · ${formsHTML(w)}` : ""}</div>
-        </div>
-      </div>
+      ${flipCardHTML(w, sentence(w))}
       <div class="review-actions">
         <button class="btn reveal">Zeigen</button>
         <div class="rate-row two" hidden>
@@ -1242,7 +1317,7 @@ async function viewNewWords(textId, onDone, rounds = 2) {
       </div>`;
     $app.querySelector(".reveal").addEventListener("click", (e) => {
       e.target.hidden = true;
-      $app.querySelector(".flash-answer").hidden = false;
+      flipOver();
       $app.querySelector(".rate-row").hidden = false;
     });
     $app.querySelectorAll(".rate").forEach((b) => b.addEventListener("click", () => {
@@ -1324,10 +1399,11 @@ async function viewSession(mode) {
     const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
     $app.innerHTML = `<div class="card hero review-done">
       <p class="eyebrow">${mode === "quick" ? "Quick 5" : `Heutige Session · ${plan.minutes} Minuten geplant`}</p>
-      <h1>Geschafft! 🎉</h1>
+      <h1>Geschafft!</h1>
       <p>${mins} Minuten · Serie: <strong>${p.streak} ${p.streak === 1 ? "Tag" : "Tage"}</strong></p>
       <a class="btn" href="#/progress">Fortschritt ansehen</a>
       <a class="btn secondary" href="#/">Zur Übersicht</a></div>`;
+    celebrate();
   };
   run();
 }
@@ -1360,7 +1436,7 @@ async function viewProgress() {
       <div class="stat"><b>${p.streak}</b><span>Tage Serie</span></div>
       <div class="stat"><b>${lastWpm ?? "–"}</b><span>Wörter/Min.${firstWpm ? ` (vorher ${firstWpm})` : ""}</span></div>
     </div>
-    ${p.ready_for_next ? `<div class="card hero"><h3>Bereit für Lektion ${p.current_lesson + 1}! 🚀</h3>
+    ${p.ready_for_next ? `<div class="card hero"><h3>Bereit für Lektion ${p.current_lesson + 1}!</h3>
       <p class="small">${pct(cur.mastery)} der Wörter aus Lektion ${p.current_lesson} sitzen und du hast ${p.current_check.texts_read} Texte dazu gelesen. Wechsle, wenn dein Kurs so weit ist.</p>
       <button class="btn" id="advance">Zu Lektion ${p.current_lesson + 1} wechseln</button></div>` : ""}
     <div class="card"><h3>Aktivität · 14 Tage</h3>${activityChart(p.activity)}
@@ -1369,7 +1445,7 @@ async function viewProgress() {
       <p class="small muted">Ziel vor der nächsten Lektion: 80 % der Wörter sicher und 3 Texte gelesen.
         Aktuelle Lektion: ${p.current_check.texts_read}/3 Texte · <a href="#/lesson/${p.current_lesson}">Lektions-Check</a></p>
       ${p.lessons.map((l) => `<a class="mastery-row ${l.number === p.current_lesson ? "current" : ""}" href="#/lesson/${l.number}">
-        <span class="m-num">${l.number}</span>
+        ${ring(l.mastery, { size: 34, stroke: 4, label: String(l.number), sub: `Lektion ${l.number}` })}
         <span class="m-body"><span class="m-title">${esc(l.theme)}</span>
           <span class="progress"><i style="width:${pct(l.mastery)}"></i></span>
           <span class="small muted">${l.known}/${l.words} sicher${l.learning ? ` · ${l.learning} in Arbeit` : ""}</span></span>
@@ -1634,8 +1710,8 @@ async function viewListenTask(id) {
     const $t = $app.querySelector("#transcript");
     $t.hidden = false;
     $t.innerHTML = `
-      <div class="card hero"><h3>${correct === graded ? "Super gehört! 🎉" : correct / Math.max(1, graded) >= 0.6
-        ? "Gut gemacht!" : "Dranbleiben! Lies den Text und hör ihn nochmal. 💪"}</h3>
+      <div class="card hero"><h3>${correct === graded ? "Super gehört!" : correct / Math.max(1, graded) >= 0.6
+        ? "Gut gemacht!" : "Dranbleiben! Lies den Text und hör ihn nochmal."}</h3>
         <p>${correct} von ${graded} richtig · ${plays}× gehört</p></div>
       <div class="card"><h3>Der Text</h3>
         <div class="toolbar"><button class="btn secondary small-btn" id="along">▶ Mit Text anhören</button>
@@ -1644,6 +1720,7 @@ async function viewListenTask(id) {
           : i === 0 || s.paraStart ? `${i ? "</p>" : ""}<p>` : ""}<span data-s="${i}">${esc(s.shown)}</span> `).join("")}</p></div>
       </div>
       <a class="btn" href="#/listen">Zurück zu Hören</a>`;
+    if (correct / Math.max(1, graded) >= 0.6) celebrate();
     const hl = (n) => $t.querySelectorAll("[data-s]").forEach((el) => el.classList.toggle("speaking", +el.dataset.s === n));
     const $along = $t.querySelector("#along");
     let on = false;
@@ -1789,6 +1866,8 @@ const routes = [
 async function route() {
   const hash = location.hash || "#/";
   keyHandler = null;
+  $app.innerHTML = skeleton();
+  $app.classList.remove("enter"); void $app.offsetWidth; $app.classList.add("enter");
   $bar.hidden = true;
   stopSpeaking();
   for (const [re, name, view] of routes) {

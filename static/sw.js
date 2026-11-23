@@ -1,6 +1,6 @@
 // Service worker: app shell cached for offline use; API is network-first with cached fallback.
-const CACHE = "trainer-v18";
-const SHELL = ["/", "/static/styles.css", "/static/app.js", "/static/icon.svg", "/manifest.webmanifest"];
+const CACHE = "trainer-v20";
+const SHELL = ["/", "/static/styles.css", "/static/theme.css", "/static/app.js", "/static/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

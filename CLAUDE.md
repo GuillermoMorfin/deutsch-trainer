@@ -13,8 +13,9 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
 - Grammar notes follow rule → bridge (English or Spanish, whichever fits) → example → warning.
 - Personal anchors for texts: Berlin-Mitte, ESMT / MAAI programme, running and marathon
   training, cycling, partner and friends; recurring character Marco.
-- UI: cream/amber tokens in `static/styles.css`, Lora + DM Sans, `color-scheme: only light`,
-  mobile first, vanilla JS (no build step).
+- UI: cream/amber tokens in `static/styles.css` plus the 'warm & modern' layer in `static/theme.css`
+  (rings, icons via `icon()`, flip cards, skeletons, confetti; respects reduced motion). Lora + DM Sans,
+  `color-scheme: only light`, mobile first, vanilla JS (no build step). No greeting on the home screen.
 
 ## Layout
 - `app/main.py` FastAPI routes; `app/db.py` sqlite helpers; `app/seed.py` idempotent seeding.
