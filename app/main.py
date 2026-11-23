@@ -269,6 +269,7 @@ def llm_status():
 
 class GenerateRequest(BaseModel):
     lesson: int | None = Field(None, ge=1, le=99)
+    kind: Literal["read", "listen"] = "read"
 
 
 @app.post("/api/texts/generate")
@@ -276,7 +277,7 @@ def generate_text(body: GenerateRequest, db: sqlite3.Connection = Depends(get_db
     """Slow (30-90 s): writes, verifies and repairs a text, then writes its questions."""
     try:
         writer = app.dependency_overrides.get(get_writer, get_writer)()
-        result = generator.generate_text(db, writer, lesson_number=body.lesson)
+        result = generator.generate_text(db, writer, lesson_number=body.lesson, kind=body.kind)
     except LLMUnavailable as e:
         raise HTTPException(503, str(e))
     except GenerationError as e:
@@ -285,12 +286,15 @@ def generate_text(body: GenerateRequest, db: sqlite3.Connection = Depends(get_db
 
 
 @app.get("/api/texts")
-def list_texts(lesson: int | None = None, db: sqlite3.Connection = Depends(get_db)):
-    sql = """SELECT t.id, t.title, t.summary, t.coverage, t.read_count, t.created_at, l.number AS lesson_number
-             FROM text t JOIN lesson l ON l.id = t.lesson_id"""
-    args: list = []
+def list_texts(lesson: int | None = None, kind: Literal["read", "listen"] = "read",
+               db: sqlite3.Connection = Depends(get_db)):
+    sql = """SELECT t.id, t.title, t.summary, t.coverage, t.read_count, t.created_at, t.kind, l.number AS lesson_number,
+                    (SELECT MAX(1.0 * correct / total) FROM listen_log g WHERE g.text_id = t.id) AS best_score,
+                    (SELECT COUNT(*) FROM listen_log g WHERE g.text_id = t.id) AS attempts
+             FROM text t JOIN lesson l ON l.id = t.lesson_id WHERE t.kind = ?"""
+    args: list = [kind]
     if lesson is not None:
-        sql += " WHERE l.number = ?"
+        sql += " AND l.number = ?"
         args.append(lesson)
     return rows_to_dicts(db.execute(sql + " ORDER BY t.id DESC", args).fetchall())
 
@@ -311,7 +315,7 @@ def get_text(text_id: int, db: sqlite3.Connection = Depends(get_db)):
     questions = [{k: q[k] for k in ("id", "type", "prompt", "options")} for q in rows_to_dicts(
         db.execute("SELECT * FROM question WHERE text_id = ? ORDER BY id", (text_id,)).fetchall())]
     return {"text": {k: t[k] for k in ("id", "title", "lesson_number", "theme", "coverage", "read_count",
-                                       "target_lemma_ids", "wpm_log", "created_at")},
+                                       "target_lemma_ids", "wpm_log", "created_at", "kind")},
             "tokens": t["annotations"], "lemmas": lemmas, "questions": questions}
 
 
@@ -341,6 +345,23 @@ def finish_text(text_id: int, body: FinishReading, db: sqlite3.Connection = Depe
         return generator.finish_reading(db, text_id, seconds=body.seconds, reread=body.reread)
     except KeyError:
         raise HTTPException(404, f"Text {text_id} not found")
+
+
+class ListenResult(BaseModel):
+    plays: int = Field(..., ge=0, le=20)
+    correct: int = Field(..., ge=0)
+    total: int = Field(..., ge=0)
+
+
+@app.post("/api/texts/{text_id}/listen-result")
+def listen_result(text_id: int, body: ListenResult, db: sqlite3.Connection = Depends(get_db)):
+    if not db.execute("SELECT 1 FROM text WHERE id = ? AND kind = 'listen'", (text_id,)).fetchone():
+        raise HTTPException(404, f"Listening task {text_id} not found")
+    with transaction(db):
+        db.execute("INSERT INTO listen_log (text_id, plays, correct, total, ts) VALUES (?, ?, ?, ?, ?)",
+                   (text_id, body.plays, min(body.correct, body.total), body.total, srs.to_db(srs.now_utc())))
+        db.execute("UPDATE text SET read_count = read_count + 1 WHERE id = ?", (text_id,))
+    return {"ok": True}
 
 
 class WordState(BaseModel):

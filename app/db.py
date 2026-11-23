@@ -43,6 +43,7 @@ MIGRATIONS = [
     ("card", "mode", "TEXT"),                             # 'check' until the first answer, then 'checked'/'learn'
     ("card", "created_at", "TEXT"),
     ("settings", "everyday_per_day", "INTEGER NOT NULL DEFAULT 15"),
+    ("text", "kind", "TEXT NOT NULL DEFAULT 'read'"),     # 'read' (reader) or 'listen' (Hören tasks)
 ]
 
 

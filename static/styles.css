@@ -391,3 +391,12 @@ code { font-size: .85em; background: var(--cream-200); padding: 1px 5px; border-
 .check-list .ck-body { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .check-note { margin-top: 4px; color: var(--ink-700); font-weight: 600; }
 .player-sentence { font: 1.05rem/1.5 var(--font-read); color: var(--ink-700); min-height: 1.5em; margin: 4px 0 10px; }
+
+/* Hören: listening tasks */
+.listen-card { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.listen-card .progress { width: 100%; }
+.listen-card .btn { width: 100%; }
+.play-big { width: 96px; height: 96px; border-radius: 50%; border: 0; background: var(--accent); color: #fff;
+  font-size: 2.2rem; cursor: pointer; box-shadow: 0 6px 18px rgba(212, 138, 28, .35); }
+.play-big:disabled { background: var(--cream-300); box-shadow: none; cursor: default; }
+.transcript p { margin: 0 0 .7em; }

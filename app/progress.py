@@ -53,7 +53,7 @@ def done_today(conn: sqlite3.Connection) -> dict[str, bool]:
         """SELECT 1 FROM writing WHERE kind = ? AND date(ts, 'localtime') = date('now', 'localtime')
            LIMIT 1""", (kind,)).fetchone() is not None
     return {"warmup": reread, "review": q("review_log"), "text": read, "drill": q("drill_attempt"),
-            "write": wrote("write"), "speak": wrote("speak")}
+            "write": wrote("write"), "speak": wrote("speak"), "listen": q("listen_log")}
 
 
 def lesson_mastery(conn: sqlite3.Connection) -> list[dict]:
@@ -73,7 +73,8 @@ def lesson_check(conn: sqlite3.Connection, number: int) -> dict:
                   SUM(k.state = 'known') AS known, SUM(k.state = 'learning') AS learning
            FROM lemma m LEFT JOIN known_word k ON k.lemma_id = m.id
            WHERE m.lesson_id = ? AND m.pos != 'PHRASE'""", (lid,)).fetchone()
-    texts = conn.execute("SELECT report_json, read_count FROM text WHERE lesson_id = ?", (lid,)).fetchall()
+    texts = conn.execute("SELECT report_json, read_count FROM text WHERE lesson_id = ? AND kind = 'read'",
+                         (lid,)).fetchall()
     texts_read = sum(1 for t in texts if t["read_count"])
     in_texts: dict[str, int] = {}
     for t in texts:
@@ -98,6 +99,13 @@ def lesson_check(conn: sqlite3.Connection, number: int) -> dict:
             "texts_read": texts_read, "texts_goal": TEXTS_PER_LESSON, "grammar": grammar,
             "writing_tasks_done": writings, "writing_tasks_goal": 3,
             "ready": mastery >= MASTERY_TO_ADVANCE and texts_read >= TEXTS_PER_LESSON}
+
+
+def listening_stats(conn: sqlite3.Connection) -> dict:
+    row = conn.execute("""SELECT COUNT(DISTINCT text_id) AS tasks, SUM(correct) AS correct, SUM(total) AS total
+                          FROM listen_log""").fetchone()
+    return {"tasks": row["tasks"] or 0,
+            "accuracy": round(row["correct"] / row["total"], 2) if row["total"] else None}
 
 
 def reading_speed(conn: sqlite3.Connection, limit: int = 10) -> list[dict]:
@@ -134,6 +142,7 @@ def summary(conn: sqlite3.Connection) -> dict:
         "top_errors": top_errors(conn, 5),
         "reading_speed": reading_speed(conn),
         "review_accuracy_7d": review_accuracy(conn),
-        "texts_read": conn.execute("SELECT COUNT(*) FROM text WHERE read_count > 0").fetchone()[0],
+        "texts_read": conn.execute("SELECT COUNT(*) FROM text WHERE read_count > 0 AND kind = 'read'").fetchone()[0],
+        "listening": listening_stats(conn),
         "writings": conn.execute("SELECT COUNT(*) FROM writing").fetchone()[0],
     }

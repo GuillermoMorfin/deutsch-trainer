@@ -613,7 +613,7 @@ async function viewReadList() {
         : `<p class="small warning-box">${esc(status.message)}</p>`}
       <p class="small muted" id="gen-status" hidden></p>
     </div>
-    ${texts.length ? `<a class="btn secondary" href="#/listen" style="margin-bottom:14px">🎧 Als Playlist hören</a>` : ""}
+    ${texts.length ? `<a class="btn secondary" href="#/playlist" style="margin-bottom:14px">🎧 Als Playlist hören</a>` : ""}
     <h2>Lektion ${n}</h2>
     ${mine.length ? `<ul class="lesson-list">${mine.map(row).join("")}</ul>` : `<p class="empty">Noch keine Texte für diese Lektion.</p>`}
     ${older.length ? `<h2>Frühere Lektionen</h2><ul class="lesson-list">${older.map(row).join("")}</ul>` : ""}`;
@@ -703,7 +703,7 @@ async function speakSentences(sentences, { onSentence, onEnd, rate, startAt = 0 
     if (!text) return;
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "de-DE";
-    if (voice) u.voice = voice;
+    if (sent.voice || voice) u.voice = sent.voice || voice;   // dialogues: one voice per speaker
     u.rate = rate || ttsRate();
     u.onstart = () => { if (run === ttsRun) onSentence?.(i); };
     if (i === lastSpoken) {
@@ -1349,12 +1349,12 @@ async function viewProgress() {
 
 // ---- listening playlist (narrow reading set as audio, e.g. for runs) ------------------
 
-async function viewListen() {
+async function viewPlaylist() {
   const texts = await api("/texts");
   $app.innerHTML = `
-    <p class="eyebrow"><a href="#/read">← Lesen</a></p>
-    <h1>Hören</h1>
-    <p class="small muted">Deine Texte als Playlist, vorgelesen von der deutschen Stimme deines Geräts. Am besten mit Kopfhörern beim Laufen.
+    <p class="eyebrow"><a href="#/listen">← Hören</a></p>
+    <h1>Lesetexte als Playlist</h1>
+    <p class="small muted">Deine Lesetexte als Playlist, vorgelesen von der deutschen Stimme deines Geräts. Am besten mit Kopfhörern beim Laufen.
       Hinweis: Auf dem iPhone stoppt die Wiedergabe meist, wenn der Bildschirm sperrt.</p>
     ${texts.length ? `
     <div class="card player">
@@ -1422,6 +1422,193 @@ async function viewListen() {
   $app.querySelectorAll(".play-one").forEach((b) => b.addEventListener("click", () => {
     stopSpeaking(); pos = { t: +b.dataset.n, s: 0 }; continuous = false; play();
   }));
+}
+
+// ---- Hören: listening comprehension (listen max. 2×, then a quiz, then the transcript) ---------
+
+function secondVoice(primary) {
+  // a different, natural-sounding German voice for the second speaker in dialogues
+  const vs = germanVoices().filter((v) => !primary || v.name !== primary.name)
+    .filter((v) => !/Grandma|Grandpa|Rocko/.test(v.name));
+  for (const re of VOICE_ORDER) { const v = vs.find((x) => re.test(x.name)); if (v) return v; }
+  return vs[0] || null;
+}
+
+// "Lena: Hallo!" lines → sentences tagged with their speaker's voice. With only one voice available the
+// name is read out, so you can still tell who speaks.
+function dialogueSentences(body) {
+  const primary = chosenVoice(), other = secondVoice(primary);
+  const speakers = [];
+  const out = [];
+  body.split(/\n+/).forEach((line, li) => {
+    const m = line.match(/^\s*([A-ZÄÖÜ][\wäöüß-]{1,20}):\s*(.+)$/);
+    const speaker = m ? m[1] : null, text = m ? m[2] : line;
+    if (speaker && !speakers.includes(speaker)) speakers.push(speaker);
+    const voice = speaker && other ? (speakers.indexOf(speaker) % 2 === 0 ? primary : other) : null;
+    splitSentences(text).forEach((s, k) => out.push({
+      text: !other && speaker && k === 0 ? `${speaker}: ${s.text}` : s.text,
+      shown: s.text, speaker: k === 0 ? speaker : null, voice, paraStart: k === 0 && li > 0,
+    }));
+  });
+  return out;
+}
+
+async function viewListen() {
+  const [tasks, status, o] = await Promise.all([api("/texts?kind=listen"), api("/llm/status"), api("/overview")]);
+  const row = (t) => `<li><a class="lesson-row" href="#/listen/${t.id}">
+      <span class="num">${t.lesson_number}</span>
+      <span class="body"><span class="title">${esc(t.title)}</span>
+        <span class="meta">${t.attempts ? `Bestes Ergebnis: ${pct(t.best_score)} · ${t.attempts}× gemacht` : "neu"}</span></span></a></li>`;
+  $app.innerHTML = `
+    <h1>Hören</h1>
+    <div class="card hero">
+      <p class="eyebrow">Lektion ${o.current_lesson.number} · ${esc(o.current_lesson.theme)}</p>
+      <p class="small">Ein kurzer Hörtext (Dialog, Sprachnachricht oder Durchsage). Du hörst ihn höchstens zweimal,
+        ohne Text, und beantwortest dann ein Quiz. Danach siehst du den Text.</p>
+      ${status.configured ? `<button class="btn" id="gen">Neue Höraufgabe</button>`
+        : `<p class="small warning-box">${esc(status.message)}</p>`}
+      <p class="small muted" id="gen-status" hidden></p>
+    </div>
+    ${tasks.length ? `<ul class="lesson-list">${tasks.map(row).join("")}</ul>` : `<p class="empty">Noch keine Höraufgaben.</p>`}
+    <p class="small"><a href="#/playlist">🎧 Deine Lesetexte als Playlist (zum Laufen)</a></p>`;
+  const btn = $app.querySelector("#gen");
+  btn?.addEventListener("click", async () => {
+    btn.disabled = true;
+    const st = $app.querySelector("#gen-status");
+    st.hidden = false; st.textContent = "Claude schreibt eine Höraufgabe (ca. 1 Minute)…";
+    try {
+      const r = await api("/texts/generate", { method: "POST", body: { kind: "listen" } });
+      location.hash = `#/listen/${r.text_id}`;
+    } catch (e) { st.textContent = `Das hat nicht geklappt: ${e.message.replace(/^\d+ /, "")}`; btn.disabled = false; }
+  });
+}
+
+const MAX_PLAYS = 2;
+
+async function viewListenTask(id) {
+  const d = await api(`/texts/${id}`);
+  const body = d.tokens.map((tk) => tk.br ? "\n" : tk.t + tk.ws).join("");
+  await voicesReady();
+  const sents = dialogueSentences(body);
+  let plays = 0, status = "idle", pos = 0;     // status: idle | playing | paused | done (heard enough)
+
+  $app.innerHTML = `
+    <p class="eyebrow"><a href="#/listen">← Hören</a> · Lektion ${d.text.lesson_number}</p>
+    <h1>${esc(d.text.title)}</h1>
+    <div class="card listen-card">
+      <p class="small muted" id="hint">Hör gut zu. Du kannst den Text höchstens ${MAX_PLAYS}× hören, dann kommt das Quiz.</p>
+      <button class="play-big" id="play" aria-label="Anhören">▶</button>
+      <div class="progress"><i id="bar" style="width:0%"></i></div>
+      <p class="small" id="count">Gehört: 0 von ${MAX_PLAYS}</p>
+      <div class="toolbar" style="justify-content:center">
+        <button class="btn secondary small-btn" id="restart" hidden>⏮ Von vorne</button>
+        <label class="small">Tempo <select id="rate"><option value="0.8">langsam</option>
+          <option value="0.9" selected>normal</option><option value="1">schnell</option></select></label>
+      </div>
+      <button class="btn" id="to-quiz" hidden>Zum Quiz →</button>
+    </div>
+    <section id="quiz" hidden></section>
+    <section id="transcript" hidden></section>`;
+
+  const $play = $app.querySelector("#play"), $bar = $app.querySelector("#bar"), $count = $app.querySelector("#count");
+  const $restart = $app.querySelector("#restart"), $toQuiz = $app.querySelector("#to-quiz"), $hint = $app.querySelector("#hint");
+  const render = () => {
+    $play.textContent = status === "playing" ? "⏸" : "▶";
+    $play.disabled = status === "done";
+    $play.setAttribute("aria-label", status === "playing" ? "Pause" : status === "paused" ? "Weiter" : "Anhören");
+    $restart.hidden = !(status === "playing" || status === "paused");
+    $count.textContent = `Gehört: ${plays} von ${MAX_PLAYS}${status === "paused" ? " · pausiert" : ""}`;
+    $toQuiz.hidden = plays === 0 || status === "playing";
+    if (status === "idle" && plays > 0 && plays < MAX_PLAYS) $hint.textContent = "Noch einmal hören oder direkt zum Quiz.";
+    if (status === "done") $hint.textContent = "Du hast den Text zweimal gehört. Jetzt das Quiz!";
+  };
+  const progress = (i) => { $bar.style.width = `${Math.round(((i + 1) / sents.length) * 100)}%`; };
+  const playFrom = (from, newPlay) => {
+    if (newPlay) plays += 1;
+    status = "playing"; pos = from; render();
+    speakSentences(sents, {
+      startAt: from, rate: +$app.querySelector("#rate").value,
+      onSentence: (i) => { if (i >= 0) { pos = i; progress(i); } },
+      onEnd: () => { status = plays >= MAX_PLAYS ? "done" : "idle"; pos = 0; render(); },
+    });
+  };
+  $play.addEventListener("click", () => {
+    if (status === "playing") { stopSpeaking(); status = "paused"; render(); return; }  // pause, same listen
+    if (status === "paused") return playFrom(pos, false);                              // resume, same listen
+    if (plays < MAX_PLAYS) playFrom(0, true);                                          // a new listen
+  });
+  $restart.addEventListener("click", () => { stopSpeaking(); playFrom(0, false); });   // restart this listen
+  render();
+
+  // ---- quiz
+  $toQuiz.addEventListener("click", () => {
+    stopSpeaking(); status = "done"; render();
+    $app.querySelector(".listen-card").hidden = true;
+    const $q = $app.querySelector("#quiz");
+    $q.hidden = false;
+    const graded = d.questions.filter((q) => q.type !== "short_answer").length;
+    let answered = 0, correct = 0;
+    $q.innerHTML = `<h2>Quiz</h2>${d.questions.map((q, n) => `
+      <div class="card question" data-q="${q.id}" data-type="${q.type}">
+        <p><strong>${n + 1}.</strong> ${esc(q.prompt)}</p>
+        ${q.type === "short_answer"
+          ? `<textarea rows="2" lang="de" spellcheck="false" placeholder="Antwort auf Deutsch…"></textarea>
+             <button class="btn secondary check">Lösung zeigen</button>`
+          : `<div class="options">${q.options.map((op) => `<button class="opt" data-a="${esc(op)}">${esc(op)}</button>`).join("")}</div>`}
+        <p class="small q-feedback" hidden></p>
+      </div>`).join("")}
+      <button class="btn" id="finish-quiz" disabled>Auswertung</button>`;
+    const $finish = $q.querySelector("#finish-quiz");
+    const sync = () => { $finish.disabled = answered < graded; };
+    $q.querySelectorAll(".question").forEach((box) => {
+      const qid = box.dataset.q, fb = box.querySelector(".q-feedback");
+      box.querySelectorAll(".opt").forEach((b) => b.addEventListener("click", async () => {
+        if (box.dataset.answered) return;
+        box.dataset.answered = "1";
+        const r = await api(`/questions/${qid}/check`, { method: "POST", body: { answer: b.dataset.a } });
+        answered += 1; if (r.correct) correct += 1; sync();
+        b.classList.add(r.correct ? "right" : "wrong");
+        if (!r.correct) box.querySelectorAll(".opt").forEach((o) => { if (o.dataset.a === r.answer) o.classList.add("right"); });
+        fb.hidden = false; fb.textContent = r.correct ? "Richtig!" : `Richtig wäre: ${r.answer}`;
+      }));
+      box.querySelector(".check")?.addEventListener("click", async () => {
+        const r = await api(`/questions/${qid}/check`, { method: "POST", body: { answer: box.querySelector("textarea").value } });
+        fb.hidden = false; fb.textContent = `Mögliche Antwort: ${r.answer}`;
+      });
+    });
+    sync();
+    $finish.addEventListener("click", async () => {
+      $finish.disabled = true;
+      await api(`/texts/${id}/listen-result`, { method: "POST", body: { plays, correct, total: graded } });
+      showTranscript(correct, graded);
+    });
+  });
+
+  // ---- transcript: read along, open in the reader for translations
+  const showTranscript = (correct, graded) => {
+    const $t = $app.querySelector("#transcript");
+    $t.hidden = false;
+    $t.innerHTML = `
+      <div class="card hero"><h3>${correct === graded ? "Super gehört! 🎉" : correct / Math.max(1, graded) >= 0.6
+        ? "Gut gemacht!" : "Dranbleiben! Lies den Text und hör ihn nochmal. 💪"}</h3>
+        <p>${correct} von ${graded} richtig · ${plays}× gehört</p></div>
+      <div class="card"><h3>Der Text</h3>
+        <div class="toolbar"><button class="btn secondary small-btn" id="along">▶ Mit Text anhören</button>
+          <a class="btn secondary small-btn" href="#/text/${id}">Im Leser öffnen (mit Übersetzungen)</a></div>
+        <div class="reading transcript">${sents.map((s, i) => `${s.speaker ? `${i ? "</p>" : ""}<p><strong>${esc(s.speaker)}:</strong> `
+          : i === 0 || s.paraStart ? `${i ? "</p>" : ""}<p>` : ""}<span data-s="${i}">${esc(s.shown)}</span> `).join("")}</p></div>
+      </div>
+      <a class="btn" href="#/listen">Zurück zu Hören</a>`;
+    const hl = (n) => $t.querySelectorAll("[data-s]").forEach((el) => el.classList.toggle("speaking", +el.dataset.s === n));
+    const $along = $t.querySelector("#along");
+    let on = false;
+    $along.addEventListener("click", () => {
+      if (on) { stopSpeaking(); on = false; hl(-1); $along.textContent = "▶ Mit Text anhören"; return; }
+      on = true; $along.textContent = "■ Stopp";
+      speakSentences(sents, { onSentence: hl, onEnd: () => { on = false; hl(-1); $along.textContent = "▶ Mit Text anhören"; } });
+    });
+    $t.scrollIntoView({ behavior: "smooth" });
+  };
 }
 
 // ---- speaking: browser speech-to-text → Claude feedback → listen & repeat -----------------
@@ -1545,6 +1732,8 @@ const routes = [
   [/^#\/session\/(full|quick)$/, "home", (m) => viewSession(m[1])],
   [/^#\/progress$/, "progress", viewProgress],
   [/^#\/listen$/, "read", viewListen],
+  [/^#\/listen\/(\d+)$/, "read", (m) => viewListenTask(m[1])],
+  [/^#\/playlist$/, "read", viewPlaylist],
   [/^#\/drill$/, "home", () => viewDrill(null)],
   [/^#\/drill\/([A-Z0-9_]+)$/, "home", (m) => viewDrill(m[1])],
   [/^#\/text\/(\d+)$/, "read", (m) => viewText(m[1])],

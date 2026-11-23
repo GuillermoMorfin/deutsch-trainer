@@ -189,3 +189,13 @@ CREATE TABLE IF NOT EXISTS reading_log (
     wpm      INTEGER,
     ts       TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Listening tasks (Hören): how often the learner listened and how the quiz went.
+CREATE TABLE IF NOT EXISTS listen_log (
+    id       INTEGER PRIMARY KEY,
+    text_id  INTEGER NOT NULL REFERENCES text(id) ON DELETE CASCADE,
+    plays    INTEGER NOT NULL,
+    correct  INTEGER NOT NULL,
+    total    INTEGER NOT NULL,
+    ts       TEXT NOT NULL DEFAULT (datetime('now'))
+);

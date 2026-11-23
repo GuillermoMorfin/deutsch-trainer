@@ -26,14 +26,14 @@ def warmup_text(conn: sqlite3.Connection) -> dict | None:
     """The most recently read text from before today ("yesterday's text")."""
     return row_to_dict(conn.execute(
         """SELECT t.id, t.title FROM reading_log r JOIN text t ON t.id = r.text_id
-           WHERE date(r.ts, 'localtime') < date('now', 'localtime')
+           WHERE date(r.ts, 'localtime') < date('now', 'localtime') AND t.kind = 'read'
            ORDER BY r.id DESC LIMIT 1""").fetchone())
 
 
 def unread_text(conn: sqlite3.Connection) -> dict | None:
     return row_to_dict(conn.execute(
         """SELECT t.id, t.title FROM text t JOIN lesson l ON l.id = t.lesson_id
-           WHERE t.read_count = 0 AND l.number = (SELECT current_lesson FROM settings WHERE id = 1)
+           WHERE t.read_count = 0 AND t.kind = 'read' AND l.number = (SELECT current_lesson FROM settings WHERE id = 1)
            ORDER BY t.id DESC LIMIT 1""").fetchone())
 
 

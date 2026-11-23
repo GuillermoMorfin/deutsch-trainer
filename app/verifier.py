@@ -43,6 +43,8 @@ VERB_FORMS = {
     "mag": "mögen", "magst": "mögen",
     "nimmt": "nehmen", "nimmst": "nehmen", "hält": "halten", "hältst": "halten",
     "war": "sein", "warst": "sein", "waren": "sein", "wart": "sein",
+    "bin": "sein", "bist": "sein", "ist": "sein", "sind": "sein", "seid": "sein",
+    "habe": "haben", "hast": "haben", "hat": "haben", "habt": "haben",
     "hatte": "haben", "hattest": "haben", "hatten": "haben", "hattet": "haben",
 }
 DET_FORMS = {f: "euer" for f in ("eure", "euren", "eurem", "eurer", "eures")}

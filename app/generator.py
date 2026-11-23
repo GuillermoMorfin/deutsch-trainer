@@ -95,6 +95,29 @@ marks is welcome. Write natural German a native speaker would accept, never a wo
 The narrator is "ich" (the learner). Do not invent facts about the learner's past, hometown, family or \
 job beyond the PERSONAL CONTEXT; invent freely for the other characters."""
 
+LISTEN_SYSTEM = """You write short German LISTENING texts for one adult learner at level A2.1 (Momente A2.1). \
+The learner will only HEAR the text (read by text-to-speech), up to two times, and then answer questions.
+
+Hard rules, in priority order:
+1. Vocabulary: use ONLY words from the KNOWN WORDS list and the TARGET WORDS. Names and numbers are fine. \
+Listening is harder than reading, so stay very close to well-known words.
+2. Grammar: use ONLY the ALLOWED GRAMMAR, never the FORBIDDEN list. Short, clear sentences.
+3. Every TARGET WORD appears at least 3 times.
+4. Use the lesson's TARGET GRAMMAR naturally at least 2 times.
+5. Format: choose ONE everyday listening situation that fits the theme: a dialogue between two people, a \
+voicemail, a short announcement, or a phone call. For a dialogue or phone call write one turn per line as \
+"Name: text" (two speakers, e.g. Marco and the learner's friend Lena; never the narrator's own name), \
+with a blank line between turns. 120-180 words.
+6. Include concrete details a listener can catch and be asked about: times, days, places, numbers, who \
+does what, a plan or a problem. Natural spoken German, a little repetition is fine.
+
+Use the PERSONAL CONTEXT (Berlin, running, cycling, ESMT) and recurring characters where it fits."""
+
+LISTEN_QUESTION_ASK = ("Write 5 listening-comprehension questions about this text: 2 true_false, 2 multiple_choice "
+                       "(3 options), 1 short_answer that can be answered in one short German sentence. Ask about "
+                       "details a listener can catch (who, where, when, what, why), not about exact wording. "
+                       "Questions must make sense without seeing the text.")
+
 QUESTION_SYSTEM = """You write comprehension questions for a German A2.1 learner about a text they just read. \
 Use only simple words that appear in the text or are very basic, and the same simple grammar as the text: \
 no relative clauses, no passive, no genitive, no Präteritum except war/hatte. The narrator "ich" of the text is \
@@ -266,7 +289,12 @@ def _store_glosses(conn: sqlite3.Connection, writer: Writer, words: list[str], b
 
 
 def generate_text(conn: sqlite3.Connection, writer: Writer, *, lesson_number: int | None = None,
-                  n_targets: int = 6, seed: int | None = None) -> Result:
+                  n_targets: int | None = None, seed: int | None = None, kind: str = "read") -> Result:
+    listen = kind == "listen"
+    if n_targets is None:
+        n_targets = 2 if listen else 6          # listening recycles a couple of words; reading teaches new ones
+    system = LISTEN_SYSTEM if listen else SYSTEM
+    min_coverage = 0.97 if listen else MIN_COVERAGE
     if lesson_number is None:
         lesson_number = conn.execute("SELECT current_lesson FROM settings WHERE id = 1").fetchone()[0]
     lesson = row_to_dict(conn.execute("SELECT * FROM lesson WHERE number = ?", (lesson_number,)).fetchone())
@@ -275,17 +303,19 @@ def generate_text(conn: sqlite3.Connection, writer: Writer, *, lesson_number: in
         raise GenerationError(f"Lektion {lesson_number}: alle Wörter sind schon bekannt.")
     target_ids = {t["id"] for t in targets}
     base = build_prompt(conn, lesson, targets, review_words(conn))
+    if listen:
+        base = "This is a LISTENING text (see the format rules).\n\n" + base
 
     lex = build_lexicon(conn, target_ids)
     unlocked = unlocked_codes(conn)
     wanted = target_grammar_points(conn, lesson)
     missing = lambda d: [g for g in wanted if g["code"] not in grammar_presence(d)]  # noqa: E731
-    draft = writer.write(SYSTEM, base)
+    draft = writer.write(system, base)
     doc, report = analyse(draft.body, lex, unlocked)
     attempts = 1
-    while (not report.passes(min_coverage=MIN_COVERAGE, min_target_uses=MIN_TARGET_USES) or missing(doc)) \
+    while (not report.passes(min_coverage=min_coverage, min_target_uses=MIN_TARGET_USES) or missing(doc)) \
             and attempts <= MAX_REPAIRS:
-        draft = writer.write(SYSTEM, repair_prompt(base, draft, report, targets, missing(doc)))
+        draft = writer.write(system, repair_prompt(base, draft, report, targets, missing(doc)))
         doc, report = analyse(draft.body, lex, unlocked)
         attempts += 1
     # Target grammar is strongly requested and repaired, but a text that is otherwise good is kept even
@@ -306,14 +336,14 @@ def generate_text(conn: sqlite3.Connection, writer: Writer, *, lesson_number: in
             f"SELECT * FROM lemma WHERE id IN ({','.join('?' * len(ids))})", list(ids))} if ids else {}
         tokens = annotate(doc, lex, lemma_rows)
         cur = conn.execute(
-            """INSERT INTO text (lesson_id, title, body, summary, annotations, coverage, target_lemma_ids, report_json)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            """INSERT INTO text (lesson_id, title, body, summary, annotations, coverage, target_lemma_ids, report_json, kind)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (lesson["id"], draft.title, draft.body, draft.summary, json.dumps(tokens, ensure_ascii=False),
              report.coverage, json.dumps(sorted(target_ids)),
-             json.dumps({**report.to_dict(), **report_extra}, ensure_ascii=False)))
+             json.dumps({**report.to_dict(), **report_extra}, ensure_ascii=False), kind))
         text_id = cur.lastrowid
 
-    questions = checked_questions(writer, draft, lex, unlocked)
+    questions = checked_questions(writer, draft, lex, unlocked, listen=listen)
     with transaction(conn):
         for q in questions[:6]:
             conn.execute("INSERT INTO question (text_id, type, prompt, options, answer) VALUES (?, ?, ?, ?, ?)",
@@ -321,10 +351,12 @@ def generate_text(conn: sqlite3.Connection, writer: Writer, *, lesson_number: in
     return Result(text_id, report, attempts)
 
 
-def checked_questions(writer: Writer, draft: Draft, lex, unlocked: set[str]) -> list:
+def checked_questions(writer: Writer, draft: Draft, lex, unlocked: set[str], *, listen: bool = False) -> list:
     """Questions get the same grammar check as the text: one retry with feedback, then drop offenders."""
-    ask = (f"Write 5 questions about this text: 2 true_false, 2 multiple_choice (3 options), 1 short_answer "
-           f"that can be answered in one short German sentence.\n\nTitle: {draft.title}\n\n{draft.body}")
+    head = LISTEN_QUESTION_ASK if listen else (
+        "Write 5 questions about this text: 2 true_false, 2 multiple_choice (3 options), 1 short_answer "
+        "that can be answered in one short German sentence.")
+    ask = f"{head}\n\nTitle: {draft.title}\n\n{draft.body}"
     questions = writer.questions(QUESTION_SYSTEM, ask)
 
     def problems(q) -> list:
