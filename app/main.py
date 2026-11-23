@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from . import drills, export, generator, optimize, progress, session, srs, writing  # noqa: E402
+from . import drills, export, generator, optimize, progress, session, srs, tts, writing  # noqa: E402
 from . import progress as progress_mod  # noqa: E402  (get_lesson has a local named 'progress')
 from .db import connect, row_to_dict, rows_to_dicts, transaction  # noqa: E402
 from .llm import GenerationError, LLMUnavailable, Writer, default_writer  # noqa: E402
@@ -520,6 +520,22 @@ def fsrs_optimize(db: sqlite3.Connection = Depends(get_db)):
 def fsrs_reset(db: sqlite3.Connection = Depends(get_db)):
     optimize.reset(db)
     return optimize.status(db)
+
+
+# ---- natural voices (Piper, local) ---------------------------------------------------------
+
+@app.get("/api/tts/voices")
+def tts_voices():
+    return tts.available()
+
+
+@app.get("/api/tts")
+def tts_audio(text: str = Query(..., min_length=1, max_length=600), voice: str = "thorsten",
+              rate: float = Query(0.9, ge=0.5, le=1.5)):
+    if voice not in {v["id"] for v in tts.available()}:
+        raise HTTPException(404, f"Stimme {voice} ist nicht installiert")
+    path = tts.synthesize(text, voice, rate)
+    return FileResponse(path, media_type="audio/wav", headers={"Cache-Control": "public, max-age=31536000, immutable"})
 
 
 @app.get("/api/health")

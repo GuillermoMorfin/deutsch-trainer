@@ -8,6 +8,7 @@ dependencies = [
     "de-core-news-md",
     "fastapi>=0.115",
     "fsrs>=6.3.3",
+    "piper-tts>=1.8.0",
     "python-dotenv>=1.2.4",
     "spacy>=3.8.18",
     "uvicorn[standard]>=0.30",

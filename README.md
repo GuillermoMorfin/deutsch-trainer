@@ -68,3 +68,14 @@ The tests (`uv run pytest`) check that every Redemittel, drill and fixture only 
 - **Quizlet**: copy or download any lesson's words (or all words you're learning) from the lesson page or *Wörter*.
 - **FSRS optimisation**: after 512 reviews, *Einstellungen → Wiederholungsplan anpassen* fits the scheduler to your
   own history. Needs `uv sync --extra optimizer` (PyTorch). CLI: `uv run python -m app.optimize`.
+
+## Natural voices (Piper)
+
+Read-aloud, playlists and Hören use local neural voices (Piper, open source, offline). They live in
+`data/voices` (not in git). On a new machine:
+
+```bash
+uv run python -m piper.download_voices --download-dir data/voices de_DE-thorsten-high de_DE-kerstin-low
+```
+
+Without them the app falls back to the browser's voices. Synthesised sentences are cached in `data/tts_cache`.

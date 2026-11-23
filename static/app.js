@@ -541,11 +541,15 @@ async function viewSettings() {
     <div class="card" id="fsrs"></div>`;
   const $voice = $app.querySelector("#voice");
   voicesReady().then(() => {
-    const rec = recommendedVoice(), cur = chosenVoice();
-    const vs = germanVoices();
-    $voice.innerHTML = vs.length ? vs.map((v) => `<option value="${esc(v.name)}" ${cur && v.name === cur.name ? "selected" : ""}>
-      ${esc(v.name.replace(/ \(German \(Germany\)\)/, ""))}${rec && v.name === rec.name ? " (empfohlen)" : ""}${v.localService ? "" : " · online"}</option>`).join("")
-      : `<option>Keine deutsche Stimme gefunden</option>`;
+    const cur = chosenVoice();
+    const curVal = cur?.kind === "piper" ? `piper:${cur.id}` : cur?.voice?.name;
+    const piper = piperVoices.map((v, k) => `<option value="piper:${esc(v.id)}" ${curVal === `piper:${v.id}` ? "selected" : ""}>
+      ${esc(v.label)}${k === 0 ? " (empfohlen)" : ""}</option>`).join("");
+    const browser = germanVoices().map((v) => `<option value="${esc(v.name)}" ${curVal === v.name ? "selected" : ""}>
+      ${esc(v.name.replace(/ \(German \(Germany\)\)/, ""))}${v.localService ? "" : " · online"}</option>`).join("");
+    $voice.innerHTML = (piper ? `<optgroup label="Natürliche Stimmen">${piper}</optgroup>` : "")
+      + (browser ? `<optgroup label="Browser-Stimmen">${browser}</optgroup>` : "")
+      || `<option>Keine deutsche Stimme gefunden</option>`;
   });
   $voice.addEventListener("change", () => { prefs.set(TTS_VOICE_KEY, $voice.value); });
   $app.querySelector("#tts-rate").addEventListener("change", (e) => prefs.set(TTS_RATE_KEY, e.target.value));
@@ -657,12 +661,24 @@ function recommendedVoice() {
   for (const re of VOICE_ORDER) { const v = vs.find((x) => re.test(x.name)); if (v) return v; }
   return vs[0] || null;
 }
+// Natural Piper voices (served by the app, made on this Mac) come first; browser voices are the fallback.
+let piperVoices = [];
+const piperReady = fetch("/api/tts/voices").then((r) => (r.ok ? r.json() : [])).then((v) => { piperVoices = v; })
+  .catch(() => {});
+// A voice spec is { kind: "piper", id } or { kind: "browser", voice }.
 function chosenVoice() {
   const saved = prefs.get(TTS_VOICE_KEY);
-  return germanVoices().find((v) => v.name === saved) || recommendedVoice();
+  if (saved && saved.startsWith("piper:") && piperVoices.some((v) => `piper:${v.id}` === saved))
+    return { kind: "piper", id: saved.slice(6) };
+  if ((!saved || saved.startsWith("piper:")) && piperVoices.length) return { kind: "piper", id: piperVoices[0].id };
+  const b = germanVoices().find((v) => v.name === saved) || recommendedVoice();
+  return b ? { kind: "browser", voice: b } : null;
 }
 function ttsRate() { return +(prefs.get(TTS_RATE_KEY) || 0.9); }
 function voicesReady() {
+  return Promise.all([piperReady, browserVoicesReady()]);
+}
+function browserVoicesReady() {
   return new Promise((resolve) => {
     if (!("speechSynthesis" in window) || speechSynthesis.getVoices().length) return resolve();
     speechSynthesis.addEventListener("voiceschanged", () => resolve(), { once: true });
@@ -676,9 +692,31 @@ function splitSentences(text) {
 }
 
 let ttsRun = 0;
+const ttsAudio = new Audio();   // one element, reused: friendlier to mobile autoplay rules
 function stopSpeaking() {
   ttsRun += 1;
   if ("speechSynthesis" in window) speechSynthesis.cancel();
+  ttsAudio.pause();
+}
+const piperUrl = (text, id, rate) => `/api/tts?voice=${encodeURIComponent(id)}&rate=${rate}&text=${encodeURIComponent(text)}`;
+
+async function speakPiper(sentences, { onSentence, onEnd, rate, startAt, voice }, run) {
+  const items = sentences.map((s, i) => ({ i, text: spokenText(s.text), v: s.voice || voice, para: s.paraStart }))
+    .filter((x) => x.i >= startAt && x.text);
+  for (let k = 0; k < items.length; k++) {
+    if (run !== ttsRun) return;
+    const it = items[k], next = items[k + 1];
+    if (next) fetch(piperUrl(next.text, next.v.id, rate)).catch(() => {});   // prepare the next sentence
+    onSentence?.(it.i);
+    ttsAudio.src = piperUrl(it.text, it.v.id, rate);
+    await new Promise((done) => {
+      ttsAudio.onended = done; ttsAudio.onerror = done;
+      ttsAudio.play().catch(done);
+    });
+    if (run !== ttsRun) return;
+    if (next?.para) await new Promise((r) => setTimeout(r, 350));        // breathe between paragraphs
+  }
+  if (run === ttsRun) { onSentence?.(-1); onEnd?.(); }
 }
 // What the voice should say: no quotation marks (voices read them out), dashes become a short pause.
 function spokenText(t) {
@@ -693,6 +731,8 @@ async function speakSentences(sentences, { onSentence, onEnd, rate, startAt = 0 
   await voicesReady();
   stopSpeaking();
   const run = ttsRun, voice = chosenVoice();
+  const r = rate || ttsRate();
+  if (voice?.kind === "piper") return speakPiper(sentences, { onSentence, onEnd, rate: r, startAt, voice }, run);
   let lastSpoken = -1;
   sentences.forEach((sent, i) => { if (i >= startAt && spokenText(sent.text)) lastSpoken = i; });
   if (lastSpoken < 0) { onEnd?.(); return; }
@@ -703,7 +743,8 @@ async function speakSentences(sentences, { onSentence, onEnd, rate, startAt = 0 
     if (!text) return;
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "de-DE";
-    if (sent.voice || voice) u.voice = sent.voice || voice;   // dialogues: one voice per speaker
+    const spec = sent.voice || voice;                         // dialogues: one voice per speaker
+    if (spec?.kind === "browser") u.voice = spec.voice;
     u.rate = rate || ttsRate();
     u.onstart = () => { if (run === ttsRun) onSentence?.(i); };
     if (i === lastSpoken) {
@@ -1427,11 +1468,15 @@ async function viewPlaylist() {
 // ---- Hören: listening comprehension (listen max. 2×, then a quiz, then the transcript) ---------
 
 function secondVoice(primary) {
-  // a different, natural-sounding German voice for the second speaker in dialogues
-  const vs = germanVoices().filter((v) => !primary || v.name !== primary.name)
-    .filter((v) => !/Grandma|Grandpa|Rocko/.test(v.name));
-  for (const re of VOICE_ORDER) { const v = vs.find((x) => re.test(x.name)); if (v) return v; }
-  return vs[0] || null;
+  // a different German voice for the second speaker in dialogues, from the same engine
+  if (primary?.kind === "piper") {
+    const other = piperVoices.find((v) => v.id !== primary.id);
+    return other ? { kind: "piper", id: other.id } : null;
+  }
+  const taken = primary?.voice?.name;
+  const vs = germanVoices().filter((v) => v.name !== taken && !/Grandma|Grandpa|Rocko/.test(v.name));
+  for (const re of VOICE_ORDER) { const v = vs.find((x) => re.test(x.name)); if (v) return { kind: "browser", voice: v }; }
+  return vs[0] ? { kind: "browser", voice: vs[0] } : null;
 }
 
 // "Lena: Hallo!" lines → sentences tagged with their speaker's voice. With only one voice available the
