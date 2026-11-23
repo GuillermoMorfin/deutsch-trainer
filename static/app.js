@@ -680,7 +680,12 @@ function stopSpeaking() {
   ttsRun += 1;
   if ("speechSynthesis" in window) speechSynthesis.cancel();
 }
-async function speakSentences(sentences, { onSentence, onEnd, rate } = {}) {
+// What the voice should say: no quotation marks (voices read them out), dashes become a short pause.
+function spokenText(t) {
+  return t.replace(/["„“”‚‘’«»]/g, "").replace(/\s+[–—-]\s+/g, ", ").replace(/\s{2,}/g, " ").trim();
+}
+
+async function speakSentences(sentences, { onSentence, onEnd, rate, startAt = 0 } = {}) {
   // All sentences go into the engine's queue at once: no JS timers, so it keeps going when the
   // tab is in the background (timers get throttled there). The engine's gap between utterances
   // is the pause; each utterance's onstart drives the read-along highlight.
@@ -688,14 +693,20 @@ async function speakSentences(sentences, { onSentence, onEnd, rate } = {}) {
   await voicesReady();
   stopSpeaking();
   const run = ttsRun, voice = chosenVoice();
-  if (!sentences.length) { onEnd?.(); return; }
+  let lastSpoken = -1;
+  sentences.forEach((sent, i) => { if (i >= startAt && spokenText(sent.text)) lastSpoken = i; });
+  if (lastSpoken < 0) { onEnd?.(); return; }
+  if (startAt >= sentences.length) { onEnd?.(); return; }
   sentences.forEach((sent, i) => {
-    const u = new SpeechSynthesisUtterance(sent.paraStart ? `… ${sent.text}` : sent.text);
+    if (i < startAt) return;                       // resume: skip what was already read
+    const text = spokenText(sent.text);
+    if (!text) return;
+    const u = new SpeechSynthesisUtterance(text);
     u.lang = "de-DE";
     if (voice) u.voice = voice;
     u.rate = rate || ttsRate();
     u.onstart = () => { if (run === ttsRun) onSentence?.(i); };
-    if (i === sentences.length - 1) {
+    if (i === lastSpoken) {
       const finish = () => { if (run === ttsRun) { onSentence?.(-1); onEnd?.(); } };
       u.onend = finish; u.onerror = finish;
     }
@@ -729,6 +740,7 @@ async function viewText(id, opts = {}) {
     <h1>${esc(t.title)}</h1>
     <div class="toolbar">
       <button class="btn secondary" id="speak">▶ Vorlesen</button>
+      <button class="btn secondary" id="restart" hidden>⏮ Von vorne</button>
       <span class="small muted" style="align-self:center">Tippe auf ein Wort für die Übersetzung.</span>
     </div>
     <article class="reading">${paragraphs.filter((p) => p.length).map((p) => `<p>${p.map(([tok, i]) =>
@@ -763,17 +775,29 @@ async function viewText(id, opts = {}) {
     el.addEventListener("keydown", (e) => { if (e.key === "Enter") show(+el.dataset.i); });
   });
 
-  // audio: read sentence by sentence and highlight the one being read
-  const $speak = $app.querySelector("#speak");
-  let speaking = false;
+  // audio: read sentence by sentence, highlight the one being read; pause keeps the place
+  const $speak = $app.querySelector("#speak"), $restart = $app.querySelector("#restart");
+  let status = "idle", pos = 0;            // idle | playing | paused; pos = sentence to continue from
   const highlight = (n) => $app.querySelectorAll(".reading [data-s]").forEach((el) =>
     el.classList.toggle("speaking", +el.dataset.s === n));
-  const stopReading = () => { stopSpeaking(); speaking = false; $speak.textContent = "▶ Vorlesen"; highlight(-1); };
+  const render = () => {
+    $speak.textContent = status === "playing" ? "⏸ Pause" : status === "paused" ? "▶ Weiter" : "▶ Vorlesen";
+    $restart.hidden = status === "idle";
+  };
+  const playFrom = (from) => {
+    status = "playing"; pos = from; render();
+    speakSentences(sentences, {
+      startAt: from,
+      onSentence: (n) => { if (n >= 0) { pos = n; highlight(n); } },
+      onEnd: () => { status = "idle"; pos = 0; highlight(-1); render(); },
+    });
+  };
+  const stopReading = () => { stopSpeaking(); status = "idle"; pos = 0; highlight(-1); render(); };
   $speak.addEventListener("click", () => {
-    if (speaking) return stopReading();
-    speaking = true; $speak.textContent = "■ Stopp";
-    speakSentences(sentences, { onSentence: highlight, onEnd: stopReading });
+    if (status === "playing") { stopSpeaking(); status = "paused"; render(); return; }  // keep pos + highlight
+    playFrom(status === "paused" ? pos : 0);
   });
+  $restart.addEventListener("click", () => playFrom(0));
 
   // comprehension
   const $q = $app.querySelector("#questions");
@@ -1333,14 +1357,15 @@ async function viewListen() {
     <p class="small muted">Deine Texte als Playlist, vorgelesen von der deutschen Stimme deines Geräts. Am besten mit Kopfhörern beim Laufen.
       Hinweis: Auf dem iPhone stoppt die Wiedergabe meist, wenn der Bildschirm sperrt.</p>
     ${texts.length ? `
-    <div class="card">
+    <div class="card player">
+      <p class="small" id="now">Bereit: ${texts.length} ${texts.length === 1 ? "Text" : "Texte"}</p>
+      <p class="player-sentence" id="sentence"></p>
       <div class="toolbar" style="align-items:center">
-        <button class="btn" id="play-all">▶ Alle abspielen</button>
-        <button class="btn secondary" id="stop" hidden>■ Stopp</button>
+        <button class="btn" id="main">▶ Alle abspielen</button>
+        <button class="btn secondary" id="restart" hidden>⏮ Von vorne</button>
         <label class="small">Tempo <select id="rate">${[[0.8, "langsam"], [0.9, "normal"], [1, "schnell"]].map(([v, l]) =>
           `<option value="${v}" ${v === ttsRate() ? "selected" : ""}>${l}</option>`).join("")}</select></label>
       </div>
-      <p class="small muted" id="now"></p>
     </div>
     <ul class="lesson-list">${texts.map((t, n) => `<li><div class="lesson-row" data-n="${n}">
       <span class="num">${t.lesson_number}</span>
@@ -1348,27 +1373,55 @@ async function viewListen() {
       <button class="btn secondary small-btn play-one" data-n="${n}" aria-label="${esc(t.title)} abspielen">▶</button></div></li>`).join("")}</ul>`
     : `<p class="empty">Noch keine Texte. Erstelle zuerst einen unter „Lesen“.</p>`}`;
   if (!texts.length) return;
-  let playing = false, idx = 0;
-  const $now = $app.querySelector("#now"), $stop = $app.querySelector("#stop"), $all = $app.querySelector("#play-all");
-  const plain = async (t) => {
-    const d = await api(`/texts/${t.id}`);
-    return `${t.title}.\n` + d.tokens.map((tk) => tk.br ? "\n" : tk.t + tk.ws).join("");
+
+  const $now = $app.querySelector("#now"), $sent = $app.querySelector("#sentence");
+  const $main = $app.querySelector("#main"), $restart = $app.querySelector("#restart");
+  const cache = {};
+  const sentencesOf = async (n) => {
+    if (!cache[n]) {
+      const d = await api(`/texts/${texts[n].id}`);
+      cache[n] = splitSentences(`${texts[n].title}.\n` + d.tokens.map((tk) => tk.br ? "\n" : tk.t + tk.ws).join(""));
+    }
+    return cache[n];
   };
-  const stop = () => { playing = false; stopSpeaking(); $stop.hidden = true; $all.hidden = false; $now.textContent = "";
-    $app.querySelectorAll(".lesson-row.playing").forEach((r) => r.classList.remove("playing")); };
-  const play = async (n, continueAfter) => {
+  // status: idle | playing | paused; pos = which text and which sentence to continue from
+  let status = "idle", pos = { t: 0, s: 0 }, continuous = true;
+
+  const render = () => {
+    $main.textContent = status === "playing" ? "⏸ Pause" : status === "paused" ? "▶ Weiter" : "▶ Alle abspielen";
+    $restart.hidden = status === "idle";
+    $app.querySelectorAll(".lesson-row").forEach((r) => r.classList.toggle("playing", status !== "idle" && +r.dataset.n === pos.t));
+  };
+  const showPos = (sents) => {
+    $now.textContent = `${status === "paused" ? "Pausiert" : "Jetzt"}: ${texts[pos.t].title} · Satz ${pos.s + 1} von ${sents.length}`;
+    $sent.textContent = sents[pos.s]?.text || "";
+  };
+  const play = async () => {
     if (!("speechSynthesis" in window)) return toast("Vorlesen wird hier nicht unterstützt");
-    playing = true; idx = n; $stop.hidden = false; $all.hidden = true;
-    $app.querySelectorAll(".lesson-row").forEach((r) => r.classList.toggle("playing", +r.dataset.n === n));
-    $now.textContent = `Jetzt: ${texts[n].title}`;
-    speakSentences(splitSentences(await plain(texts[n])), {
+    status = "playing"; render();
+    const sents = await sentencesOf(pos.t);
+    showPos(sents);
+    speakSentences(sents, {
+      startAt: pos.s,
       rate: +$app.querySelector("#rate").value,
-      onEnd: () => { if (playing && continueAfter && idx + 1 < texts.length) play(idx + 1, true); else stop(); },
+      onSentence: (i) => { if (i >= 0) { pos.s = i; showPos(sents); } },
+      onEnd: () => {
+        if (continuous && pos.t + 1 < texts.length) { pos = { t: pos.t + 1, s: 0 }; play(); }
+        else { status = "idle"; pos = { t: 0, s: 0 }; $now.textContent = "Fertig gehört."; $sent.textContent = ""; render(); }
+      },
     });
   };
-  $all.addEventListener("click", () => play(0, true));
-  $stop.addEventListener("click", stop);
-  $app.querySelectorAll(".play-one").forEach((b) => b.addEventListener("click", () => play(+b.dataset.n, false)));
+  $main.addEventListener("click", async () => {
+    if (status === "playing") {                 // pause: remember the sentence
+      stopSpeaking(); status = "paused"; render(); showPos(await sentencesOf(pos.t)); return;
+    }
+    if (status === "idle") { pos = { t: 0, s: 0 }; continuous = true; }
+    play();                                     // idle: from the top · paused: resume where we stopped
+  });
+  $restart.addEventListener("click", () => { stopSpeaking(); pos = { t: pos.t, s: 0 }; play(); });   // this text from the start
+  $app.querySelectorAll(".play-one").forEach((b) => b.addEventListener("click", () => {
+    stopSpeaking(); pos = { t: +b.dataset.n, s: 0 }; continuous = false; play();
+  }));
 }
 
 // ---- speaking: browser speech-to-text → Claude feedback → listen & repeat -----------------

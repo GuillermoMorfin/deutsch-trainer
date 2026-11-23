@@ -390,3 +390,4 @@ code { font-size: .85em; background: var(--cream-200); padding: 1px 5px; border-
 .check-list li.done .ck { background: var(--ok-bg); color: var(--ok); }
 .check-list .ck-body { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .check-note { margin-top: 4px; color: var(--ink-700); font-weight: 600; }
+.player-sentence { font: 1.05rem/1.5 var(--font-read); color: var(--ink-700); min-height: 1.5em; margin: 4px 0 10px; }
