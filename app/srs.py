@@ -95,14 +95,30 @@ def checks_today(conn: sqlite3.Connection, at: datetime | None = None) -> int:
                         (to_db(at.replace(hour=0, minute=0, second=0)),)).fetchone()[0]
 
 
-def introduce_everyday(conn: sqlite3.Connection, *, limit: int | None = None, at: datetime | None = None) -> list[int]:
-    """Today's everyday checks, most useful words first, up to the daily setting."""
+EVERYDAY_BATCH = 5            # checks are handed out in small batches …
+MAX_CHECKS_PER_DAY = 40       # … known words are quick, but keep a ceiling
+
+
+def everyday_new_today(conn: sqlite3.Connection, at: datetime | None = None) -> int:
+    """Everyday words that turned out new today, plus checks still waiting (they might be new too)."""
     at = at or now_utc()
-    per_day = conn.execute("SELECT everyday_per_day FROM settings WHERE id = 1").fetchone()[0]
-    room = max(0, per_day - checks_today(conn, at))
+    return conn.execute(
+        "SELECT COUNT(*) FROM card WHERE mode IN ('learn', 'check') AND created_at >= ?",
+        (to_db(at.replace(hour=0, minute=0, second=0)),)).fetchone()[0]
+
+
+def introduce_everyday(conn: sqlite3.Connection, *, limit: int | None = None, at: datetime | None = None) -> list[int]:
+    """Next batch of everyday checks, most useful words first.
+
+    The daily setting caps how many *new* everyday words (ones you didn't know) you take on per day:
+    words you already know don't count, so a good day moves quickly through the deck, and a day
+    full of unknown words stops early instead of piling up."""
+    at = at or now_utc()
+    cap_new = conn.execute("SELECT everyday_per_day FROM settings WHERE id = 1").fetchone()[0]
+    room = min(EVERYDAY_BATCH, cap_new - everyday_new_today(conn, at), MAX_CHECKS_PER_DAY - checks_today(conn, at))
     if limit is not None:
         room = min(room, limit)
-    if room == 0:
+    if room <= 0:
         return []
     rows = conn.execute(
         """SELECT m.id FROM lemma m WHERE m.deck = 'alltag'

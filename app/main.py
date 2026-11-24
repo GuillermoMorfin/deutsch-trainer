@@ -159,7 +159,7 @@ class SettingsUpdate(BaseModel):
     target_retention: float | None = Field(None, ge=0.7, le=0.97)
     session_minutes: Literal[20, 30, 40] | None = None
     umlaut_ascii_ok: bool | None = None
-    everyday_per_day: Literal[0, 10, 15, 25] | None = None
+    everyday_per_day: Literal[0, 5, 10, 15] | None = None
 
 
 @app.put("/api/settings")
@@ -221,6 +221,14 @@ def review_start(body: ReviewStart, db: sqlite3.Connection = Depends(get_db)):
     return {"introduced": len(introduced), "checks": len(checks),
             "queue": srs.queue(db, limit=body.limit), "due_count": srs.due_count(db),
             "new_today": srs.new_cards_today(db)}
+
+
+@app.post("/api/review/more")
+def review_more(db: sqlite3.Connection = Depends(get_db)):
+    """When the queue runs dry: the next small batch of everyday checks, if today's limit allows."""
+    with transaction(db):
+        checks = srs.introduce_everyday(db)
+    return {"checks": len(checks), "queue": srs.queue(db), "due_count": srs.due_count(db)}
 
 
 @app.get("/api/review/today-new")

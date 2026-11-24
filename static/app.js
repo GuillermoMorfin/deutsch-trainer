@@ -261,6 +261,8 @@ async function viewReview(opts = {}) {
       // Learning steps may have brought cards back into the window.
       if (done >= limit) return finish();
       queue = (await api(`/review/queue?limit=${limit - done}`)).queue;
+      // next small batch of everyday checks, if today's limit for new words allows it
+      if (!queue.length) queue = (await api("/review/more", { method: "POST" })).queue.slice(0, limit - done);
       if (!queue.length) return finish();
     }
     const c = queue.shift();
@@ -588,10 +590,11 @@ async function viewSettings() {
           `<option value="${v}" ${v === s.session_minutes ? "selected" : ""}>${l}</option>`).join("")}</select>
       </div>
       <div class="field">
-        <label for="everyday">Alltagswörter pro Tag (Kurzcheck)</label>
-        <select id="everyday">${[[0, "keine"], [10, "10"], [15, "15"], [25, "25"]].map(([v, l]) =>
+        <label for="everyday">Neue Alltagswörter pro Tag</label>
+        <select id="everyday">${[[0, "keine"], [5, "5"], [10, "10"], [15, "15"]].map(([v, l]) =>
           `<option value="${v}" ${v === s.everyday_per_day ? "selected" : ""}>${l}</option>`).join("")}</select>
-        <span class="small muted">Wörter wie Tür, Heizung, Kaution. Richtig beim ersten Mal = kommt erst in 3 Monaten wieder.</span>
+        <span class="small muted">Wörter wie Tür, Heizung, Kaution. Wörter, die du schon kennst, zählen nicht mit:
+          richtig beim ersten Mal = kommt erst in 3 Monaten wieder.</span>
       </div>
       <div class="field">
         <label for="cap">Neue Wörter pro Tag</label>

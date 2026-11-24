@@ -29,14 +29,37 @@ def test_deck_tags_a1_words_and_adds_new_ones_but_no_lesson_words(conn):
     assert len(deck) >= 140
 
 
-def test_everyday_checks_are_typing_cards_capped_per_day(conn):
+def answer_all_checks(conn, right: bool):
+    for c in conn.execute("""SELECT c.id, m.lemma, m.article FROM card c JOIN lemma m ON m.id = c.lemma_id
+                             WHERE c.mode = 'check'""").fetchall():
+        good = f"{c['article']} {c['lemma']}" if c["article"] else c["lemma"]
+        srs.review(conn, c["id"], answer=good if right else "falsch", at=T0)
+
+
+def test_everyday_checks_come_in_small_batches(conn):
     ids = srs.introduce_everyday(conn, at=T0)
-    assert len(ids) == 15
+    assert len(ids) == srs.EVERYDAY_BATCH == 5
     cards = conn.execute("SELECT direction, mode FROM card").fetchall()
     assert {(c["direction"], c["mode"]) for c in cards} == {("produce", "check")}
-    assert srs.introduce_everyday(conn, at=T0) == []          # daily cap reached
+    assert len(srs.introduce_everyday(conn, at=T0)) == 5      # pending checks count, room left: 10 - 5
     first = conn.execute("SELECT m.lemma FROM card c JOIN lemma m ON m.id = c.lemma_id ORDER BY m.deck_order LIMIT 1")
     assert first.fetchone()[0] == "Tür"                        # most useful first
+
+
+def test_unknown_everyday_words_are_capped_per_day(conn):
+    for _ in range(3):
+        srs.introduce_everyday(conn, at=T0)
+        answer_all_checks(conn, right=False)                   # every word turns out new
+    assert srs.everyday_new_today(conn, T0) == 10              # the daily setting
+    assert srs.introduce_everyday(conn, at=T0) == []           # no more new words today
+
+
+def test_known_everyday_words_do_not_use_up_the_limit(conn):
+    for _ in range(4):
+        assert len(srs.introduce_everyday(conn, at=T0)) == 5
+        answer_all_checks(conn, right=True)                    # all known: quick checks
+    assert srs.everyday_new_today(conn, T0) == 0
+    assert len(srs.introduce_everyday(conn, at=T0)) == 5       # keeps going through the deck
 
 
 def test_right_first_time_means_known_and_back_in_three_months(conn):
@@ -97,7 +120,9 @@ def test_good_on_first_sight_still_needs_two(conn):
 
 
 def test_everyday_setting_and_word_filter(client):
-    assert client.put("/api/settings", json={"everyday_per_day": 25}).status_code == 200
-    assert client.post("/api/review/start", json={"new_words": False}).json()["checks"] == 25
+    assert client.put("/api/settings", json={"everyday_per_day": 15}).status_code == 200
+    assert client.put("/api/settings", json={"everyday_per_day": 25}).status_code == 422
+    assert client.post("/api/review/start", json={"new_words": False}).json()["checks"] == 5
+    assert client.post("/api/review/more").json()["checks"] == 5          # next batch on request
     words = client.get("/api/words", params={"lesson": -1, "limit": 500}).json()
     assert words["total"] >= 140
