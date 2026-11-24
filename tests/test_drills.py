@@ -102,8 +102,8 @@ def test_session_caps_items_per_point(conn):
 
 def test_order_tokens_are_shuffled(conn):
     set_lesson(conn, 2)
-    items = drills.session(conn, n=6, code="KONJ_WEIL", seed=3)
-    assert items and all(i["type"] == "order" for i in items)
+    items = [i for i in drills.session(conn, n=12, code="KONJ_WEIL", seed=3) if i["type"] == "order"]
+    assert items
     item = items[0]
     canon = json.loads(conn.execute("SELECT tokens FROM drill_item WHERE id = ?", (item["id"],)).fetchone()[0])
     assert sorted(item["tokens"]) == sorted(canon) and item["tokens"] != canon
@@ -173,3 +173,37 @@ def test_drill_api(client):
     assert client.get("/api/errors").json()[0]["count"] == 1
     assert client.get("/api/drills/stats").json()
     assert client.post("/api/drills/999999/check", json={"answer": "x"}).status_code == 404
+
+
+def test_every_grammar_point_has_rewrite_exercises():
+    codes = {i["code"] for i in SEED}
+    for c in codes:
+        assert sum(i["code"] == c and i["type"] == "rewrite" for i in SEED) >= 3, c
+
+
+@pytest.mark.parametrize("answer, verdict", [
+    ("Ich bleibe zu Hause, weil ich krank bin.", "correct"),
+    ("ich bleibe zu hause weil ich krank bin", "correct"),          # capitals and punctuation don't matter
+    ("Ich bleibe zu Hause, weil ich bin krank.", "word_order"),     # the typical weil mistake
+    ("Ich bleibe zu Hause, denn ich bin krank.", "wrong"),
+])
+def test_rewrite_verdicts(answer, verdict):
+    item = {"type": "rewrite", "answers": ["Ich bleibe zu Hause, weil ich krank bin."]}
+    assert drills.rewrite_verdict(item, answer) == verdict
+    assert drills.grade(item, answer) is (verdict == "correct")
+
+
+def test_rewrite_accepts_listed_variants():
+    item = {"type": "rewrite", "answers": ["Es regnet. Deshalb nehme ich den Bus.", "Es regnet, deshalb nehme ich den Bus."]}
+    assert drills.grade(item, "Es regnet, deshalb nehme ich den Bus")
+
+
+def test_rewrite_check_and_override(conn):
+    set_lesson(conn, 2)
+    item = conn.execute("SELECT id FROM drill_item WHERE type = 'rewrite' AND grammar_code = 'KONJ_WEIL' LIMIT 1").fetchone()[0]
+    r = drills.check(conn, item, "Ich bleibe zu Hause, weil ich bin krank.")
+    assert r["correct"] is False and r["verdict"] in ("word_order", "wrong")
+    assert conn.execute("SELECT count FROM error_log WHERE grammar_code = 'KONJ_WEIL'").fetchone()[0] == 1
+    drills.override(conn, item)                                       # "Ich hatte es richtig"
+    assert conn.execute("SELECT correct FROM drill_attempt ORDER BY id DESC LIMIT 1").fetchone()[0] == 1
+    assert conn.execute("SELECT COUNT(*) FROM error_log WHERE grammar_code = 'KONJ_WEIL'").fetchone()[0] == 0

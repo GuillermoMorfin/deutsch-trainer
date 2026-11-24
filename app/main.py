@@ -408,6 +408,14 @@ def drill_check(item_id: int, body: DrillAnswer, db: sqlite3.Connection = Depend
         raise HTTPException(404, f"Drill item {item_id} not found")
 
 
+@app.post("/api/drills/{item_id}/override")
+def drill_override(item_id: int, db: sqlite3.Connection = Depends(get_db)):
+    try:
+        return drills.override(db, item_id)
+    except KeyError:
+        raise HTTPException(404, f"No attempt for drill item {item_id}")
+
+
 class DrillGenerate(BaseModel):
     code: str
 

@@ -30,6 +30,8 @@ GENERATE_BATCH = 8
 # ---- items ------------------------------------------------------------------------
 
 def full_sentence(item_type: str, prompt: str, answers: list) -> str:
+    if item_type == "rewrite":
+        return answers[0]
     if item_type == "order":
         words = " ".join(answers[0])
         end = "" if words.endswith((".", "!", "?")) else ("?" if prompt.rstrip().startswith(("Wissen", "Weißt", "Können", "Kannst")) else ".")
@@ -191,7 +193,26 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", s)
 
 
+def _words(s: str) -> list[str]:
+    """Lower-case words without punctuation: capitals and commas don't decide a rewrite."""
+    return re.findall(r"[\wäöüß-]+", unicodedata.normalize("NFC", s or "").lower())
+
+
+def rewrite_verdict(item: dict, answer) -> str:
+    """'correct' | 'word_order' (right words, wrong order) | 'wrong'."""
+    given = _words(str(answer))
+    for a in item["answers"]:
+        if given == _words(a):
+            return "correct"
+    for a in item["answers"]:
+        if sorted(given) == sorted(_words(a)):
+            return "word_order"
+    return "wrong"
+
+
 def grade(item: dict, answer) -> bool:
+    if item["type"] == "rewrite":
+        return rewrite_verdict(item, answer) == "correct"
     if item["type"] == "order":
         given = [w.strip() for w in (answer if isinstance(answer, list) else str(answer).split())]
         return any([w.lower() for w in given] == [w.lower() for w in a] for a in item["answers"])
@@ -229,8 +250,25 @@ def check(conn: sqlite3.Connection, item_id: int, answer) -> dict:
         "SELECT code, name, rule, spanish_bridge, example, warning FROM grammar_point WHERE code = ?",
         (item["grammar_code"],)).fetchone())
     expected = " ".join(item["answers"][0]) if item["type"] == "order" else item["answers"][0]
-    return {"correct": correct, "expected": expected, "full_sentence": item["full_sentence"],
+    verdict = rewrite_verdict(item, answer) if item["type"] == "rewrite" else ("correct" if correct else "wrong")
+    return {"correct": correct, "verdict": verdict, "expected": expected, "full_sentence": item["full_sentence"],
             "explanation": item.get("explanation"), "grammar": g}
+
+
+def override(conn: sqlite3.Connection, item_id: int) -> dict:
+    """'Ich hatte es richtig': the learner's sentence was a valid variant the key didn't list."""
+    row = conn.execute("SELECT id, correct FROM drill_attempt WHERE item_id = ? ORDER BY id DESC LIMIT 1",
+                       (item_id,)).fetchone()
+    if row is None:
+        raise KeyError(item_id)
+    if not row["correct"]:
+        code = conn.execute("SELECT grammar_code FROM drill_item WHERE id = ?", (item_id,)).fetchone()[0]
+        with transaction(conn):
+            conn.execute("UPDATE drill_attempt SET correct = 1 WHERE id = ?", (row["id"],))
+            conn.execute("UPDATE error_log SET count = MAX(0, count - 1) WHERE grammar_code = ? AND lemma_id IS NULL",
+                         (code,))
+            conn.execute("DELETE FROM error_log WHERE count = 0")
+    return {"ok": True}
 
 
 # ---- stats -----------------------------------------------------------------------------
@@ -292,6 +330,9 @@ Write {n} new exercises for this point. Mix the types that fit it:
 - "choice": prompt contains ___ ; options = 2-4 choices; answers = [the correct option, exactly as in options].
 - "order": prompt = the fixed start of the sentence (e.g. "Ich bleibe zu Hause,"); answers = [[the remaining
   words in the correct order]] (each word a separate string, no final punctuation). Use for word order (verb position).
+- "rewrite": prompt = one or two short sentences to transform (e.g. "Ich bleibe zu Hause. Ich bin krank.");
+  hint = the instruction in simple German (e.g. "Verbinde mit weil."); answers = the full correct sentence(s),
+  including acceptable variants (2-3 at most).
 Give a one-sentence English explanation of why the answer is right.
 
 FORMAT EXAMPLES (do not repeat): {json.dumps(examples, ensure_ascii=False)}
@@ -313,6 +354,8 @@ ALLOWED WORDS ({len(words)}): {", ".join(words)}"""
             else:
                 d.pop("order_answers", None)
             if not d["answers"] or (d["type"] in ("gap", "choice") and "___" not in d["prompt"]):
+                continue
+            if d["type"] == "rewrite" and not d.get("hint"):
                 continue
             if d["type"] == "choice" and not set(d["answers"]) <= set(d.get("options") or []):
                 continue

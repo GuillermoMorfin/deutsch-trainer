@@ -38,6 +38,7 @@ const ICONS = {   // 24×24 line icons (stroke = currentColor)
   flame: '<path d="M12 22c4 0 7-2.7 7-6.8 0-3.6-2.4-5.9-4-7.7-.4 2-1.4 3.2-2.7 3.8.4-3.5-1.3-6.6-4.3-8.3.3 3.4-1.2 5.3-2.7 7.1C4.1 11.6 5 13.3 5 15.2 5 19.3 8 22 12 22z"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  table: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   warm: '<path d="M12 21a7 7 0 0 0 7-7c0-4-3-6-4-9-1.5 2-2 3-4 4-2-1.5-2.5-3-2.5-3C6 9 5 11.5 5 14a7 7 0 0 0 7 7z"/>',
 };
@@ -156,7 +157,7 @@ async function viewHome() {
     <p class="section-title">Einzeln üben</p>
     <div class="tile-grid">
       ${[["#/review", "cards", "Karten"], ["#/read", "book", "Lesen"], ["#/drill", "puzzle", "Grammatik"], ["#/write", "pen", "Schreiben"],
-         ["#/listen", "headphones", "Hören"]].map(([href, ic, label]) =>
+         ["#/listen", "headphones", "Hören"], ["#/cases", "table", "Spickzettel"]].map(([href, ic, label]) =>
         `<a class="tile" href="${href}"><span class="tile-ico">${icon(ic)}</span>${label}</a>`).join("")}
     </div>`;
 }
@@ -465,6 +466,7 @@ async function viewLesson(number) {
     <div class="card">
       <h2>Grammatik</h2>
       ${grammar.map(grammarHTML).join("")}
+      <p class="small"><a href="#/cases">Spickzettel: der / den / dem, mich / mir, Präpositionen →</a></p>
     </div>
 
     <div class="card">
@@ -1047,13 +1049,17 @@ async function viewDrill(code, opts = {}) {
   const header = () => `
     <div class="review-top">
       <a href="#/" class="small">✕ Beenden</a>
+      <a href="#/cases" class="small">Spickzettel</a>
       <span class="small muted">${idx + 1} / ${items.length}</span>
     </div>
     <div class="progress"><i style="width:${pct(idx / items.length)}"></i></div>`;
 
-  const feedback = (r) => `
+  const feedback = (r, given) => `
     <div class="feedback ${r.correct ? "ok" : "bad"}">
-      <strong>${r.correct ? "Richtig!" : "Leider falsch."}</strong>
+      <strong>${r.correct ? "Richtig!" : r.verdict === "word_order"
+        ? "Fast! Die Wörter stimmen, aber die Reihenfolge nicht." : "Leider falsch."}</strong>
+      ${!r.correct && given ? `<div class="small muted" style="margin-top:6px">Dein Satz → so ist es richtig:</div>
+        <div class="diff">${diffHTML(given, r.full_sentence, true)}</div>` : ""}
       <div class="drill-sentence">${esc(r.full_sentence)}</div>
       ${r.explanation ? `<div class="small">${esc(r.explanation)}</div>` : ""}
     </div>
@@ -1074,6 +1080,13 @@ async function viewDrill(code, opts = {}) {
     } else if (it.type === "choice") {
       body = `<p class="drill-sentence">${esc(parts[0])}<span class="blank">＿＿</span>${esc(parts[1] || "")}</p>
         <div class="options">${it.options.map((o) => `<button class="opt" data-a="${esc(o)}">${esc(o)}</button>`).join("")}</div>`;
+    } else if (it.type === "rewrite") {
+      body = `<form class="drill-rewrite" autocomplete="off">
+          <div class="rewrite-source">${esc(it.prompt)}</div>
+          <textarea class="rewrite-input" rows="2" lang="de" spellcheck="false" autocapitalize="sentences"
+            placeholder="Schreib den ganzen Satz…" aria-label="Dein Satz"></textarea>
+          <div class="umlauts">${UMLAUT_KEYS.map((u) => `<button type="button" class="uml" data-ch="${u}">${u}</button>`).join("")}</div>
+          <button class="btn" type="submit">Prüfen</button></form>`;
     } else {
       body = `<p class="drill-sentence">${esc(it.prompt)}</p>
         <div class="order-line" aria-label="Deine Antwort"></div>
@@ -1082,7 +1095,7 @@ async function viewDrill(code, opts = {}) {
           <button class="btn order-check" disabled>Prüfen</button></div>`;
     }
     $app.innerHTML = `${header()}
-      <p class="eyebrow">${{ gap: "Lücke füllen", choice: "Wähle", order: "Sätze bauen" }[it.type]}
+      <p class="eyebrow">${{ gap: "Lücke füllen", choice: "Wähle", order: "Sätze bauen", rewrite: "Umformen" }[it.type]}
         ${it.hint ? ` · <span class="hint">${esc(it.hint)}</span>` : ""}</p>
       <div class="flash drill">${body}<div class="drill-fb"></div></div>`;
 
@@ -1097,7 +1110,19 @@ async function viewDrill(code, opts = {}) {
       answered = true;
       const r = await api(`/drills/${it.id}/check`, { method: "POST", body: { answer } });
       if (r.correct) right += 1; else missed[it.grammar_code] = r.grammar.name;
-      $fb.innerHTML = feedback(r);
+      $fb.innerHTML = feedback(r, it.type === "rewrite" ? answer : null);
+      if (it.type === "rewrite" && !r.correct) {
+        // the key can't list every valid sentence: let the learner overrule it
+        const ok = document.createElement("button");
+        ok.className = "btn secondary small-btn";
+        ok.textContent = "Ich hatte es richtig";
+        ok.addEventListener("click", async () => {
+          await api(`/drills/${it.id}/override`, { method: "POST" });
+          right += 1; delete missed[it.grammar_code];
+          ok.replaceWith(Object.assign(document.createElement("p"), { className: "small", textContent: "Als richtig gezählt." }));
+        }, { once: true });
+        $fb.appendChild(ok);
+      }
       $fb.appendChild(next);
       next.focus();
       return r;
@@ -1121,6 +1146,26 @@ async function viewDrill(code, opts = {}) {
         $in.classList.add(r.correct ? "is-ok" : "is-bad");
         $app.querySelector(".drill-gap .btn").hidden = true;
         $app.querySelector(".umlauts").hidden = true;
+      });
+    } else if (it.type === "rewrite") {
+      const $in = $app.querySelector(".rewrite-input");
+      $in.focus();
+      $app.querySelectorAll(".uml").forEach((b) => b.addEventListener("click", () => {
+        const a = $in.selectionStart ?? $in.value.length;
+        $in.value = $in.value.slice(0, a) + b.dataset.ch + $in.value.slice($in.selectionEnd ?? a);
+        $in.focus(); $in.setSelectionRange(a + 1, a + 1);
+      }));
+      $in.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $in.form.requestSubmit(); } });
+      $app.querySelector(".drill-rewrite").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (answered) return next.click();
+        if (!$in.value.trim()) return;
+        const r = await submit($in.value.trim());
+        if (!r) return;
+        $in.readOnly = true;
+        $in.classList.add(r.correct ? "is-ok" : "is-bad");
+        $app.querySelector(".drill-rewrite .btn").hidden = true;
+        $app.querySelector(".drill-rewrite .umlauts").hidden = true;
       });
     } else if (it.type === "choice") {
       $app.querySelectorAll(".opt").forEach((b) => b.addEventListener("click", async () => {
@@ -1735,6 +1780,92 @@ async function viewListenTask(id) {
   };
 }
 
+// ---- Spickzettel: cases at a glance (written for this app) ------------------------------------
+
+function caseTable(head, rows, note = "", corner = "") {
+  return `<div class="table-wrap"><table class="case-table"><thead><tr><th>${corner}</th>${head.map((h) => `<th>${h}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map(([c, ...cells]) => `<tr><th>${c}</th>${cells.map((x) => `<td>${x}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    ${note ? `<p class="small muted">${note}</p>` : ""}`;
+}
+
+function viewCases() {
+  const G = ["<span class='art der'>m</span>", "<span class='art die'>f</span>", "<span class='art das'>n</span>", "Plural"];
+  const hi = (x) => `<mark>${x}</mark>`;   // the forms that change
+  $app.innerHTML = `
+    <p class="eyebrow"><a href="#/drill">← Grammatik</a></p>
+    <h1>Spickzettel: Fälle</h1>
+    <p class="muted">Nominativ, Akkusativ, Dativ auf einen Blick. Markiert ist, was sich ändert.</p>
+
+    <nav class="toc">${[["faelle", "Die 3 Fälle"], ["artikel", "der / den / dem"], ["ein", "ein / kein"], ["poss", "mein … unser, euer"],
+      ["pron", "ich / mich / mir"], ["praep", "Präpositionen"], ["verben", "Verben mit Dativ"], ["tricks", "Merktricks"]]
+      .map(([id, t]) => `<a href="#/cases" data-jump="${id}">${t}</a>`).join("")}</nav>
+
+    <section class="card" id="faelle"><h2>Die 3 Fälle</h2>
+      <dl class="cases-dl">
+        <dt>Nominativ · <em>Wer? Was?</em></dt><dd>Das Subjekt. <span class="muted">ES: el sujeto</span> · <i>Der Hund schläft.</i></dd>
+        <dt>Akkusativ · <em>Wen? Was?</em></dt><dd>Das direkte Objekt. <span class="muted">ES: complemento directo (lo / la)</span> · <i>Ich sehe den Hund.</i></dd>
+        <dt>Dativ · <em>Wem?</em></dt><dd>Das indirekte Objekt, oft eine Person. <span class="muted">ES: complemento indirecto (le)</span> · <i>Ich gebe dem Hund Wasser.</i></dd>
+      </dl></section>
+
+    <section class="card" id="artikel"><h2>Bestimmter Artikel</h2>
+      ${caseTable(G, [["Nom", "der", "die", "das", "die"], ["Akk", hi("den"), "die", "das", "die"],
+        ["Dat", hi("dem"), hi("der"), hi("dem"), hi("den") + " …" + hi("n")]],
+        "Akkusativ: nur maskulin ändert sich (der → den). Dativ Plural: das Nomen bekommt -n: mit den Freunde<b>n</b>.")}
+    </section>
+
+    <section class="card" id="ein"><h2>ein / kein</h2>
+      ${caseTable(G, [["Nom", "ein", "eine", "ein", "–"], ["Akk", hi("einen"), "eine", "ein", "–"],
+        ["Dat", hi("einem"), hi("einer"), hi("einem"), "–"]])}
+      ${caseTable(G, [["Nom", "kein", "keine", "kein", "keine"], ["Akk", hi("keinen"), "keine", "kein", "keine"],
+        ["Dat", hi("keinem"), hi("keiner"), hi("keinem"), hi("keinen")]],
+        "kein hat dieselben Endungen wie ein, aber auch einen Plural.")}
+    </section>
+
+    <section class="card" id="poss"><h2>Possessivartikel</h2>
+      ${caseTable(["Possessivartikel"], [["ich", "mein"], ["du", "dein"], ["er / es", "sein"], ["sie", "ihr"],
+        ["wir", "unser"], ["ihr", "euer → eure, euren …"], ["sie (Plural)", "ihr"], ["Sie", "Ihr"]], "", "Person")}
+      <p class="small">Die Endungen sind wie bei <b>kein</b>. Beispiel mit <b>unser</b>:</p>
+      ${caseTable(G, [["Nom", "unser Hund", "unser" + hi("e") + " WG", "unser Haus", "unser" + hi("e") + " Freunde"],
+        ["Akk", "unser" + hi("en") + " Hund", "unser" + hi("e") + " WG", "unser Haus", "unser" + hi("e") + " Freunde"],
+        ["Dat", "unser" + hi("em") + " Hund", "unser" + hi("er") + " WG", "unser" + hi("em") + " Haus", "unser" + hi("en") + " Freunde" + hi("n")]],
+        "Achtung: euer verliert das e vor einer Endung: eure Wohnung, euren Hund (nicht *euere*).")}
+    </section>
+
+    <section class="card" id="pron"><h2>Personalpronomen</h2>
+      ${caseTable(["Akkusativ", "Dativ"], [["ich", "mich", "mir"], ["du", "dich", "dir"], ["er", "ihn", "ihm"], ["sie", "sie", "ihr"],
+        ["es", "es", "ihm"], ["wir", "uns", "uns"], ["ihr", "euch", "euch"], ["sie (Plural)", "sie", "ihnen"], ["Sie", "Sie", "Ihnen"]],
+        "ES: mich = me (lo) · mir = me (le). Ich sehe dich (te veo) · Ich helfe dir (te ayudo).", "Nominativ")}
+    </section>
+
+    <section class="card" id="praep"><h2>Präpositionen</h2>
+      <div class="prep-grid">
+        <div><h3>immer Akkusativ</h3><p>durch · für · gegen · ohne · um</p><p class="small muted">Ich laufe durch <b>den</b> Park.</p></div>
+        <div><h3>immer Dativ</h3><p>aus · bei · mit · nach · seit · von · zu</p><p class="small muted">Ich fahre mit <b>dem</b> Fahrrad.</p></div>
+        <div><h3>Wechselpräpositionen</h3><p>an · auf · hinter · in · neben · über · unter · vor · zwischen</p>
+          <p class="small"><b>Wo?</b> → Dativ: Ich bin in <b>dem</b> (im) Park.<br><b>Wohin?</b> → Akkusativ: Ich gehe in <b>den</b> Park.</p></div>
+      </div>
+      <p class="small"><b>Kurzformen:</b> am = an dem · im = in dem · ins = in das · ans = an das · zum = zu dem · zur = zu der · vom = von dem · beim = bei dem</p>
+    </section>
+
+    <section class="card" id="verben"><h2>Verben mit Dativ</h2>
+      <p>helfen · danken · gefallen · gehören · schmecken · passen · antworten</p>
+      <p class="small muted">Das gefällt <b>mir</b> (me gusta) · Ich helfe <b>dir</b> · Die Jacke gehört <b>meinem</b> Bruder · Das passt <b>mir</b> gut.</p>
+    </section>
+
+    <section class="card" id="tricks"><h2>Merktricks</h2>
+      <ul class="tricks">
+        <li><b>Akkusativ:</b> nur der Mann ändert sich: der → <b>den</b>, ein → <b>einen</b>, er → <b>ihn</b>.</li>
+        <li><b>Dativ:</b> maskulin und neutral enden auf <b>-m</b> (dem, einem, meinem), feminin auf <b>-r</b> (der, einer, meiner), Plural auf <b>-n</b> (den Freunden).</li>
+        <li><b>Wo oder wohin?</b> Bewegung zu einem Ziel → Akkusativ, Position → Dativ.</li>
+        <li><b>Für Spanischsprechende:</b> Wenn du auf Spanisch „le“ sagst, ist es auf Deutsch meistens Dativ.</li>
+      </ul>
+    </section>`;
+  $app.querySelectorAll("[data-jump]").forEach((a) => a.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById(a.dataset.jump)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
+}
+
 // ---- router ----------------------------------------------------------------
 
 const routes = [
@@ -1750,6 +1881,7 @@ const routes = [
   [/^#\/listen\/(\d+)$/, "read", (m) => viewListenTask(m[1])],
   [/^#\/playlist$/, "read", viewPlaylist],
   [/^#\/drill$/, "home", () => viewDrill(null)],
+  [/^#\/cases$/, "home", viewCases],
   [/^#\/drill\/([A-Z0-9_]+)$/, "home", (m) => viewDrill(m[1])],
   [/^#\/text\/(\d+)$/, "read", (m) => viewText(m[1])],
   [/^#\/words$/, "words", viewWords],

@@ -1,5 +1,5 @@
 {
- "_comment": "Hand-written starter drills (no book content). type: gap | choice | order. order answers are lists of words; the first is shown as the solution.",
+ "_comment": "Hand-written starter drills (no book content). type: gap | choice | order | rewrite. order answers are lists of words; rewrite answers are full sentences (first one is shown as the solution).",
  "items": [
   {
    "code": "PERFEKT_HABEN_SEIN",
@@ -1367,6 +1367,628 @@
     "dauert der Kurs",
     "der Kurs dauert"
    ]
+  },
+  {
+   "code": "PERFEKT_HABEN_SEIN",
+   "type": "rewrite",
+   "prompt": "Ich laufe 10 Kilometer.",
+   "answers": [
+    "Ich bin 10 Kilometer gelaufen."
+   ],
+   "hint": "Schreib im Perfekt."
+  },
+  {
+   "code": "PERFEKT_HABEN_SEIN",
+   "type": "rewrite",
+   "prompt": "Marco kocht Nudeln.",
+   "answers": [
+    "Marco hat Nudeln gekocht."
+   ],
+   "hint": "Schreib im Perfekt."
+  },
+  {
+   "code": "PERFEKT_HABEN_SEIN",
+   "type": "rewrite",
+   "prompt": "Wir fahren mit dem Fahrrad zur Uni.",
+   "answers": [
+    "Wir sind mit dem Fahrrad zur Uni gefahren."
+   ],
+   "hint": "Schreib im Perfekt."
+  },
+  {
+   "code": "PERFEKT_HABEN_SEIN",
+   "type": "rewrite",
+   "prompt": "Ich stehe früh auf.",
+   "answers": [
+    "Ich bin früh aufgestanden."
+   ],
+   "hint": "Schreib im Perfekt."
+  },
+  {
+   "code": "PRAET_WAR_HATTE",
+   "type": "rewrite",
+   "prompt": "Ich bin müde.",
+   "answers": [
+    "Ich war müde."
+   ],
+   "hint": "Schreib im Präteritum."
+  },
+  {
+   "code": "PRAET_WAR_HATTE",
+   "type": "rewrite",
+   "prompt": "Wir haben keine Zeit.",
+   "answers": [
+    "Wir hatten keine Zeit."
+   ],
+   "hint": "Schreib im Präteritum."
+  },
+  {
+   "code": "PRAET_WAR_HATTE",
+   "type": "rewrite",
+   "prompt": "Du bist in Berlin.",
+   "answers": [
+    "Du warst in Berlin."
+   ],
+   "hint": "Schreib im Präteritum."
+  },
+  {
+   "code": "PRAET_WAR_HATTE",
+   "type": "rewrite",
+   "prompt": "Marco hat einen Hund.",
+   "answers": [
+    "Marco hatte einen Hund."
+   ],
+   "hint": "Schreib im Präteritum."
+  },
+  {
+   "code": "LETZT_NAECHST_JED",
+   "type": "rewrite",
+   "prompt": "Am Montag war ich krank.",
+   "answers": [
+    "Letzten Montag war ich krank.",
+    "Ich war letzten Montag krank."
+   ],
+   "hint": "Schreib mit letzt- (letzte Woche, letzten …)."
+  },
+  {
+   "code": "LETZT_NAECHST_JED",
+   "type": "rewrite",
+   "prompt": "In der Woche habe ich einen Termin.",
+   "answers": [
+    "Nächste Woche habe ich einen Termin.",
+    "Ich habe nächste Woche einen Termin."
+   ],
+   "hint": "Schreib mit nächst-."
+  },
+  {
+   "code": "LETZT_NAECHST_JED",
+   "type": "rewrite",
+   "prompt": "Ich laufe am Tag fünf Kilometer.",
+   "answers": [
+    "Ich laufe jeden Tag fünf Kilometer.",
+    "Jeden Tag laufe ich fünf Kilometer."
+   ],
+   "hint": "Schreib mit jed-."
+  },
+  {
+   "code": "LETZT_NAECHST_JED",
+   "type": "rewrite",
+   "prompt": "Im Sommer bin ich nach Berlin gekommen.",
+   "answers": [
+    "Letzten Sommer bin ich nach Berlin gekommen.",
+    "Ich bin letzten Sommer nach Berlin gekommen."
+   ],
+   "hint": "Schreib mit letzt-."
+  },
+  {
+   "code": "KONJ_WEIL",
+   "type": "rewrite",
+   "prompt": "Ich bleibe zu Hause. Ich bin krank.",
+   "answers": [
+    "Ich bleibe zu Hause, weil ich krank bin."
+   ],
+   "hint": "Verbinde mit weil."
+  },
+  {
+   "code": "KONJ_WEIL",
+   "type": "rewrite",
+   "prompt": "Marco ist müde. Er arbeitet viel.",
+   "answers": [
+    "Marco ist müde, weil er viel arbeitet."
+   ],
+   "hint": "Verbinde mit weil."
+  },
+  {
+   "code": "KONJ_WEIL",
+   "type": "rewrite",
+   "prompt": "Ich lerne Deutsch. Ich wohne in Berlin.",
+   "answers": [
+    "Ich lerne Deutsch, weil ich in Berlin wohne."
+   ],
+   "hint": "Verbinde mit weil."
+  },
+  {
+   "code": "KONJ_WEIL",
+   "type": "rewrite",
+   "prompt": "Ich gehe früh ins Bett. Ich stehe morgen früh auf.",
+   "answers": [
+    "Ich gehe früh ins Bett, weil ich morgen früh aufstehe."
+   ],
+   "hint": "Verbinde mit weil."
+  },
+  {
+   "code": "KONJ_WEIL",
+   "type": "rewrite",
+   "prompt": "Sie mag ihre Arbeit. Sie hat feste Arbeitszeiten.",
+   "answers": [
+    "Sie mag ihre Arbeit, weil sie feste Arbeitszeiten hat."
+   ],
+   "hint": "Verbinde mit weil."
+  },
+  {
+   "code": "POSS_UNSER_EUER_IHR",
+   "type": "rewrite",
+   "prompt": "Das ist die Wohnung von uns.",
+   "answers": [
+    "Das ist unsere Wohnung."
+   ],
+   "hint": "Schreib mit einem Possessivartikel."
+  },
+  {
+   "code": "POSS_UNSER_EUER_IHR",
+   "type": "rewrite",
+   "prompt": "Ist das der Hund von euch?",
+   "answers": [
+    "Ist das euer Hund?"
+   ],
+   "hint": "Schreib mit einem Possessivartikel."
+  },
+  {
+   "code": "POSS_UNSER_EUER_IHR",
+   "type": "rewrite",
+   "prompt": "Wir vermissen den Garten von uns.",
+   "answers": [
+    "Wir vermissen unseren Garten."
+   ],
+   "hint": "Schreib mit einem Possessivartikel."
+  },
+  {
+   "code": "POSS_UNSER_EUER_IHR",
+   "type": "rewrite",
+   "prompt": "Wie ist die WG von euch?",
+   "answers": [
+    "Wie ist eure WG?"
+   ],
+   "hint": "Schreib mit einem Possessivartikel."
+  },
+  {
+   "code": "KONJ_DESHALB",
+   "type": "rewrite",
+   "prompt": "Mein Kollege ist krank. Ich habe viel Arbeit.",
+   "answers": [
+    "Mein Kollege ist krank. Deshalb habe ich viel Arbeit.",
+    "Mein Kollege ist krank, deshalb habe ich viel Arbeit."
+   ],
+   "hint": "Verbinde mit deshalb."
+  },
+  {
+   "code": "KONJ_DESHALB",
+   "type": "rewrite",
+   "prompt": "Es regnet. Ich nehme den Bus.",
+   "answers": [
+    "Es regnet. Deshalb nehme ich den Bus.",
+    "Es regnet, deshalb nehme ich den Bus."
+   ],
+   "hint": "Verbinde mit deshalb."
+  },
+  {
+   "code": "KONJ_DESHALB",
+   "type": "rewrite",
+   "prompt": "Ich bin müde. Ich gehe früh ins Bett.",
+   "answers": [
+    "Ich bin müde. Deshalb gehe ich früh ins Bett.",
+    "Ich bin müde, deshalb gehe ich früh ins Bett."
+   ],
+   "hint": "Verbinde mit deshalb."
+  },
+  {
+   "code": "KONJ_DESHALB",
+   "type": "rewrite",
+   "prompt": "Das Meeting ist um neun Uhr. Ich muss früh kommen.",
+   "answers": [
+    "Das Meeting ist um neun Uhr. Deshalb muss ich früh kommen.",
+    "Das Meeting ist um neun Uhr, deshalb muss ich früh kommen."
+   ],
+   "hint": "Verbinde mit deshalb."
+  },
+  {
+   "code": "PREP_UEBER_AKK",
+   "type": "rewrite",
+   "prompt": "Wir sprechen. → der Urlaub",
+   "answers": [
+    "Wir sprechen über den Urlaub."
+   ],
+   "hint": "Schreib einen Satz mit über."
+  },
+  {
+   "code": "PREP_UEBER_AKK",
+   "type": "rewrite",
+   "prompt": "Marco erzählt. → der Marathon",
+   "answers": [
+    "Marco erzählt über den Marathon."
+   ],
+   "hint": "Schreib einen Satz mit über."
+  },
+  {
+   "code": "PREP_UEBER_AKK",
+   "type": "rewrite",
+   "prompt": "Sie schreibt eine E-Mail. → das Problem",
+   "answers": [
+    "Sie schreibt eine E-Mail über das Problem."
+   ],
+   "hint": "Schreib einen Satz mit über."
+  },
+  {
+   "code": "PREP_SEIT_DAT",
+   "type": "rewrite",
+   "prompt": "Ich wohne in Berlin. → ein Jahr",
+   "answers": [
+    "Ich wohne seit einem Jahr in Berlin.",
+    "Seit einem Jahr wohne ich in Berlin."
+   ],
+   "hint": "Schreib einen Satz mit seit."
+  },
+  {
+   "code": "PREP_SEIT_DAT",
+   "type": "rewrite",
+   "prompt": "Marco läuft jeden Tag. → drei Monate",
+   "answers": [
+    "Marco läuft seit drei Monaten jeden Tag.",
+    "Seit drei Monaten läuft Marco jeden Tag."
+   ],
+   "hint": "Schreib einen Satz mit seit."
+  },
+  {
+   "code": "PREP_SEIT_DAT",
+   "type": "rewrite",
+   "prompt": "Ich bin krank. → eine Woche",
+   "answers": [
+    "Ich bin seit einer Woche krank.",
+    "Seit einer Woche bin ich krank."
+   ],
+   "hint": "Schreib einen Satz mit seit."
+  },
+  {
+   "code": "PREP_VON_BIS_ZUM",
+   "type": "rewrite",
+   "prompt": "Das Festival: 1. Juli – 3. Juli",
+   "answers": [
+    "Das Festival ist vom 1. bis zum 3. Juli."
+   ],
+   "hint": "Schreib einen Satz mit von … bis zum."
+  },
+  {
+   "code": "PREP_VON_BIS_ZUM",
+   "type": "rewrite",
+   "prompt": "Mein Urlaub: 10. August – 20. August",
+   "answers": [
+    "Mein Urlaub ist vom 10. bis zum 20. August.",
+    "Ich habe Urlaub vom 10. bis zum 20. August."
+   ],
+   "hint": "Schreib einen Satz mit von … bis zum."
+  },
+  {
+   "code": "PREP_VON_BIS_ZUM",
+   "type": "rewrite",
+   "prompt": "Der Kurs: Montag – Freitag",
+   "answers": [
+    "Der Kurs ist von Montag bis Freitag."
+   ],
+   "hint": "Schreib einen Satz mit von … bis."
+  },
+  {
+   "code": "KONJ2_RAT_KOENNTE_SOLLTE",
+   "type": "rewrite",
+   "prompt": "Du musst mehr schlafen.",
+   "answers": [
+    "Du solltest mehr schlafen."
+   ],
+   "hint": "Gib einen höflichen Rat mit sollte."
+  },
+  {
+   "code": "KONJ2_RAT_KOENNTE_SOLLTE",
+   "type": "rewrite",
+   "prompt": "Trink mehr Wasser!",
+   "answers": [
+    "Du solltest mehr Wasser trinken."
+   ],
+   "hint": "Gib einen höflichen Rat mit sollte."
+  },
+  {
+   "code": "KONJ2_RAT_KOENNTE_SOLLTE",
+   "type": "rewrite",
+   "prompt": "Geh in einen Verein!",
+   "answers": [
+    "Du könntest in einen Verein gehen."
+   ],
+   "hint": "Gib einen Rat mit könnte."
+  },
+  {
+   "code": "KONJ2_RAT_KOENNTE_SOLLTE",
+   "type": "rewrite",
+   "prompt": "Ihr müsst langsamer laufen.",
+   "answers": [
+    "Ihr solltet langsamer laufen."
+   ],
+   "hint": "Gib einen höflichen Rat mit sollte."
+  },
+  {
+   "code": "KONJ_DASS",
+   "type": "rewrite",
+   "prompt": "Ich finde super: Es gibt hier Pizza.",
+   "answers": [
+    "Ich finde super, dass es hier Pizza gibt.",
+    "Ich finde es super, dass es hier Pizza gibt."
+   ],
+   "hint": "Verbinde mit dass."
+  },
+  {
+   "code": "KONJ_DASS",
+   "type": "rewrite",
+   "prompt": "Marco hofft: Der Lieferservice ist schnell.",
+   "answers": [
+    "Marco hofft, dass der Lieferservice schnell ist."
+   ],
+   "hint": "Verbinde mit dass."
+  },
+  {
+   "code": "KONJ_DASS",
+   "type": "rewrite",
+   "prompt": "Ich weiß: Du isst gern Kuchen.",
+   "answers": [
+    "Ich weiß, dass du gern Kuchen isst."
+   ],
+   "hint": "Verbinde mit dass."
+  },
+  {
+   "code": "KONJ_DASS",
+   "type": "rewrite",
+   "prompt": "Es ist wichtig: Wir zahlen getrennt.",
+   "answers": [
+    "Es ist wichtig, dass wir getrennt zahlen."
+   ],
+   "hint": "Verbinde mit dass."
+  },
+  {
+   "code": "KONJ_WENN",
+   "type": "rewrite",
+   "prompt": "Ich habe Pause. Ich gehe in die Kantine.",
+   "answers": [
+    "Wenn ich Pause habe, gehe ich in die Kantine."
+   ],
+   "hint": "Verbinde mit wenn. Beginne mit „Wenn“."
+  },
+  {
+   "code": "KONJ_WENN",
+   "type": "rewrite",
+   "prompt": "Es regnet. Ich bleibe zu Hause.",
+   "answers": [
+    "Wenn es regnet, bleibe ich zu Hause."
+   ],
+   "hint": "Verbinde mit wenn. Beginne mit „Wenn“."
+  },
+  {
+   "code": "KONJ_WENN",
+   "type": "rewrite",
+   "prompt": "Ich bin gestresst. Ich laufe.",
+   "answers": [
+    "Wenn ich gestresst bin, laufe ich."
+   ],
+   "hint": "Verbinde mit wenn. Beginne mit „Wenn“."
+  },
+  {
+   "code": "KONJ_WENN",
+   "type": "rewrite",
+   "prompt": "Die Sonne scheint. Wir essen draußen.",
+   "answers": [
+    "Wenn die Sonne scheint, essen wir draußen."
+   ],
+   "hint": "Verbinde mit wenn. Beginne mit „Wenn“."
+  },
+  {
+   "code": "NOMEN_UNG",
+   "type": "rewrite",
+   "prompt": "Wir besprechen das heute. → die Besprechung",
+   "answers": [
+    "Wir haben heute eine Besprechung.",
+    "Heute haben wir eine Besprechung."
+   ],
+   "hint": "Schreib mit dem Nomen."
+  },
+  {
+   "code": "NOMEN_UNG",
+   "type": "rewrite",
+   "prompt": "Das hat mich überrascht. → die Überraschung",
+   "answers": [
+    "Das war eine Überraschung."
+   ],
+   "hint": "Schreib mit dem Nomen."
+  },
+  {
+   "code": "NOMEN_UNG",
+   "type": "rewrite",
+   "prompt": "Ich wohne in Berlin. → die Wohnung",
+   "answers": [
+    "Meine Wohnung ist in Berlin."
+   ],
+   "hint": "Schreib mit dem Nomen."
+  },
+  {
+   "code": "NOMEN_UNG",
+   "type": "rewrite",
+   "prompt": "Danke, du hast es gut erklärt. → die Erklärung",
+   "answers": [
+    "Danke für die Erklärung.",
+    "Danke für die gute Erklärung."
+   ],
+   "hint": "Schreib mit dem Nomen."
+  },
+  {
+   "code": "VERBEN_LEGEN_STELLEN_HAENGEN",
+   "type": "rewrite",
+   "prompt": "Das Buch liegt auf dem Tisch. → Ich …",
+   "answers": [
+    "Ich lege das Buch auf den Tisch."
+   ],
+   "hint": "Schreib die Handlung (legen/stellen/hängen)."
+  },
+  {
+   "code": "VERBEN_LEGEN_STELLEN_HAENGEN",
+   "type": "rewrite",
+   "prompt": "Die Lampe steht neben dem Sofa. → Marco …",
+   "answers": [
+    "Marco stellt die Lampe neben das Sofa."
+   ],
+   "hint": "Schreib die Handlung (legen/stellen/hängen)."
+  },
+  {
+   "code": "VERBEN_LEGEN_STELLEN_HAENGEN",
+   "type": "rewrite",
+   "prompt": "Das Poster hängt an der Wand. → Ich …",
+   "answers": [
+    "Ich hänge das Poster an die Wand."
+   ],
+   "hint": "Schreib die Handlung (legen/stellen/hängen)."
+  },
+  {
+   "code": "WECHSELPRAEP",
+   "type": "rewrite",
+   "prompt": "Ich bin im Park. → gehen",
+   "answers": [
+    "Ich gehe in den Park."
+   ],
+   "hint": "Wo? → Wohin? Schreib mit „Ich gehe …“."
+  },
+  {
+   "code": "WECHSELPRAEP",
+   "type": "rewrite",
+   "prompt": "Das Kissen liegt auf dem Sofa. → Leg …!",
+   "answers": [
+    "Leg das Kissen auf das Sofa!",
+    "Leg das Kissen aufs Sofa!"
+   ],
+   "hint": "Wo? → Wohin?"
+  },
+  {
+   "code": "WECHSELPRAEP",
+   "type": "rewrite",
+   "prompt": "Die Jacke hängt an der Garderobe. → Ich hänge …",
+   "answers": [
+    "Ich hänge die Jacke an die Garderobe."
+   ],
+   "hint": "Wo? → Wohin?"
+  },
+  {
+   "code": "PREP_VON_BEI_ZU_DAT",
+   "type": "rewrite",
+   "prompt": "Ich bin beim Arzt. → Ich gehe …",
+   "answers": [
+    "Ich gehe zum Arzt."
+   ],
+   "hint": "Ziel statt Ort: zu + Dativ."
+  },
+  {
+   "code": "PREP_VON_BEI_ZU_DAT",
+   "type": "rewrite",
+   "prompt": "Ich gehe zu meiner Freundin. → Ich bin …",
+   "answers": [
+    "Ich bin bei meiner Freundin."
+   ],
+   "hint": "Ort statt Ziel: bei + Dativ."
+  },
+  {
+   "code": "PREP_VON_BEI_ZU_DAT",
+   "type": "rewrite",
+   "prompt": "Marco ist beim Bäcker. → Marco kommt …",
+   "answers": [
+    "Marco kommt vom Bäcker."
+   ],
+   "hint": "Herkunft: von + Dativ."
+  },
+  {
+   "code": "KONJ2_WUNSCH_HAETTE_WAERE",
+   "type": "rewrite",
+   "prompt": "Ich bin nicht am Strand.",
+   "answers": [
+    "Ich wäre gern am Strand.",
+    "Ich wäre jetzt gern am Strand."
+   ],
+   "hint": "Schreib einen Wunsch mit wäre gern."
+  },
+  {
+   "code": "KONJ2_WUNSCH_HAETTE_WAERE",
+   "type": "rewrite",
+   "prompt": "Ich habe keine Zeit.",
+   "answers": [
+    "Ich hätte gern Zeit.",
+    "Ich hätte gern mehr Zeit."
+   ],
+   "hint": "Schreib einen Wunsch mit hätte gern."
+  },
+  {
+   "code": "KONJ2_WUNSCH_HAETTE_WAERE",
+   "type": "rewrite",
+   "prompt": "Wir sind nicht in den Bergen.",
+   "answers": [
+    "Wir wären gern in den Bergen."
+   ],
+   "hint": "Schreib einen Wunsch mit wäre gern."
+  },
+  {
+   "code": "KONJ2_WUNSCH_HAETTE_WAERE",
+   "type": "rewrite",
+   "prompt": "Marco hat keinen Urlaub.",
+   "answers": [
+    "Marco hätte gern Urlaub.",
+    "Marco hätte gern mehr Urlaub."
+   ],
+   "hint": "Schreib einen Wunsch mit hätte gern."
+  },
+  {
+   "code": "INDIREKTE_FRAGE",
+   "type": "rewrite",
+   "prompt": "Fährt der Bus zum Bahnhof? → Wissen Sie, …",
+   "answers": [
+    "Wissen Sie, ob der Bus zum Bahnhof fährt?"
+   ],
+   "hint": "Frag höflich."
+  },
+  {
+   "code": "INDIREKTE_FRAGE",
+   "type": "rewrite",
+   "prompt": "Wie lange dauert die Anmeldung? → Können Sie mir sagen, …",
+   "answers": [
+    "Können Sie mir sagen, wie lange die Anmeldung dauert?"
+   ],
+   "hint": "Frag höflich."
+  },
+  {
+   "code": "INDIREKTE_FRAGE",
+   "type": "rewrite",
+   "prompt": "Wann beginnt der Kurs? → Ich möchte wissen, …",
+   "answers": [
+    "Ich möchte wissen, wann der Kurs beginnt."
+   ],
+   "hint": "Frag höflich."
+  },
+  {
+   "code": "INDIREKTE_FRAGE",
+   "type": "rewrite",
+   "prompt": "Brauche ich ein Visum? → Wissen Sie, …",
+   "answers": [
+    "Wissen Sie, ob ich ein Visum brauche?"
+   ],
+   "hint": "Frag höflich."
   }
  ]
 }

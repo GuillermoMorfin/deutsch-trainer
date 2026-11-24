@@ -71,10 +71,11 @@ class GlossSet(BaseModel):
 
 
 class DrillItemModel(BaseModel):
-    type: Literal["gap", "choice", "order"]
+    type: Literal["gap", "choice", "order", "rewrite"]
     prompt: str = Field(description="gap/choice: sentence with ___ ; order: the fixed start of the sentence")
     options: list[str] = Field(description="choice: 2-4 options; otherwise []")
-    answers: list[str] = Field(description="gap/choice: accepted answers (choice: exactly one option); order: []")
+    answers: list[str] = Field(description="gap/choice: accepted answers (choice: exactly one option); "
+                                           "rewrite: the full correct sentence(s); order: []")
     order_answers: list[str] = Field(description="order: each accepted solution as the remaining words separated "
                                                  "by single spaces, no final punctuation; otherwise []")
     hint: str = Field(description="Short German hint, may be ''")

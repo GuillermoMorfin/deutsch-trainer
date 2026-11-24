@@ -47,7 +47,31 @@ MIGRATIONS = [
 ]
 
 
+def _allow_rewrite_drills(conn: sqlite3.Connection) -> None:
+    """drill_item's CHECK constraint gained 'rewrite'. SQLite can't alter a CHECK, so rebuild the table
+    (same columns, same ids) once for databases created before that."""
+    row = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'drill_item'").fetchone()
+    if row is None or "'rewrite'" in row[0]:
+        return
+    new_sql = row[0].replace("'order')", "'order', 'rewrite')").replace("CREATE TABLE drill_item", "CREATE TABLE drill_item_new", 1)
+    conn.commit()
+    conn.execute("PRAGMA foreign_keys = OFF")
+    try:
+        conn.execute("BEGIN")
+        conn.execute(new_sql)
+        conn.execute("INSERT INTO drill_item_new SELECT * FROM drill_item")
+        conn.execute("DROP TABLE drill_item")
+        conn.execute("ALTER TABLE drill_item_new RENAME TO drill_item")
+        conn.execute("COMMIT")
+    except Exception:
+        conn.execute("ROLLBACK")
+        raise
+    finally:
+        conn.execute("PRAGMA foreign_keys = ON")
+
+
 def init_schema(conn: sqlite3.Connection) -> None:
+    _allow_rewrite_drills(conn)
     conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
     for table, column, decl in MIGRATIONS:
         cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}

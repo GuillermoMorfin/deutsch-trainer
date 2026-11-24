@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS settings (
 CREATE TABLE IF NOT EXISTS drill_item (
     id             INTEGER PRIMARY KEY,
     grammar_code   TEXT NOT NULL REFERENCES grammar_point(code),
-    type           TEXT NOT NULL CHECK (type IN ('gap', 'choice', 'order')),
+    type           TEXT NOT NULL CHECK (type IN ('gap', 'choice', 'order', 'rewrite')),
     prompt         TEXT NOT NULL,              -- sentence with ___ (gap/choice) or the fixed start (order)
     options        TEXT,                       -- JSON list (choice)
     tokens         TEXT,                       -- JSON list of words to arrange (order)
