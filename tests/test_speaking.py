@@ -39,7 +39,6 @@ def test_guide_combines_lesson_words_and_errors(conn):
     set_lesson(conn, 2)
     wid = conn.execute("SELECT m.id FROM lemma m JOIN lesson l ON l.id = m.lesson_id WHERE l.number = 2 LIMIT 1").fetchone()[0]
     srs.introduce_word(conn, wid)
-    conn.execute("UPDATE known_word SET state = 'learning' WHERE lemma_id = ?", (wid,))
     conn.execute("INSERT INTO error_log (grammar_code, example, count) VALUES ('KONJ_WEIL', 'weil ich bin krank', 3)")
     conn.commit()
     g = speaking.guide(conn)

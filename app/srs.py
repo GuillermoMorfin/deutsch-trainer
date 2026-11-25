@@ -1,11 +1,10 @@
-"""Spaced repetition on top of py-fsrs.
+"""Spaced repetition on top of py-fsrs, for the typing steps of the vocabulary ladder.
 
-Card flow per word:
-  1. A recognise card (DE → ES, reveal + self-rate) is created when the word is introduced.
-  2. After 2 successful recognitions (Good/Easy) a produce card (ES → DE, typed, article
-     required) is created and is due immediately.
-  3. The word counts as 'known' once its produce card is stable (≥ KNOWN_STABILITY days);
-     a lapse on either card drops it back to 'learning'.
+Words enter through reader texts (`introduce_word`, ladder step 1) and climb by multiple choice
+(steps 2-3, app/ladder.py, in-session). From step 4 they have one FSRS card (direction 'produce'):
+step 4 shows it as a cloze with the first letter, step 5 as free typing. A word is 'known' once it
+is at step 5 and its card is stable (≥ KNOWN_STABILITY days). Old 'recognise' cards are kept in the
+database for history but no longer scheduled.
 """
 
 from __future__ import annotations
@@ -20,7 +19,6 @@ from .answers import check_answer
 from .db import row_to_dict
 
 DB_TIME = "%Y-%m-%d %H:%M:%S"          # same format as sqlite datetime('now'), UTC
-RECOGNITIONS_TO_UNLOCK_PRODUCE = 2
 KNOWN_STABILITY = 7.0                   # days
 MAX_REVIEWS_PER_SESSION = 40
 LEARN_AHEAD = timedelta(minutes=20)     # learning-step cards due soon are shown in the same session
@@ -55,21 +53,30 @@ def _fsrs_card(row: sqlite3.Row) -> Card:
 # ---- creating cards -----------------------------------------------------------
 
 def introduce_word(conn: sqlite3.Connection, lemma_id: int, *, sentence: str | None = None,
-                   text_id: int | None = None, at: datetime | None = None) -> int | None:
-    """Create the recognise card for a word (idempotent). Returns the card id if created."""
+                   text_id: int | None = None, at: datetime | None = None) -> bool:
+    """A reader text introduced the word: it goes on the ladder at step 1 (idempotent).
+    Returns True if the word is new on the ladder."""
     at = at or now_utc()
-    cur = conn.execute(
-        """INSERT INTO card (lemma_id, direction, due, state, source_sentence, source_text_id)
-           VALUES (?, 'recognise', ?, ?, ?, ?) ON CONFLICT(lemma_id, direction) DO NOTHING""",
-        (lemma_id, to_db(at), State.Learning.value, sentence, text_id),
-    )
+    row = conn.execute("SELECT state, ladder_step, source_sentence FROM known_word WHERE lemma_id = ?",
+                       (lemma_id,)).fetchone()
+    if row and row["ladder_step"]:          # already climbing: just keep a sentence if it had none
+        if sentence and not row["source_sentence"]:
+            conn.execute("UPDATE known_word SET source_sentence = ?, source_text_id = ? WHERE lemma_id = ?",
+                         (sentence, text_id, lemma_id))
+        return False
+    if row and row["state"] == "known" and row["ladder_step"] != 0:   # 0 = failed its everyday check
+        return False
     conn.execute(
-        """INSERT INTO known_word (lemma_id, state, first_seen) VALUES (?, 'learning', ?)
-           ON CONFLICT(lemma_id) DO UPDATE SET state = CASE WHEN known_word.state = 'new'
-             THEN 'learning' ELSE known_word.state END""",
-        (lemma_id, to_db(at)),
-    )
-    return cur.lastrowid if cur.rowcount else None
+        """INSERT INTO known_word (lemma_id, state, first_seen, ladder_step, ladder_correct, ladder_since,
+                                   source_sentence, source_text_id)
+           VALUES (?, 'learning', ?, 1, 0, ?, ?, ?)
+           ON CONFLICT(lemma_id) DO UPDATE SET ladder_step = 1, ladder_correct = 0,
+             state = CASE WHEN known_word.state = 'known' THEN 'known' ELSE 'learning' END,
+             ladder_since = excluded.ladder_since,
+             source_sentence = COALESCE(excluded.source_sentence, known_word.source_sentence),
+             source_text_id = COALESCE(excluded.source_text_id, known_word.source_text_id)""",
+        (lemma_id, to_db(at), to_db(at), sentence, text_id))
+    return True
 
 
 CHECK_PASS_DAYS = 90      # everyday word typed right first time: you know it, see it again in ~3 months
@@ -77,8 +84,8 @@ CHECK_TYPO_DAYS = 21      # right but with a small typo
 
 
 def introduce_check(conn: sqlite3.Connection, lemma_id: int, *, at: datetime | None = None) -> int | None:
-    """Everyday words start as a typing check (ES → DE). Right first time → known, back in months.
-    Wrong → normal learning in both directions."""
+    """Everyday words start as a quick multiple-choice check (EN → DE, article included).
+    Right → known, back in months. Wrong → the word waits for a reader text (ladder step 0)."""
     at = at or now_utc()
     cur = conn.execute(
         """INSERT INTO card (lemma_id, direction, due, state, mode, created_at)
@@ -103,7 +110,7 @@ def everyday_new_today(conn: sqlite3.Connection, at: datetime | None = None) -> 
     """Everyday words that turned out new today, plus checks still waiting (they might be new too)."""
     at = at or now_utc()
     return conn.execute(
-        "SELECT COUNT(*) FROM card WHERE mode IN ('learn', 'check') AND created_at >= ?",
+        "SELECT COUNT(*) FROM card WHERE mode IN ('pending', 'check') AND created_at >= ?",
         (to_db(at.replace(hour=0, minute=0, second=0)),)).fetchone()[0]
 
 
@@ -127,62 +134,36 @@ def introduce_everyday(conn: sqlite3.Connection, *, limit: int | None = None, at
     return [cid for r in rows if (cid := introduce_check(conn, r["id"], at=at))]
 
 
-def new_cards_today(conn: sqlite3.Connection, at: datetime | None = None) -> int:
-    at = at or now_utc()
-    day_start = at.replace(hour=0, minute=0, second=0)
+def words_introduced_today(conn: sqlite3.Connection, at: datetime | None = None) -> int:
+    """Words that texts put on the ladder today (local day)."""
     return conn.execute(
-        """SELECT COUNT(*) FROM card c JOIN known_word k ON k.lemma_id = c.lemma_id
-           WHERE c.direction = 'recognise' AND k.first_seen >= ?""", (to_db(day_start),)
-    ).fetchone()[0]
+        """SELECT COUNT(*) FROM known_word WHERE ladder_since IS NOT NULL
+           AND date(ladder_since, 'localtime') = date(?, 'localtime')""", (to_db(at or now_utc()),)).fetchone()[0]
 
 
-def introduce_lesson_words(conn: sqlite3.Connection, *, limit: int | None = None,
-                           at: datetime | None = None) -> list[int]:
-    """Introduce not-yet-seen words of the current lesson, up to the daily cap."""
-    at = at or now_utc()
-    s = conn.execute("SELECT current_lesson, daily_new_word_cap FROM settings WHERE id = 1").fetchone()
-    room = max(0, s["daily_new_word_cap"] - new_cards_today(conn, at))
-    if limit is not None:
-        room = min(room, limit)
-    if room == 0:
-        return []
-    # Nouns, verbs and adjectives first: they carry the meaning of the texts.
-    rows = conn.execute(
-        """SELECT m.id FROM lemma m
-           JOIN lesson l ON l.id = m.lesson_id AND l.number = ?
-           LEFT JOIN card c ON c.lemma_id = m.id
-           WHERE c.id IS NULL
-           ORDER BY CASE m.pos WHEN 'NOUN' THEN 0 WHEN 'VERB' THEN 0 WHEN 'ADJ' THEN 1 ELSE 2 END, m.id
-           LIMIT ?""", (s["current_lesson"], room)).fetchall()
-    return [cid for r in rows if (cid := introduce_word(conn, r["id"], at=at))]
-
-
-def introduced_today(conn: sqlite3.Connection) -> list[dict]:
-    rows = conn.execute(
-        """SELECT m.id, m.lemma, m.pos, m.article, m.plural, m.aux, m.partizip2, m.gloss_es, m.gloss_en,
-                  c.source_sentence
-           FROM known_word k JOIN lemma m ON m.id = k.lemma_id
-           JOIN card c ON c.lemma_id = m.id AND c.direction = 'recognise'
-           WHERE m.lesson_id IS NOT NULL AND date(k.first_seen, 'localtime') = date('now', 'localtime')
-           ORDER BY k.first_seen, m.id""").fetchall()
-    return [dict(r) for r in rows]
+def new_word_room(conn: sqlite3.Connection, at: datetime | None = None) -> int:
+    cap = conn.execute("SELECT daily_new_word_cap FROM settings WHERE id = 1").fetchone()[0]
+    return max(0, cap - words_introduced_today(conn, at))
 
 
 # ---- queue ----------------------------------------------------------------------
 
 CARD_SELECT = """
 SELECT c.*, m.lemma, m.pos, m.article, m.plural, m.aux, m.partizip2, m.gloss_es, m.gloss_en,
-       m.deck, l.number AS lesson_number
+       m.deck, m.cognate, l.number AS lesson_number, k.ladder_step
 FROM card c JOIN lemma m ON m.id = c.lemma_id LEFT JOIN lesson l ON l.id = m.lesson_id
+LEFT JOIN known_word k ON k.lemma_id = c.lemma_id
 """
+# Scheduled = everyday checks + typing cards of words at ladder step 4-5. Recognise cards are history.
+SCHEDULED = "c.direction = 'produce' AND (c.mode = 'check' OR COALESCE(k.ladder_step, 0) >= 4)"
 
 
 def queue(conn: sqlite3.Connection, *, limit: int = MAX_REVIEWS_PER_SESSION,
           at: datetime | None = None) -> list[dict]:
     at = at or now_utc()
     rows = conn.execute(
-        CARD_SELECT + """
-        WHERE c.due <= ? OR (c.state IN (1, 3) AND c.due <= ?)
+        CARD_SELECT + f"""
+        WHERE {SCHEDULED} AND (c.due <= ? OR (c.state IN (1, 3) AND c.due <= ?))
         ORDER BY c.due, c.id LIMIT ?""",
         (to_db(at), to_db(at + LEARN_AHEAD), limit),
     ).fetchall()
@@ -191,7 +172,8 @@ def queue(conn: sqlite3.Connection, *, limit: int = MAX_REVIEWS_PER_SESSION,
 
 def due_count(conn: sqlite3.Connection, at: datetime | None = None) -> int:
     at = at or now_utc()
-    return conn.execute("SELECT COUNT(*) FROM card WHERE due <= ?", (to_db(at),)).fetchone()[0]
+    return conn.execute(f"""SELECT COUNT(*) FROM card c LEFT JOIN known_word k ON k.lemma_id = c.lemma_id
+                             WHERE {SCHEDULED} AND c.due <= ?""", (to_db(at),)).fetchone()[0]
 
 
 def public_card(row: sqlite3.Row) -> dict:
@@ -203,6 +185,7 @@ def public_card(row: sqlite3.Row) -> dict:
         "aux": d["aux"], "partizip2": d["partizip2"], "gloss_es": d["gloss_es"],
         "gloss_en": d["gloss_en"], "lesson_number": d["lesson_number"],
         "source_sentence": d["source_sentence"], "mode": d.get("mode"), "deck": d.get("deck"),
+        "cognate": d.get("cognate"), "ladder_step": d.get("ladder_step"),
     }
 
 
@@ -215,25 +198,30 @@ def rating_for_check(verdict: str) -> Rating:
 def review(conn: sqlite3.Connection, card_id: int, *, rating: int | None = None,
            answer: str | None = None, duration_ms: int | None = None,
            at: datetime | None = None) -> dict:
-    """Grade one card. Produce cards are graded from the typed answer unless a rating is given."""
+    """Grade one scheduled card: an everyday check (multiple choice) or a step 4-5 typing card.
+    The typed answer sets the FSRS rating and moves the word on the ladder."""
+    from . import ladder
     at = at or now_utc()
     row = conn.execute(CARD_SELECT + " WHERE c.id = ?", (card_id,)).fetchone()
     if row is None:
         raise KeyError(card_id)
-
-    check = None
-    if row["direction"] == "produce" and answer is not None:
-        ascii_ok = bool(conn.execute("SELECT umlaut_ascii_ok FROM settings WHERE id = 1").fetchone()[0])
-        check = check_answer(answer, lemma=row["lemma"], pos=row["pos"], article=row["article"],
-                             ascii_ok=ascii_ok)
-        if rating is None:
-            rating = rating_for_check(check.verdict)
-    if rating is None:
-        raise ValueError("rating is required for recognise cards")
-    r = Rating(rating)
+    if row["direction"] != "produce":
+        raise ValueError("recognise cards are retired; words are practised on the ladder")
 
     if row["mode"] == "check" and row["reps"] == 0:
-        return _finish_check(conn, row, r, check, answer, duration_ms, at)
+        expected = ladder.display(dict(row))
+        correct = (answer or "").strip() == expected
+        return _finish_check(conn, row, Rating.Good if correct else Rating.Again, expected, answer, duration_ms, at)
+
+    if answer is None and rating is None:
+        raise ValueError("answer is required")
+    check = None
+    if answer is not None:
+        ascii_ok = bool(conn.execute("SELECT umlaut_ascii_ok FROM settings WHERE id = 1").fetchone()[0])
+        check = ladder.grade_typed(conn, row["lemma_id"], answer, ascii_ok=ascii_ok)
+        if rating is None:
+            rating = rating_for_check(check.verdict)
+    r = Rating(rating)
 
     card, _ = scheduler(conn).review_card(_fsrs_card(row), r, review_datetime=at)
     conn.execute(
@@ -246,74 +234,55 @@ def review(conn: sqlite3.Connection, card_id: int, *, rating: int | None = None,
         "INSERT INTO review_log (card_id, rating, answer_given, duration_ms, ts) VALUES (?, ?, ?, ?, ?)",
         (card_id, r.value, answer, duration_ms, to_db(at)),
     )
-
-    unlocked = None
-    if row["direction"] == "recognise" and r >= Rating.Good:
-        good = conn.execute("SELECT COUNT(*) FROM review_log WHERE card_id = ? AND rating >= 3",
-                            (card_id,)).fetchone()[0]
-        # 'Leicht' the very first time = you already know it: go straight to the typing test
-        easy_first = r == Rating.Easy and row["reps"] == 0
-        if good >= RECOGNITIONS_TO_UNLOCK_PRODUCE or easy_first:
-            cur = conn.execute(
-                """INSERT INTO card (lemma_id, direction, due, state, source_sentence, source_text_id)
-                   VALUES (?, 'produce', ?, ?, ?, ?) ON CONFLICT(lemma_id, direction) DO NOTHING""",
-                (row["lemma_id"], to_db(at), State.Learning.value, row["source_sentence"], row["source_text_id"]),
-            )
-            unlocked = cur.lastrowid if cur.rowcount else None
-
+    step = None
+    if row["ladder_step"]:
+        step = ladder.record(conn, row["lemma_id"], r >= Rating.Hard, answer=answer, at=at)
     word_state = update_word_state(conn, row["lemma_id"])
     return {"card_id": card_id, "rating": r.value, "check": check.to_dict() if check else None,
             "next_due": to_db(card.due), "interval_days": round((card.due - at).total_seconds() / 86400, 2),
-            "produce_unlocked": unlocked is not None, "word_state": word_state}
+            "ladder": step, "word_state": word_state}
 
 
-def _finish_check(conn: sqlite3.Connection, row: sqlite3.Row, r: Rating, check, answer: str | None,
+def _finish_check(conn: sqlite3.Connection, row: sqlite3.Row, r: Rating, expected: str, answer: str | None,
                   duration_ms: int | None, at: datetime) -> dict:
-    """First answer on an everyday check card."""
+    """First answer on an everyday check card (multiple choice EN → DE)."""
     conn.execute("INSERT INTO review_log (card_id, rating, answer_given, duration_ms, ts) VALUES (?, ?, ?, ?, ?)",
                  (row["id"], r.value, answer, duration_ms, to_db(at)))
-    if r >= Rating.Hard:   # right (Hard = small typo): you know it, don't drill it
-        days = CHECK_PASS_DAYS if r >= Rating.Good else CHECK_TYPO_DAYS
-        due = at + timedelta(days=days)
+    if r >= Rating.Good:   # you know it: don't drill it, see it again in a few months (typed, step 5)
+        due = at + timedelta(days=CHECK_PASS_DAYS)
         conn.execute("""UPDATE card SET state = ?, step = NULL, stability = ?, difficulty = ?, due = ?, reps = 1,
                         last_review = ?, mode = 'checked' WHERE id = ?""",
-                     (State.Review.value, float(days), 3.0, to_db(due), to_db(at), row["id"]))
+                     (State.Review.value, float(CHECK_PASS_DAYS), 3.0, to_db(due), to_db(at), row["id"]))
+        conn.execute("UPDATE known_word SET ladder_step = 5, ladder_correct = 0 WHERE lemma_id = ?", (row["lemma_id"],))
         if conn.execute("SELECT source FROM lemma WHERE id = ?", (row["lemma_id"],)).fetchone()[0] != "a1":
             conn.execute("UPDATE known_word SET state = 'known' WHERE lemma_id = ?", (row["lemma_id"],))
-        result, word_state = "known", "known"
-    else:                  # new for you: learn it properly, both directions
-        card, _ = scheduler(conn).review_card(_fsrs_card(row), r, review_datetime=at)
-        due = card.due
-        conn.execute("""UPDATE card SET stability = ?, difficulty = ?, due = ?, state = ?, step = ?, reps = 1,
-                        last_review = ?, mode = 'learn' WHERE id = ?""",
-                     (card.stability, card.difficulty, to_db(due), card.state.value, card.step, to_db(at), row["id"]))
-        conn.execute("""INSERT INTO card (lemma_id, direction, due, state, created_at)
-                        VALUES (?, 'recognise', ?, ?, ?) ON CONFLICT(lemma_id, direction) DO NOTHING""",
-                     (row["lemma_id"], to_db(at), State.Learning.value, to_db(at)))
-        conn.execute("UPDATE known_word SET state = CASE WHEN state = 'known' THEN state ELSE 'learning' END "
+        result = "known"
+    else:                  # new for you: it waits for a reader text, then climbs the ladder
+        due = at + timedelta(days=CHECK_PASS_DAYS)
+        conn.execute("UPDATE card SET reps = 1, last_review = ?, mode = 'pending', due = ? WHERE id = ?",
+                     (to_db(at), to_db(due), row["id"]))
+        conn.execute("UPDATE known_word SET ladder_step = 0, state = CASE WHEN state = 'known' THEN state ELSE 'new' END "
                      "WHERE lemma_id = ?", (row["lemma_id"],))
         result = "learn"
-        word_state = conn.execute("SELECT state FROM known_word WHERE lemma_id = ?", (row["lemma_id"],)).fetchone()[0]
-    return {"card_id": row["id"], "rating": r.value, "check": check.to_dict() if check else None,
-            "next_due": to_db(due), "interval_days": round((due - at).total_seconds() / 86400, 2),
-            "produce_unlocked": False, "word_state": word_state, "check_result": result}
+    word_state = conn.execute("SELECT state FROM known_word WHERE lemma_id = ?", (row["lemma_id"],)).fetchone()[0]
+    return {"card_id": row["id"], "rating": r.value, "correct": r >= Rating.Good, "answer": expected,
+            "check": None, "next_due": to_db(due), "interval_days": round((due - at).total_seconds() / 86400, 2),
+            "word_state": word_state, "check_result": result, "ladder": None}
 
 
 def update_word_state(conn: sqlite3.Connection, lemma_id: int) -> str:
     # A1 base words are the coverage baseline: reviewing them never demotes them.
     if conn.execute("SELECT source FROM lemma WHERE id = ?", (lemma_id,)).fetchone()[0] == "a1":
         return conn.execute("SELECT state FROM known_word WHERE lemma_id = ?", (lemma_id,)).fetchone()[0]
-    cards ={r["direction"]: r for r in conn.execute(
-        "SELECT direction, stability, state FROM card WHERE lemma_id = ?", (lemma_id,)).fetchall()}
-    prod = cards.get("produce")
-    rec = cards.get("recognise")
-    if rec is None and prod is not None and prod["state"] == State.Review.value:
-        # everyday word that passed its check (no recognition card needed)
-        state = "known" if (prod["stability"] or 0) >= KNOWN_STABILITY else "learning"
-        conn.execute("UPDATE known_word SET state = ? WHERE lemma_id = ?", (state, lemma_id))
-        return state
-    known = (prod is not None and prod["state"] == State.Review.value and (prod["stability"] or 0) >= KNOWN_STABILITY
-             and rec is not None and rec["state"] == State.Review.value)
+    kw = conn.execute("SELECT ladder_step, state FROM known_word WHERE lemma_id = ?", (lemma_id,)).fetchone()
+    if kw is None or kw["ladder_step"] is None:
+        return kw["state"] if kw else "new"
+    if kw["ladder_step"] == 0:
+        return kw["state"]
+    prod = conn.execute("SELECT stability, state, mode FROM card WHERE lemma_id = ? AND direction = 'produce'",
+                        (lemma_id,)).fetchone()
+    known = (kw["ladder_step"] == 5 and prod is not None and prod["state"] == State.Review.value
+             and (prod["stability"] or 0) >= KNOWN_STABILITY)
     state = "known" if known else "learning"
     conn.execute("UPDATE known_word SET state = ? WHERE lemma_id = ?", (state, lemma_id))
     return state

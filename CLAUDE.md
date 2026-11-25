@@ -19,11 +19,18 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
 
 ## Layout
 - `app/main.py` FastAPI routes; `app/db.py` sqlite helpers; `app/seed.py` idempotent seeding.
-- `app/srs.py` FSRS scheduling (py-fsrs 6): `introduce_word` creates the recognise card; 2 Good/Easy
-  recognitions create the produce card; a word is `known` once both cards are in Review and the
-  produce card's stability ≥ 7 days. A1 words are never demoted. Times in DB are UTC `YYYY-MM-DD HH:MM:SS`.
-- `app/answers.py` typed-answer checker: article required, umlaut mistakes never forgiven,
-  small stem typos → Hard. Phase 3 should call `srs.introduce_word(..., sentence=, text_id=)`.
+- Vocabulary ladder (`app/ladder.py`, state in `known_word.ladder_step/ladder_correct`): new words enter ONLY
+  through reader texts (`srs.introduce_word` → step 1; no bare new cards; default cap 5/day). Steps: 2 MC DE→EN,
+  3 MC EN→DE (a wrong-article variant is always a distractor), 4 cloze from the source sentence + first letter,
+  5 typed EN→DE with article. 2 correct → up; a miss → down one step, never below 2. Steps 2-3 repeat in-session;
+  steps 4-5 are one FSRS card (`card.direction = 'produce'`). Known = step 5 + stability ≥ 7 days. Old
+  'recognise' cards are kept but never scheduled; `migrate_to_ladder` ran once on existing DBs.
+- `app/srs.py` FSRS (py-fsrs 6) for steps 4-5 + everyday checks. A1 words are never demoted. Times in DB are UTC.
+- `app/practice.py`: rotating formats (match, listen, gender, odd, cloze on yesterday's text), 2-3 per day,
+  never the same set as the previous session day (`practice_day`). They don't move ladder steps.
+- Glosses are English (`settings.gloss_language`, default 'en'; `gloss_es` kept, optional). Spanish only as an
+  optional bridge in grammar notes/feedback. `app/glosses.py`: cognate flag (`lemma.cognate`), missing-gloss fill.
+- `app/answers.py` typed-answer checker: article required, umlaut mistakes never forgiven, small stem typos → Hard.
 - `app/verifier.py` (no LLM): spaCy `de_core_news_md` lemmas + fallbacks (separable verbs via `svp`,
   plural/Partizip forms, pronoun/modal forms, strong-verb vowel swaps); targets win lookups; grammar
   checks map to `grammar_point.code`. `tests/fixtures/lesson_texts.py` holds one text per lesson that must pass.
@@ -41,10 +48,11 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
   (`GRAMMAR_WORDS`) and places/people from personal.json count as known.
 - `progress.lesson_check` = the plan's per-lesson ingredients (texts read ≥ 3, words met, words known ≥ 80 %,
   grammar drilled, writing tasks); next lesson is suggested only when ready.
-- Everyday deck (`app/seed/everyday.txt`, lemma.deck = 'alltag'): starts as a typing *check* card;
-  right first time → known, due in 90 days (typo: 21); wrong → normal learning in both directions.
-  'Leicht' on a new recognition card unlocks the typing card immediately. The learner asked not to be
-  drilled on words they already know.
+- Everyday deck (`app/seed/everyday.txt`, lemma.deck = 'alltag'): starts as a multiple-choice *check*;
+  right → known, due in 90 days; wrong → ladder step 0 (waits for a text, up to 2 per text as targets).
+  The learner asked not to be drilled on words they already know.
+- Reading texts: 250-450 words (`generator.TEXT_WORDS`, enforced by the repair loop), 3-6 targets: new words
+  first (within the daily cap), then words still climbing.
 - `app/speaking.py` (Sprechen): a plan for talking with the partner, no microphone or grading (the learner
   asked for that after speech recognition was removed). Seed `app/seed/speaking.json`; `speaking_log` counts as activity.
 - `app/session.py` plans the daily flow and writes the day's text in a background thread with its own

@@ -44,6 +44,13 @@ MIGRATIONS = [
     ("card", "created_at", "TEXT"),
     ("settings", "everyday_per_day", "INTEGER NOT NULL DEFAULT 10"),   # max NEW everyday words per day
     ("text", "kind", "TEXT NOT NULL DEFAULT 'read'"),     # 'read' (reader) or 'listen' (Hören tasks)
+    # vocabulary ladder (app/ladder.py): NULL = not on the ladder, 0 = waiting for a text, 1-5 = step
+    ("known_word", "ladder_step", "INTEGER"),
+    ("known_word", "ladder_correct", "INTEGER NOT NULL DEFAULT 0"),   # correct answers at the current step
+    ("known_word", "ladder_since", "TEXT"),                           # when a text introduced the word
+    ("known_word", "source_sentence", "TEXT"),
+    ("known_word", "source_text_id", "INTEGER"),
+    ("lemma", "cognate", "INTEGER NOT NULL DEFAULT 0"),               # English cognate (Haus/house)
 ]
 
 
@@ -73,11 +80,15 @@ def _allow_rewrite_drills(conn: sqlite3.Connection) -> None:
 def init_schema(conn: sqlite3.Connection) -> None:
     _allow_rewrite_drills(conn)
     conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+    before_ladder = "ladder_step" not in {r[1] for r in conn.execute("PRAGMA table_info(known_word)")}
     for table, column, decl in MIGRATIONS:
         cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
         if column not in cols:
             conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
     conn.execute("INSERT OR IGNORE INTO settings (id) VALUES (1)")
+    if before_ladder:   # one-time: move existing cards onto the ladder, switch glosses to English
+        from .ladder import migrate_to_ladder
+        migrate_to_ladder(conn)
     conn.commit()
 
 

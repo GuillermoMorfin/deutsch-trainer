@@ -61,7 +61,7 @@ def test_done_today_flags(conn):
 
 def test_full_plan_without_history_skips_warmup(conn):
     p = session.plan(conn, "full")
-    assert [s["kind"] for s in p["steps"]] == ["review", "text", "newwords", "drill", "write"]
+    assert [s["kind"] for s in p["steps"]] == ["text", "review", "drill", "write"]   # the text brings the new words
     assert [s["kind"] for s in session.plan(conn, "quick")["steps"]] == ["review", "drill"]
 
 
@@ -106,8 +106,8 @@ def test_session_and_progress_api(client):
         ["review", "drill"]
     p = client.get("/api/progress").json()
     assert {"streak", "lessons", "top_errors", "activity", "done_today", "ready_for_next"} <= p.keys()
-    r = client.post("/api/review/start", json={"new_words": False, "limit": 5}).json()
-    assert r["introduced"] == 0
+    r = client.post("/api/review/start", json={"limit": 5, "everyday": False}).json()
+    assert r["items"] == [] and r["new_today"] == 0 and r["new_room"] == 5
 
 
 def test_concurrent_requests_do_not_share_a_connection(client):
@@ -120,11 +120,13 @@ def test_concurrent_requests_do_not_share_a_connection(client):
 
 @pytest.mark.parametrize("minutes, review, rounds, drills", [(20, 40, 2, 8), (30, 60, 3, 12), (40, 80, 3, 16)])
 def test_plan_scales_with_session_length(conn, minutes, review, rounds, drills):
+    # 'rounds' = number of rotating practice formats in the vocab step
     conn.execute("UPDATE settings SET session_minutes = ?", (minutes,))
     p = session.plan(conn, "full")
     by = {s["kind"]: s for s in p["steps"]}
     assert p["minutes"] == minutes
-    assert by["review"]["limit"] == review and by["newwords"]["rounds"] == rounds and by["drill"]["n"] == drills
+    assert by["review"]["limit"] == review and by["review"]["practice"] and by["drill"]["n"] == drills
+    assert session.SIZES[minutes]["practice"] == rounds
     assert "speak" not in by
 
 
@@ -138,23 +140,14 @@ def test_session_minutes_setting_validated(client):
     assert client.put("/api/settings", json={"session_minutes": 25}).status_code == 422
 
 
-def test_session_cards_add_new_words_within_daily_cap(conn):
-    assert conn.execute("SELECT daily_new_word_cap FROM settings").fetchone()[0] == 12
-    review = next(s for s in session.plan(conn, "full")["steps"] if s["kind"] == "review")
-    assert review["new"] == 12 - session.TEXT_TARGETS
+def test_text_step_shows_todays_room_for_new_words(conn):
+    text = next(s for s in session.plan(conn, "full")["steps"] if s["kind"] == "text")
+    assert text["new_words"] == 5
 
 
-def test_introduced_today_lists_new_lesson_words(conn):
-    srs.introduce_lesson_words(conn, limit=5)
-    conn.commit()
-    today = srs.introduced_today(conn)
-    assert len(today) == 5 and all(w["gloss_es"] for w in today)
-
-
-def test_review_start_respects_new_limit(client):
-    r = client.post("/api/review/start", json={"new_words": True, "new_limit": 3}).json()
-    assert r["introduced"] == 3
-    assert len(client.get("/api/review/today-new").json()) == 3
+def test_review_start_never_introduces_bare_words(client):
+    r = client.post("/api/review/start", json={"everyday": False}).json()
+    assert r["items"] == [] and r["new_today"] == 0
 
 
 def test_lesson_check_tracks_plan_ingredients(conn):

@@ -1,8 +1,9 @@
 """The daily ~20-minute session (Nation's four strands) and Quick 5.
 
-full : warm-up re-read (fluency) → due cards (language) → new text + questions (input)
-       → new words, quick recall → grammar drill (language) → write (output)
-quick: due cards (max 20) → 3 drill items
+full : warm-up re-read (fluency) → new text + questions (input; it brings the day's new words)
+       → vocabulary: the ladder (new words by multiple choice, due cloze/typing cards) and 2-3
+         rotating practice formats → grammar drill (language) → write (output)
+quick: vocabulary (max 20) → 3 drill items
 
 The new text is prepared in a background thread at session start, so it is usually ready
 by the time the learner reaches it.
@@ -70,12 +71,12 @@ def prepare_text(conn: sqlite3.Connection, writer_factory: Callable[[], Writer],
     return text_status(conn)
 
 
-# Session sizes by length. The extra time goes where it helps most: more cards, an extra recall
-# round and more drills, keeping the four strands roughly balanced.
+# Session sizes by length. The extra time goes where it helps most: more cards and more drills,
+# keeping the four strands roughly balanced. 'practice' = rotating formats in the vocab step.
 SIZES = {
-    20: {"review": 40, "rounds": 2, "drills": 8},
-    30: {"review": 60, "rounds": 3, "drills": 12},
-    40: {"review": 80, "rounds": 3, "drills": 16},
+    20: {"review": 40, "practice": 2, "drills": 8},
+    30: {"review": 60, "practice": 3, "drills": 12},
+    40: {"review": 80, "practice": 3, "drills": 16},
 }
 
 
@@ -84,15 +85,11 @@ def size_for(minutes: int) -> tuple[int, dict]:
     return m, SIZES[m]
 
 
-TEXT_TARGETS = 6   # new words each text introduces (generator default)
-
-
 def plan(conn: sqlite3.Connection, mode: str = "full") -> dict:
     due = srs.due_count(conn)
-    cap = conn.execute("SELECT daily_new_word_cap FROM settings WHERE id = 1").fetchone()[0]
     minutes, size = size_for(conn.execute("SELECT session_minutes FROM settings WHERE id = 1").fetchone()[0])
     if mode == "quick":
-        steps = [{"kind": "review", "label": "Wortschatz", "limit": 20, "due": due},
+        steps = [{"kind": "review", "label": "Wortschatz", "limit": 20, "due": due, "practice": False},
                  {"kind": "drill", "label": "Grammatik", "n": 3}]
     else:
         warm = warmup_text(conn)
@@ -100,11 +97,9 @@ def plan(conn: sqlite3.Connection, mode: str = "full") -> dict:
         if warm:
             steps.append({"kind": "warmup", "label": "Aufwärmen", "text_id": warm["id"], "title": warm["title"]})
         steps += [
-            # the cards add new lesson words too; the text brings its own TEXT_TARGETS later
-            {"kind": "review", "label": "Wortschatz", "limit": size["review"], "due": due,
-             "new": max(0, cap - TEXT_TARGETS)},
-            {"kind": "text", "label": "Neuer Text"},
-            {"kind": "newwords", "label": "Neue Wörter", "rounds": size["rounds"]},
+            # new words arrive in the text; the vocab step right after practises them on the ladder
+            {"kind": "text", "label": "Neuer Text", "new_words": srs.new_word_room(conn)},
+            {"kind": "review", "label": "Wortschatz", "limit": size["review"], "due": due, "practice": True},
             {"kind": "drill", "label": "Grammatik", "n": size["drills"]},
             {"kind": "write", "label": "Schreiben"},
         ]

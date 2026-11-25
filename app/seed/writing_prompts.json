@@ -4,169 +4,205 @@
   "1": [
    {
     "de": "Was hast du als Kind gern gemacht? Schreib 3 Sätze im Perfekt.",
-    "es": "¿Qué te gustaba hacer de niño? Escribe 3 frases en Perfekt."
+    "es": "¿Qué te gustaba hacer de niño? Escribe 3 frases en Perfekt.",
+    "en": "What did you like doing as a child? Write 3 sentences in the Perfekt."
    },
    {
     "de": "Erzähl von deinem letzten Wochenende: Was hast du gemacht? Wo warst du?",
-    "es": "Cuenta tu último fin de semana: ¿qué hiciste? ¿Dónde estuviste?"
+    "es": "Cuenta tu último fin de semana: ¿qué hiciste? ¿Dónde estuviste?",
+    "en": "Tell about your last weekend: what did you do? Where were you?"
    },
    {
     "de": "Wie war deine Kindheit? Was hattest du? Was war schön?",
-    "es": "¿Cómo fue tu infancia? ¿Qué tenías? ¿Qué era bonito?"
+    "es": "¿Cómo fue tu infancia? ¿Qué tenías? ¿Qué era bonito?",
+    "en": "What was your childhood like? What did you have? What was nice?"
    }
   ],
   "2": [
    {
     "de": "Was studierst du? Warum? Benutz „weil“.",
-    "es": "¿Qué estudias? ¿Por qué? Usa «weil»."
+    "es": "¿Qué estudias? ¿Por qué? Usa «weil».",
+    "en": "What do you study? Why? Use 'weil'."
    },
    {
     "de": "Warum lernst du Deutsch? Schreib 2–3 Gründe mit „weil“.",
-    "es": "¿Por qué aprendes alemán? Escribe 2–3 razones con «weil»."
+    "es": "¿Por qué aprendes alemán? Escribe 2–3 razones con «weil».",
+    "en": "Why are you learning German? Write 2-3 reasons with 'weil'."
    },
    {
     "de": "Welche Arbeit findest du gut? Was ist ein Vorteil, was ist ein Nachteil?",
-    "es": "¿Qué trabajo te parece bueno? ¿Una ventaja y una desventaja?"
+    "es": "¿Qué trabajo te parece bueno? ¿Una ventaja y una desventaja?",
+    "en": "Which job do you think is good? One advantage and one disadvantage?"
    }
   ],
   "3": [
    {
     "de": "Wie ist deine Wohnung oder WG? Was gefällt dir? Was fehlt dir?",
-    "es": "¿Cómo es tu piso o WG? ¿Qué te gusta? ¿Qué echas de menos?"
+    "es": "¿Cómo es tu piso o WG? ¿Qué te gusta? ¿Qué echas de menos?",
+    "en": "What is your flat or shared flat like? What do you like? What do you miss?"
    },
    {
     "de": "Was vermisst du aus deiner Heimat?",
-    "es": "¿Qué echas de menos de tu país?"
+    "es": "¿Qué echas de menos de tu país?",
+    "en": "What do you miss from your home country?"
    },
    {
     "de": "Schreib Marco: Wie ist eure Umgebung? Gibt es einen Park, einen Fluss, Tiere?",
-    "es": "Escríbele a Marco: ¿cómo es vuestro barrio? ¿Hay un parque, un río, animales?"
+    "es": "Escríbele a Marco: ¿cómo es vuestro barrio? ¿Hay un parque, un río, animales?",
+    "en": "Write to Marco: what is your neighbourhood like? Is there a park, a river, animals?"
    }
   ],
   "4": [
    {
     "de": "Du bist krank. Schreib deinem Kollegen eine Nachricht. Benutz „deshalb“.",
-    "es": "Estás enfermo/a. Escribe un mensaje a tu colega. Usa «deshalb»."
+    "es": "Estás enfermo/a. Escribe un mensaje a tu colega. Usa «deshalb».",
+    "en": "You are ill. Write a message to your colleague. Use 'deshalb'."
    },
    {
     "de": "Was musst du diese Woche an der Uni erledigen?",
-    "es": "¿Qué tienes que hacer esta semana en la universidad?"
+    "es": "¿Qué tienes que hacer esta semana en la universidad?",
+    "en": "What do you have to do at university this week?"
    },
    {
     "de": "Erzähl von einem stressigen Tag. Benutz „deshalb“.",
-    "es": "Cuenta un día estresante. Usa «deshalb»."
+    "es": "Cuenta un día estresante. Usa «deshalb».",
+    "en": "Describe a stressful day. Use 'deshalb'."
    }
   ],
   "5": [
    {
     "de": "Lade einen Freund zu einem Konzert ein: Wann? Wo? Seit wann kennt ihr die Band?",
-    "es": "Invita a un amigo a un concierto: ¿cuándo? ¿dónde? ¿desde cuándo conocéis la banda?"
+    "es": "Invita a un amigo a un concierto: ¿cuándo? ¿dónde? ¿desde cuándo conocéis la banda?",
+    "en": "Invite a friend to a concert: when? where? since when have you known the band?"
    },
    {
     "de": "Seit wann wohnst du in Berlin? Seit wann läufst du?",
-    "es": "¿Desde cuándo vives en Berlín? ¿Desde cuándo corres?"
+    "es": "¿Desde cuándo vives en Berlín? ¿Desde cuándo corres?",
+    "en": "Since when have you lived in Berlin? Since when have you been running?"
    },
    {
     "de": "Ein Freund hat keine Lust auf eine Party. Überrede ihn!",
-    "es": "Un amigo no tiene ganas de ir a una fiesta. ¡Convéncelo!"
+    "es": "Un amigo no tiene ganas de ir a una fiesta. ¡Convéncelo!",
+    "en": "A friend doesn't feel like going to a party. Convince them!"
    }
   ],
   "6": [
    {
     "de": "Gib einem Freund einen Rat zum Marathon.",
-    "es": "Dale un consejo a un amigo sobre el maratón."
+    "es": "Dale un consejo a un amigo sobre el maratón.",
+    "en": "Give a friend advice about the marathon."
    },
    {
     "de": "Marco ist immer müde. Was sollte er machen? Was könnte er machen?",
-    "es": "Marco siempre está cansado. ¿Qué debería hacer? ¿Qué podría hacer?"
+    "es": "Marco siempre está cansado. ¿Qué debería hacer? ¿Qué podría hacer?",
+    "en": "Marco is always tired. What should he do? What could he do?"
    },
    {
     "de": "Eine Freundin möchte mit Sport anfangen. Gib ihr zwei Tipps.",
-    "es": "Una amiga quiere empezar a hacer deporte. Dale dos consejos."
+    "es": "Una amiga quiere empezar a hacer deporte. Dale dos consejos.",
+    "en": "A friend wants to start doing sport. Give her two pieces of advice."
    }
   ],
   "7": [
    {
     "de": "Was findest du gut an Berlin? Benutz „Ich finde gut, dass …“.",
-    "es": "¿Qué te gusta de Berlín? Usa «Ich finde gut, dass …»."
+    "es": "¿Qué te gusta de Berlín? Usa «Ich finde gut, dass …».",
+    "en": "What do you like about Berlin? Use 'Ich finde gut, dass …'."
    },
    {
     "de": "Bestell beim Lieferservice: Was möchtest du? Wie zahlst du?",
-    "es": "Pide a domicilio: ¿qué quieres? ¿Cómo pagas?"
+    "es": "Pide a domicilio: ¿qué quieres? ¿Cómo pagas?",
+    "en": "Order food for delivery: what do you want? How do you pay?"
    },
    {
     "de": "Was ist dein Lieblingsessen? Was hoffst du für das Wochenende? Benutz „dass“.",
-    "es": "¿Cuál es tu comida favorita? ¿Qué esperas del fin de semana? Usa «dass»."
+    "es": "¿Cuál es tu comida favorita? ¿Qué esperas del fin de semana? Usa «dass».",
+    "en": "What is your favourite food? What are you looking forward to at the weekend? Use 'dass'."
    }
   ],
   "8": [
    {
     "de": "Was machst du, wenn du Pause hast?",
-    "es": "¿Qué haces cuando tienes una pausa?"
+    "es": "¿Qué haces cuando tienes una pausa?",
+    "en": "What do you do when you have a break?"
    },
    {
     "de": "Was machst du, wenn du gestresst bist?",
-    "es": "¿Qué haces cuando estás estresado/a?"
+    "es": "¿Qué haces cuando estás estresado/a?",
+    "en": "What do you do when you are stressed?"
    },
    {
     "de": "Wie ist deine Mittagspause an der Uni? Benutz „wenn“.",
-    "es": "¿Cómo es tu pausa del mediodía en la uni? Usa «wenn»."
+    "es": "¿Cómo es tu pausa del mediodía en la uni? Usa «wenn».",
+    "en": "What is your lunch break at uni like? Use 'wenn'."
    }
   ],
   "9": [
    {
     "de": "Wo liegen und stehen deine Sachen? Beschreib dein Zimmer.",
-    "es": "¿Dónde están tus cosas? Describe tu habitación."
+    "es": "¿Dónde están tus cosas? Describe tu habitación.",
+    "en": "Where are your things? Describe your room."
    },
    {
     "de": "Welche Gewohnheit hast du? Was nervt dich manchmal?",
-    "es": "¿Qué costumbre tienes? ¿Qué te molesta a veces?"
+    "es": "¿Qué costumbre tienes? ¿Qué te molesta a veces?",
+    "en": "What habit do you have? What annoys you sometimes?"
    },
    {
     "de": "Du ziehst um. Wohin stellst, legst und hängst du deine Sachen?",
-    "es": "Te mudas. ¿Dónde pones y cuelgas tus cosas?"
+    "es": "Te mudas. ¿Dónde pones y cuelgas tus cosas?",
+    "en": "You are moving. Where do you put and hang your things?"
    }
   ],
   "10": [
    {
     "de": "Wie kommst du zur Uni? Fährst du lieber Fahrrad oder U-Bahn? Warum?",
-    "es": "¿Cómo vas a la uni? ¿Prefieres bici o metro? ¿Por qué?"
+    "es": "¿Cómo vas a la uni? ¿Prefieres bici o metro? ¿Por qué?",
+    "en": "How do you get to uni? Do you prefer the bike or the U-Bahn? Why?"
    },
    {
     "de": "Wohin gehst du heute noch? Zum Bäcker, zum Arzt, zu einem Freund?",
-    "es": "¿A dónde vas hoy? ¿A la panadería, al médico, a casa de un amigo?"
+    "es": "¿A dónde vas hoy? ¿A la panadería, al médico, a casa de un amigo?",
+    "en": "Where are you going today? To the bakery, the doctor, a friend's place?"
    },
    {
     "de": "Erzähl von einem Stau oder einem Problem mit dem Bus.",
-    "es": "Cuenta un atasco o un problema con el autobús."
+    "es": "Cuenta un atasco o un problema con el autobús.",
+    "en": "Tell about a traffic jam or a problem with the bus."
    }
   ],
   "11": [
    {
     "de": "Wo wärst du jetzt gern? Was hättest du gern?",
-    "es": "¿Dónde te gustaría estar ahora? ¿Qué te gustaría tener?"
+    "es": "¿Dónde te gustaría estar ahora? ¿Qué te gustaría tener?",
+    "en": "Where would you like to be right now? What would you like to have?"
    },
    {
     "de": "Wie wäre dein Traumurlaub?",
-    "es": "¿Cómo serían tus vacaciones soñadas?"
+    "es": "¿Cómo serían tus vacaciones soñadas?",
+    "en": "What would your dream holiday be like?"
    },
    {
     "de": "Was packst du in den Koffer für eine Wanderung?",
-    "es": "¿Qué metes en la maleta para una excursión?"
+    "es": "¿Qué metes en la maleta para una excursión?",
+    "en": "What do you pack in your suitcase for a trip?"
    }
   ],
   "12": [
    {
     "de": "Du möchtest einen Kurs machen. Schreib eine E-Mail mit zwei Fragen („Können Sie mir sagen, ob …?“).",
-    "es": "Quieres hacer un curso. Escribe un email con dos preguntas."
+    "es": "Quieres hacer un curso. Escribe un email con dos preguntas.",
+    "en": "You want to take a course. Write an email with two questions."
    },
    {
     "de": "Du brauchst ein Visum. Was möchtest du wissen?",
-    "es": "Necesitas un visado. ¿Qué quieres saber?"
+    "es": "Necesitas un visado. ¿Qué quieres saber?",
+    "en": "You need a visa. What do you want to know?"
    },
    {
     "de": "Ein Freund macht ein freiwilliges Jahr und ist nervös. Mach ihm Mut!",
-    "es": "Un amigo hace un año de voluntariado y está nervioso. ¡Anímalo!"
+    "es": "Un amigo hace un año de voluntariado y está nervioso. ¡Anímalo!",
+    "en": "A friend is doing a voluntary year and is nervous. Cheer them up!"
    }
   ]
  }

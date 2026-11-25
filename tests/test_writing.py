@@ -37,7 +37,7 @@ def conn(tmp_path):
 def test_every_lesson_has_three_prompts():
     for n in range(1, 13):
         ps = writing.prompts_for(n)
-        assert len(ps) == 3 and all(p["de"] and p["es"] for p in ps)
+        assert len(ps) == 3 and all(p["de"] and p["en"] for p in ps)
 
 
 def test_prompt_rotation_prefers_unused_tasks(conn):

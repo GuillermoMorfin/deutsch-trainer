@@ -72,57 +72,47 @@ def test_right_first_time_means_known_and_back_in_three_months(conn):
     assert card not in {c["id"] for c in srs.queue(conn, at=T0 + timedelta(days=30))}   # not repeated soon
 
 
-def test_typo_passes_with_shorter_interval(conn):
+def test_check_is_multiple_choice_with_a_wrong_article_option(conn):
+    from app import ladder
     srs.introduce_check(conn, lid(conn, "Kühlschrank", "der"), at=T0)
-    card = conn.execute("SELECT id FROM card").fetchone()[0]
-    r = srs.review(conn, card, answer="der Kühlschrnak", at=T0)
-    assert r["check_result"] == "known" and r["interval_days"] == pytest.approx(srs.CHECK_TYPO_DAYS)
+    card = srs.queue(conn, at=T0)[0]
+    item = ladder.card_item(conn, card, seed=1)
+    assert item["kind"] == "check" and "der Kühlschrank" in item["options"]
+    assert any(o in item["options"] for o in ("die Kühlschrank", "das Kühlschrank"))
 
 
-def test_wrong_becomes_a_learning_word_in_both_directions(conn):
-    srs.introduce_check(conn, lid(conn, "Kaution", "die"), at=T0)
+def test_wrong_check_waits_for_a_text_instead_of_a_bare_card(conn):
+    w = lid(conn, "Kaution", "die")
+    srs.introduce_check(conn, w, at=T0)
     card = conn.execute("SELECT id FROM card").fetchone()[0]
     r = srs.review(conn, card, answer="der Kaution", at=T0)
-    assert r["check_result"] == "learn" and r["word_state"] == "learning"
-    dirs = {c["direction"] for c in conn.execute("SELECT direction FROM card")}
-    assert dirs == {"produce", "recognise"}
-    due_soon = {c["id"] for c in srs.queue(conn, at=T0)}
-    assert card in due_soon                                       # comes back in this session
+    assert r["check_result"] == "learn" and not r["correct"] and r["answer"] == "die Kaution"
+    assert conn.execute("SELECT ladder_step FROM known_word WHERE lemma_id = ?", (w,)).fetchone()[0] == 0
+    assert {c["direction"] for c in conn.execute("SELECT direction FROM card")} == {"produce"}   # no recognise card
+    assert srs.queue(conn, at=T0) == []                         # nothing to drill before a text introduces it
+    assert srs.introduce_word(conn, w, sentence="Die Kaution ist hoch.", at=T0)    # a text brings it in
+    assert conn.execute("SELECT ladder_step FROM known_word WHERE lemma_id = ?", (w,)).fetchone()[0] == 1
 
 
-def test_known_a1_word_answered_wrong_keeps_coverage_but_is_drilled(conn):
-    srs.introduce_check(conn, lid(conn, "Apfel", "der"), at=T0)
+def test_known_a1_word_answered_wrong_keeps_coverage_but_is_learned(conn):
+    w = lid(conn, "Apfel", "der")
+    srs.introduce_check(conn, w, at=T0)
     card = conn.execute("SELECT id FROM card").fetchone()[0]
-    r = srs.review(conn, card, answer="die Apfel", at=T0)
-    assert r["check_result"] == "learn"
-    assert conn.execute("SELECT state FROM known_word WHERE lemma_id = ?", (lid(conn, "Apfel", "der"),)).fetchone()[0] == "known"
-    assert conn.execute("SELECT COUNT(*) FROM card").fetchone()[0] == 2
+    assert srs.review(conn, card, answer="die Apfel", at=T0)["check_result"] == "learn"
+    assert conn.execute("SELECT state, ladder_step FROM known_word WHERE lemma_id = ?", (w,)).fetchone()[:] == ("known", 0)
+    assert srs.introduce_word(conn, w, at=T0)                   # can still be introduced by a text
 
 
 def test_phrases_with_punctuation_can_be_answered(conn):
     srs.introduce_check(conn, lid(conn, "Wie bitte?"), at=T0)
     card = conn.execute("SELECT id FROM card").fetchone()[0]
-    assert srs.review(conn, card, answer="wie bitte", at=T0)["check_result"] == "known"
-
-
-def test_easy_on_first_sight_unlocks_typing_immediately(conn):
-    w = lid(conn, "Kindheit", "die")
-    srs.introduce_word(conn, w, at=T0)
-    rec = conn.execute("SELECT id FROM card WHERE lemma_id = ?", (w,)).fetchone()[0]
-    assert srs.review(conn, rec, rating=4, at=T0)["produce_unlocked"]
-
-
-def test_good_on_first_sight_still_needs_two(conn):
-    w = lid(conn, "Kindheit", "die")
-    srs.introduce_word(conn, w, at=T0)
-    rec = conn.execute("SELECT id FROM card WHERE lemma_id = ?", (w,)).fetchone()[0]
-    assert not srs.review(conn, rec, rating=3, at=T0)["produce_unlocked"]
+    assert srs.review(conn, card, answer="Wie bitte?", at=T0)["check_result"] == "known"
 
 
 def test_everyday_setting_and_word_filter(client):
     assert client.put("/api/settings", json={"everyday_per_day": 15}).status_code == 200
     assert client.put("/api/settings", json={"everyday_per_day": 25}).status_code == 422
-    assert client.post("/api/review/start", json={"new_words": False}).json()["checks"] == 5
+    assert client.post("/api/review/start", json={}).json()["checks"] == 5
     assert client.post("/api/review/more").json()["checks"] == 5          # next batch on request
     words = client.get("/api/words", params={"lesson": -1, "limit": 500}).json()
     assert words["total"] >= 140

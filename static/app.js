@@ -89,7 +89,7 @@ function wordHTML(w) {
       title="${w.state === "known" ? "bekannt (tippen zum Zurücksetzen)" : "Als bekannt markieren"}"
       aria-label="Status: ${esc(w.state)}"></button><span class="de">${art}${esc(w.lemma)}</span>
       ${extras.length ? `<div class="extra">${extras.join(" · ")}</div>` : ""}</div>
-    <div class="es">${esc(w.gloss_es || "")}</div>
+    <div class="es">${esc(gl(w))} ${cog(w)}</div>
   </li>`;
 }
 
@@ -98,7 +98,7 @@ function grammarHTML(g) {
     <h3>${esc(g.name)}</h3>
     <dl>
       <dt>Regel</dt><dd>${esc(g.rule)}</dd>
-      ${g.spanish_bridge ? `<dt>Puente</dt><dd>${esc(g.spanish_bridge)}</dd>` : ""}
+      ${g.spanish_bridge ? `<dt>Brücke</dt><dd>${esc(g.spanish_bridge)}</dd>` : ""}
       ${g.example ? `<dt>Beispiel</dt><dd class="example">${esc(g.example)}</dd>` : ""}
       ${g.warning ? `<dt>Achtung</dt><dd class="warning">${esc(g.warning)}</dd>` : ""}
     </dl>
@@ -174,10 +174,6 @@ function wireDone(opts) {
 
 // ---- review (FSRS) ---------------------------------------------------------
 
-const RATINGS = [
-  [1, "Nochmal", "again"], [2, "Schwer", "hard"], [3, "Gut", "good"], [4, "Leicht", "easy"],
-];
-
 function nounHTML(c) {
   return c.article ? `<span class="art ${c.article}">${c.article}</span> ${esc(c.lemma)}` : esc(c.lemma);
 }
@@ -204,53 +200,48 @@ function charDiffHTML(given, expected) {
   return out;
 }
 
-// Recognition card that flips over on "Zeigen": front = the German word, back = its meaning.
-function flipCardHTML(w, sentence) {
-  return `<div class="flip"><div class="flip-inner">
-    <div class="flash face front">
-      <div class="flash-word">${nounHTML(w)}</div>
-      ${sentence ? `<p class="flash-sentence">${esc(sentence)}</p>` : ""}
-    </div>
-    <div class="flash face back" aria-hidden="true">
-      <div class="flash-word small-word">${nounHTML(w)}</div>
-      <div class="flash-answer">
-        <div class="flash-gloss">${esc(w.gloss_es)}</div>
-        <div class="small muted">${esc(w.gloss_en || "")}${formsHTML(w) ? ` · ${formsHTML(w)}` : ""}</div>
-      </div>
-      ${sentence ? `<p class="flash-sentence small">${esc(sentence)}</p>` : ""}
-    </div>
-  </div></div>`;
-}
-function flipOver() {
-  const f = $app.querySelector(".flip");
-  f.classList.add("flipped");
-  f.querySelector(".front").setAttribute("aria-hidden", "true");
-  f.querySelector(".back").removeAttribute("aria-hidden");
-  // once turned, drop the 3D transform so the text renders crisp
-  const settle = () => f.classList.add("settled");
-  f.querySelector(".flip-inner").addEventListener("transitionend", settle, { once: true });
-  setTimeout(settle, 650);
-}
-
 const POS_HINT = { NOUN: "Nomen · mit Artikel", VERB: "Verb · Infinitiv", ADJ: "Adjektiv", ADV: "Adverb",
   PHRASE: "Ausdruck", CONJ: "Konjunktion", PRON: "Pronomen", ADP: "Präposition", DET: "Artikel/Begleiter", INTJ: "Ausruf" };
+
+// ---- vocabulary: the 5-step ladder + rotating practice formats -------------------------------
+// Steps: 1 met in a text · 2 choose the meaning (DE → EN) · 3 choose the German (EN → DE)
+//        · 4 type it with the first letter in the sentence · 5 type it freely. 2 right = up, a miss = down one.
+
+let glossLang = "en";
+const gl = (w) => (glossLang === "es" ? (w.gloss_es || w.gloss_en) : (w.gloss_en || w.gloss_es)) || "";
+const cog = (w) => (w && w.cognate ? `<span class="cognate" title="Ähnlich wie im Englischen">cognate</span>` : "");
+const STEP_LABEL = { 1: "im Text gesehen", 2: "Bedeutung wählen", 3: "Deutsch wählen", 4: "mit Hilfe schreiben", 5: "frei schreiben" };
+
+function ladderDots(step, correctAtStep = 0) {
+  return `<span class="ladder" role="img" aria-label="Stufe ${step} von 5">${[1, 2, 3, 4, 5].map((s) =>
+    `<i class="${s < step ? "done" : s === step ? `now${correctAtStep ? " half" : ""}` : ""}"></i>`).join("")}</span>`;
+}
+
+// the word inside its sentence: "Der <mark>Umzug</mark> war anstrengend."
+function sentenceHTML(it, { gap = false, letter = "" } = {}) {
+  if (it.before != null && it.blank != null && !gap) return `${esc(it.before)}<mark>${esc(it.blank)}</mark>${esc(it.after)}`;
+  if (gap && it.before != null) return `${esc(it.before)}<span class="gap">${esc(letter)}<span>${"_".repeat(Math.max(3, (it.length || 5) - 1))}</span></span>${esc(it.after)}`;
+  if (it.blanked) return esc(it.blanked).replace("____", `<span class="gap"><span>____</span></span>`);
+  return it.sentence ? esc(it.sentence) : "";
+}
 
 async function viewReview(opts = {}) {
   $app.innerHTML = skeleton();
   const limit = opts.limit || 40;
-  const start = await api("/review/start", { method: "POST", body: {
-    new_words: opts.newWords ?? true, new_limit: opts.newLimit ?? null, limit } });
-  let queue = start.queue;
-  let done = 0, correct = 0, checksKnown = 0, checksNew = 0;
+  const start = await api("/review/start", { method: "POST", body: { limit, everyday: opts.everyday ?? true } });
+  let queue = start.items;
+  let done = 0, correct = 0, promoted = 0, checksKnown = 0, checksNew = 0, practiced = false;
+  const practice = opts.practice ?? true;
 
   const finish = () => {
     $app.innerHTML = `
       <div class="card hero review-done">
         <p class="eyebrow">Fertig für jetzt</p>
         <h1>Gut gemacht!</h1>
-        <p>${done} Karten wiederholt${done ? ` · ${Math.round((correct / done) * 100)} % richtig` : ""}.</p>
-        ${checksKnown + checksNew ? `<p class="small">Alltagswörter: ${checksKnown} kanntest du schon, ${checksNew} lernst du jetzt.</p>` : ""}
-        <p class="small muted">${done ? `Neue Wörter heute: ${start.new_today}. Die nächsten Karten plant FSRS für dich.` : "Gerade ist keine Karte fällig."}</p>
+        <p>${done} Antworten${done ? ` · ${Math.round((correct / done) * 100)} % richtig` : ""}${promoted ? ` · ${promoted}× eine Stufe höher` : ""}.</p>
+        ${checksKnown + checksNew ? `<p class="small">Alltagswörter: ${checksKnown} kanntest du schon, ${checksNew} kommen in einem der nächsten Texte vor.</p>` : ""}
+        <p class="small muted">${done ? "Wörter auf Stufe 4 und 5 plant FSRS für dich." :
+          `Gerade ist nichts fällig. Neue Wörter bringt dir der nächste <a href="#/read">Text</a> (heute noch ${start.new_room}).`}</p>
         ${doneButton(opts)}
       </div>`;
     wireDone(opts);
@@ -259,81 +250,107 @@ async function viewReview(opts = {}) {
 
   const next = async () => {
     if (!queue.length) {
-      // Learning steps may have brought cards back into the window.
-      if (done >= limit) return finish();
-      queue = (await api(`/review/queue?limit=${limit - done}`)).queue;
-      // next small batch of everyday checks, if today's limit for new words allows it
-      if (!queue.length) queue = (await api("/review/more", { method: "POST" })).queue.slice(0, limit - done);
-      if (!queue.length) return finish();
+      if (done < limit) {
+        queue = (await api(`/review/queue?limit=${limit - done}`)).items;
+        if (!queue.length) queue = (await api("/review/more", { method: "POST" })).items.slice(0, limit - done);
+      }
+      if (!queue.length) {
+        if (practice && !practiced) { practiced = true; return runPractice(finish); }
+        return finish();
+      }
     }
-    const c = queue.shift();
-    (c.direction === "produce" ? showProduce : showRecognise)(c);
+    const it = queue.shift();
+    if (it.kind === "mc" || it.kind === "check") return showChoice(it);
+    return showTyping(it);
   };
 
-  const header = (c) => `
+  const header = (it) => `
     <div class="review-top">
       <a href="#/" class="small">✕ Beenden</a>
       <span class="small muted">${done} erledigt · ${queue.length + 1} übrig</span>
     </div>
     <div class="progress"><i style="width:${pct(done / (done + queue.length + 1))}"></i></div>
-    <p class="eyebrow">${c.direction === "produce" ? "Español → Deutsch" : "Deutsch → Español"}
-      ${c.mode === "check" ? ' · <span class="chip amber">Alltag · Kennst du das?</span>'
-        : `${c.lesson_number ? ` · Lektion ${c.lesson_number}` : c.deck ? " · Alltag" : " · A1"}${c.reps === 0 ? ' · <span class="chip amber">neu</span>' : ""}`}</p>`;
+    <p class="eyebrow">${it.kind === "check" ? `<span class="chip amber">Alltag · Kennst du das?</span>`
+      : `Stufe ${it.step} · ${STEP_LABEL[it.step]}`}
+      ${it.word.lesson_number ? ` · Lektion ${it.word.lesson_number}` : it.word.deck ? " · Alltag" : ""}
+      ${it.kind !== "check" ? ladderDots(it.step, it.correct_at_step) : ""}</p>`;
 
-  // Each card is graded exactly once: ignore double taps and keys pressed while saving.
-  const graded = new Set();
-  const submit = async (c, payload) => {
-    const showing = `${c.id}:${c.reps}`;  // a card can return later in the session with more reps
-    if (graded.has(showing)) return null;
-    graded.add(showing);
-    keyHandler = null;
-    $app.querySelectorAll(".rate, .produce .btn").forEach((b) => (b.disabled = true));
-    let r;
-    try {
-      r = await api(`/review/${c.id}`, { method: "POST", body: payload });
-    } finally {
-      $app.querySelectorAll(".produce .btn").forEach((b) => (b.disabled = false));
-    }
-    done += 1;
-    if (r.rating >= 3 || (r.check && r.check.correct)) correct += 1;
-    if (r.produce_unlocked) toast("Neu: Schreibkarte freigeschaltet ✍️");
-    return r;
-  };
+  const ladderNote = (l) => !l ? "" : l.promoted ? `<div class="small step-note up">↑ Stufe ${l.step}: ${STEP_LABEL[l.step]}</div>`
+    : l.demoted ? `<div class="small step-note down">↓ Zurück auf Stufe ${l.step}: ${STEP_LABEL[l.step]}. Kein Problem, das festigt es.</div>`
+    : l.correct_at_step ? `<div class="small step-note">Noch 1× richtig, dann Stufe ${Math.min(5, l.step + 1)}.</div>` : "";
 
-  function showRecognise(c) {
-    const t0 = performance.now();
-    $app.innerHTML = `${header(c)}
-      ${flipCardHTML(c, c.source_sentence)}
-      <div class="review-actions">
-        <button class="btn reveal">Zeigen</button>
-        <div class="rate-row" hidden>${RATINGS.map(([v, label, cls]) =>
-          `<button class="rate ${cls}" data-rating="${v}">${label}</button>`).join("")}</div>
+  // steps 2-3 (and everyday checks): four options
+  function showChoice(it) {
+    const w = it.word;
+    const deToEn = it.kind === "mc" && it.step === 2;
+    $app.innerHTML = `${header(it)}
+      <div class="flash choice">
+        ${deToEn
+          ? `<div class="flash-word">${nounHTML(w)} ${cog(w)}</div>
+             ${it.sentence ? `<p class="flash-sentence">${sentenceHTML(it)}</p>` : ""}
+             <p class="small muted">Was bedeutet das?</p>`
+          : `<div class="flash-gloss big">${esc(w.gloss)}</div>
+             <p class="small muted">${POS_HINT[w.pos] || ""}</p>
+             ${it.blanked ? `<p class="flash-sentence">${sentenceHTML({ blanked: it.blanked })}</p>` : ""}`}
+        <div class="options mc-options">${it.options.map((o, k) =>
+          `<button class="opt" data-a="${esc(o)}"><kbd>${k + 1}</kbd>${esc(o)}</button>`).join("")}</div>
+        <div class="feedback" hidden></div>
       </div>`;
-    const reveal = () => {
-      flipOver();
-      $app.querySelector(".reveal").hidden = true;
-      $app.querySelector(".rate-row").hidden = false;
+    let answered = false;
+    const pick = async (b) => {
+      if (answered) return;
+      answered = true;
+      keyHandler = null;
+      $app.querySelectorAll(".opt").forEach((x) => (x.disabled = true));
+      const r = it.kind === "check"
+        ? await api(`/review/${it.card_id}`, { method: "POST", body: { answer: b.dataset.a } })
+        : await api(`/ladder/${it.lemma_id}/answer`, { method: "POST", body: { step: it.step, choice: b.dataset.a } });
+      done += 1;
+      if (r.correct) correct += 1;
+      if (r.promoted) promoted += 1;
+      if (r.check_result === "known") checksKnown += 1;
+      if (r.check_result === "learn") checksNew += 1;
+      b.classList.add(r.correct ? "right" : "wrong");
+      if (!r.correct) $app.querySelector(`.opt[data-a="${CSS.escape(r.answer)}"]`)?.classList.add("right");
+      const fb = $app.querySelector(".feedback");
+      fb.hidden = false;
+      fb.className = `feedback ${r.correct ? "ok" : "bad"}`;
+      fb.innerHTML = `<strong>${r.correct ? "✓ Richtig!" : `✗ Richtig ist: ${esc(r.answer)}`}</strong>
+        ${it.kind === "check" ? (r.check_result === "known"
+          ? `<div class="small check-note">Kennst du! Kommt erst in ca. 3 Monaten wieder.</div>`
+          : `<div class="small check-note">Neu für dich: es kommt bald in einem Text vor, dann übst du es hier.</div>`) : ""}
+        ${ladderNote(r)}
+        <div class="small muted">${nounHTML(w)} = ${esc(w.gloss)} ${cog(w)}</div>
+        <button class="btn" id="go">Weiter</button>`;
+      if (r.next_item) queue.splice(Math.min(3, queue.length), 0, r.next_item);   // steps 2-3 repeat in the session
+      const go = $app.querySelector("#go");
+      let moved = false;
+      const advance = () => { if (!moved) { moved = true; next(); } };
+      go.addEventListener("click", advance);
+      go.focus();
+      keyHandler = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); advance(); } };
+      if (r.correct) setTimeout(() => { if (document.body.contains(go)) advance(); }, 1100);
     };
-    $app.querySelector(".reveal").addEventListener("click", reveal);
-    $app.querySelectorAll(".rate").forEach((b) => b.addEventListener("click", async () => {
-      if (await submit(c, { rating: +b.dataset.rating, duration_ms: Math.round(performance.now() - t0) })) next();
-    }));
-    keyHandler = (e) => {
-      if (e.key === " " || e.key === "Enter") { e.preventDefault(); if ($app.querySelector(".flip.flipped")) return; reveal(); }
-      if (["1", "2", "3", "4"].includes(e.key) && !$app.querySelector(".rate-row").hidden)
-        $app.querySelector(`[data-rating="${e.key}"]`).click();
-    };
+    $app.querySelectorAll(".opt").forEach((b) => b.addEventListener("click", () => pick(b)));
+    keyHandler = (e) => { const b = $app.querySelectorAll(".opt")[+e.key - 1]; if (b) pick(b); };
   }
 
-  function showProduce(c) {
-    const t0 = performance.now();
-    $app.innerHTML = `${header(c)}
+  // steps 4-5: typing (FSRS cards)
+  function showTyping(it) {
+    const w = it.word, t0 = performance.now();
+    const cloze = it.kind === "cloze";
+    const inSentence = cloze && it.before != null;
+    $app.innerHTML = `${header(it)}
       <div class="flash">
-        <div class="flash-gloss big">${esc(c.gloss_es)}</div>
-        <p class="small muted">${POS_HINT[c.pos] || ""}${c.gloss_en ? ` · ${esc(c.gloss_en)}` : ""}</p>
+        ${inSentence
+          ? `<p class="flash-sentence big-sentence">${sentenceHTML(it, { gap: true, letter: it.first_letter })}</p>
+             <p class="small muted">${esc(w.gloss)} · beginnt mit „${esc(it.first_letter)}“, die Form aus dem Satz</p>`
+          : `<div class="flash-gloss big">${esc(w.gloss)}</div>
+             <p class="small muted">${POS_HINT[w.pos] || ""}${cloze ? ` · beginnt mit „${esc(it.first_letter)}“` : ""}</p>
+             ${it.blanked ? `<p class="flash-sentence">${sentenceHTML({ blanked: it.blanked })}</p>` : ""}`}
         <form class="produce" autocomplete="off">
           <input id="answer" type="text" lang="de" autocapitalize="off" autocorrect="off" spellcheck="false"
-            enterkeyhint="done" placeholder="${c.pos === "NOUN" ? "der / die / das …" : "auf Deutsch…"}" aria-label="Antwort">
+            enterkeyhint="done" placeholder="${!inSentence && w.pos === "NOUN" ? "der / die / das …" : "auf Deutsch…"}" aria-label="Antwort">
           <div class="umlauts">${["ä", "ö", "ü", "ß", "Ä", "Ö", "Ü"].map((u) =>
             `<button type="button" class="uml" data-ch="${u}">${u}</button>`).join("")}</div>
           <button class="btn" type="submit">Prüfen</button>
@@ -347,49 +364,220 @@ async function viewReview(opts = {}) {
       $in.value = $in.value.slice(0, s) + b.dataset.ch + $in.value.slice(e);
       $in.focus(); $in.setSelectionRange(s + 1, s + 1);
     }));
-    let answered = false, moved = false;
+    let answered = false, moved = false, busy = false;
+    keyHandler = null;
     $app.querySelector(".produce").addEventListener("submit", async (ev) => {
       ev.preventDefault();
       if (answered) { if (!moved) { moved = true; next(); } return; }
-      const r = await submit(c, { answer: $in.value, duration_ms: Math.round(performance.now() - t0) });
-      if (!r) return;
+      if (busy) return;
+      busy = true;
+      const r = await api(`/review/${it.card_id}`, { method: "POST", body: { answer: $in.value, duration_ms: Math.round(performance.now() - t0) } });
       answered = true;
+      done += 1;
       const ok = r.check.correct;
+      if (ok) correct += 1;
+      if (r.ladder?.promoted) promoted += 1;
       $in.readOnly = true;
       $in.classList.add(ok ? (r.check.verdict === "typo" ? "is-typo" : "is-ok") : "is-bad");
       const fb = $app.querySelector(".feedback");
       fb.hidden = false;
       fb.className = `feedback ${ok ? "ok" : "bad"}`;
-      const verdictLine = {
-        exact: "✓ Richtig!",
-        typo: "✓ Richtig, mit kleinem Tippfehler",
-        missing_article: "✗ Artikel fehlt",
-        wrong_article: "✗ Falscher Artikel",
-        umlaut: "✗ Achte auf den Umlaut",
-      }[r.check.verdict] || "✗ Leider falsch";
-      const showLetters = ["typo", "umlaut"].includes(r.check.verdict) ||
-        (r.check.verdict === "wrong_article" && r.check.given.trim());
-      const checkLine = r.check_result === "known"
-        ? `<div class="small check-note">Kennst du! Kommt erst in ca. ${r.interval_days >= 60 ? "3 Monaten" : "3 Wochen"} wieder.</div>`
-        : r.check_result === "learn" ? `<div class="small check-note">Neu für dich: wir üben es jetzt öfter.</div>` : "";
-      if (r.check_result === "known") checksKnown += 1;
-      if (r.check_result === "learn") checksNew += 1;
-      fb.innerHTML = `<strong>${verdictLine}</strong>${checkLine}
+      const verdictLine = { exact: "✓ Richtig!", typo: "✓ Richtig, mit kleinem Tippfehler", missing_article: "✗ Artikel fehlt",
+        wrong_article: "✗ Falscher Artikel", umlaut: "✗ Achte auf den Umlaut" }[r.check.verdict] || "✗ Leider falsch";
+      const showLetters = ["typo", "umlaut"].includes(r.check.verdict) || (r.check.verdict === "wrong_article" && r.check.given.trim());
+      fb.innerHTML = `<strong>${verdictLine}</strong>
         ${showLetters ? `<div class="typo-diff" aria-label="Unterschied">${r.check.verdict === "wrong_article"
-          // whole-word swap for articles: ~~der~~ das Fenster
-          ? `<del>${esc(r.check.given.trim().split(/\s+/)[0])}</del> <ins>${esc(c.article)}</ins> ${esc(c.lemma)}`
+          ? `<del>${esc(r.check.given.trim().split(/\s+/)[0])}</del> <ins>${esc(w.article)}</ins> ${esc(w.lemma)}`
           : charDiffHTML(r.check.given.trim(), r.check.expected)}</div>` : ""}
-        <div class="flash-word small-word">${nounHTML(c)}</div>
-        ${formsHTML(c) ? `<div class="small muted">${formsHTML(c)}</div>` : ""}`;
+        ${!ok && !showLetters ? `<div>Richtig: <b>${esc(r.check.expected)}</b></div>` : ""}
+        <div class="flash-word small-word">${nounHTML(w)} ${cog(w)}</div>
+        ${formsHTML(w) ? `<div class="small muted">${formsHTML(w)}</div>` : ""}
+        ${it.sentence ? `<p class="flash-sentence small">${esc(it.sentence)}</p>` : ""}
+        ${ladderNote(r.ladder)}`;
       $app.querySelector(".umlauts").hidden = true;
       const btn = $app.querySelector(".produce .btn");
       btn.textContent = "Weiter";
       btn.focus();
     });
-    keyHandler = null;
   }
 
-  next();
+  next().catch((e) => { $app.innerHTML = `<p class="empty">Fehler: ${esc(e.message)}</p>`; });
+}
+
+async function runPractice(onDone) {
+  let today;
+  try { today = await api("/practice/today"); } catch { return onDone(); }
+  const games = today.games;
+  let k = 0;
+  const step = () => (k < games.length ? playGame(games[k++], step) : onDone());
+  if (!games.length) return onDone();
+  $app.innerHTML = `<div class="card hero"><p class="eyebrow">Zum Abschluss · heute</p>
+    <h2>${games.length} kurze Übungen</h2>
+    <ul class="game-list">${games.map((g) => `<li>${esc(g.title)}</li>`).join("")}</ul>
+    <p class="small muted">Jeden Tag andere Formate, damit es nicht langweilig wird.</p>
+    <button class="btn" id="go">Los geht's</button></div>`;
+  $app.querySelector("#go").addEventListener("click", step);
+}
+
+
+function viewPractice() {
+  return runPractice(() => {
+    $app.innerHTML = `<div class="card hero review-done"><p class="eyebrow">Übungen</p><h1>Fertig!</h1>
+      <p class="small muted">Morgen gibt es andere Formate.</p><a class="btn" href="#/">Zur Übersicht</a></div>`;
+  });
+}
+
+// ---- practice formats ----------------------------------------------------------------------
+
+function shuffle(a) { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+
+function playGame(g, onDone) {
+  const report = (correct, total) => api("/practice/result", { method: "POST", body: { kind: g.kind, correct, total } }).catch(() => {});
+  const doneCard = (title, line, correct, total) => {
+    report(correct, total);
+    $app.innerHTML = `<div class="card hero review-done"><p class="eyebrow">${esc(g.title)}</p><h2>${title}</h2>
+      <p>${line}</p><button class="btn" id="go">Weiter</button></div>`;
+    const go = $app.querySelector("#go");
+    go.addEventListener("click", onDone); go.focus();
+    if (total && correct / total >= 0.8) celebrate();
+  };
+  const head = (sub) => `<p class="eyebrow">${esc(g.title)}${sub ? ` · ${sub}` : ""}</p>`;
+  return ({ match: gameMatch, listen: gameListen, gender: gameGender, odd: gameOdd, cloze: gameCloze }[g.kind])(g, head, doneCard);
+}
+
+function gameMatch(g, head, doneCard) {
+  const left = shuffle(g.pairs), right = shuffle(g.pairs);
+  let sel = null, matched = 0, mistakes = 0, timeLeft = g.seconds, over = false;
+  $app.innerHTML = `${head("Tippe Deutsch und Englisch nacheinander an")}
+    <div class="match-top"><span class="timer" id="t">${timeLeft}s</span><span class="small muted" id="m">0 / ${g.pairs.length}</span></div>
+    <div class="match-grid">
+      <div>${left.map((p) => `<button class="match-btn" data-id="${p.id}" data-side="de">${esc(p.de)}</button>`).join("")}</div>
+      <div>${right.map((p) => `<button class="match-btn" data-id="${p.id}" data-side="en">${esc(p.en)}</button>`).join("")}</div>
+    </div>`;
+  const end = (won) => {
+    if (over) return; over = true; clearInterval(timer);
+    doneCard(won ? "Alle Paare!" : "Zeit um!", `${matched} von ${g.pairs.length} Paaren · ${g.seconds - timeLeft} s · ${mistakes} Fehlgriffe`,
+      Math.max(0, matched - mistakes / 2), g.pairs.length);
+  };
+  const timer = setInterval(() => {
+    if (!document.body.contains($app.querySelector("#t"))) return clearInterval(timer);
+    timeLeft -= 1; $app.querySelector("#t").textContent = `${timeLeft}s`;
+    if (timeLeft <= 0) end(false);
+  }, 1000);
+  $app.querySelectorAll(".match-btn").forEach((b) => b.addEventListener("click", () => {
+    if (b.classList.contains("done")) return;
+    if (!sel || sel.dataset.side === b.dataset.side) {
+      sel?.classList.remove("sel"); sel = b; b.classList.add("sel"); return;
+    }
+    if (sel.dataset.id === b.dataset.id) {
+      [sel, b].forEach((x) => { x.classList.remove("sel"); x.classList.add("done"); x.disabled = true; });
+      matched += 1; $app.querySelector("#m").textContent = `${matched} / ${g.pairs.length}`;
+      sel = null;
+      if (matched === g.pairs.length) setTimeout(() => end(true), 300);
+    } else {
+      mistakes += 1;
+      [sel, b].forEach((x) => { x.classList.add("shake"); setTimeout(() => x.classList.remove("shake", "sel"), 400); });
+      sel = null;
+    }
+  }));
+}
+
+function choiceRounds(g, head, doneCard, { render, sub, after }) {
+  let i = 0, right = 0;
+  const rounds = g.rounds || g.items;
+  const show = () => {
+    if (i >= rounds.length) return doneCard(right === rounds.length ? "Perfekt!" : "Geschafft!", `${right} von ${rounds.length} richtig`, right, rounds.length);
+    const r = rounds[i];
+    $app.innerHTML = `${head(`${i + 1} / ${rounds.length}`)}${render(r)}
+      <div class="options mc-options">${r.options.map((o, k) => `<button class="opt" data-a="${esc(o)}"><kbd>${k + 1}</kbd>${esc(o)}</button>`).join("")}</div>
+      <div class="feedback" hidden></div>`;
+    sub?.(r);
+    let answered = false;
+    const pick = (b) => {
+      if (answered) return; answered = true; keyHandler = null;
+      const ok = b.dataset.a === r.answer;
+      if (ok) right += 1;
+      b.classList.add(ok ? "right" : "wrong");
+      $app.querySelector(`.opt[data-a="${CSS.escape(r.answer)}"]`)?.classList.add("right");
+      const fb = $app.querySelector(".feedback");
+      fb.hidden = false; fb.className = `feedback ${ok ? "ok" : "bad"}`;
+      fb.innerHTML = `<strong>${ok ? "✓ Richtig!" : `✗ ${esc(r.answer)}`}</strong>${after ? after(r) : ""}<button class="btn" id="go">Weiter</button>`;
+      const go = $app.querySelector("#go");
+      let moved = false;
+      const adv = () => { if (!moved) { moved = true; i += 1; show(); } };
+      go.addEventListener("click", adv); go.focus();
+      keyHandler = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); adv(); } };
+    };
+    $app.querySelectorAll(".opt").forEach((b) => b.addEventListener("click", () => pick(b)));
+    keyHandler = (e) => { const b = $app.querySelectorAll(".opt")[+e.key - 1]; if (b) pick(b); };
+  };
+  show();
+}
+
+function gameListen(g, head, doneCard) {
+  choiceRounds(g, head, doneCard, {
+    render: () => `<div class="flash"><button class="btn secondary listen-btn" id="play">${icon("headphones")} Nochmal hören</button>
+      <p class="small muted">Welches Wort hörst du?</p></div>`,
+    sub: (r) => { speak(r.say); $app.querySelector("#play").addEventListener("click", () => speak(r.say)); },
+    after: (r) => `<div class="small muted">${esc(r.answer)} = ${esc(r.gloss)}</div>`,
+  });
+}
+
+function gameOdd(g, head, doneCard) {
+  choiceRounds(g, head, doneCard, {
+    render: () => `<div class="flash"><p class="flash-gloss">Welches Wort passt nicht zu den anderen?</p></div>`,
+    after: (r) => `<div class="small">Drei Wörter sind aus „${esc(r.theme)}“, ${esc(r.answer)} ist aus „${esc(r.odd_theme)}“.</div>
+      <div class="small muted">${Object.entries(r.glosses).map(([de, en]) => `${esc(de)} = ${esc(en)}`).join(" · ")}</div>`,
+  });
+}
+
+function gameCloze(g, head, doneCard) {
+  choiceRounds({ ...g, rounds: g.items }, head, doneCard, {
+    render: (r) => `<div class="flash"><p class="small muted">Aus „${esc(g.text_title)}“</p>
+      <p class="flash-sentence big-sentence">${esc(r.before)}<span class="gap"><span>____</span></span>${esc(r.after)}</p></div>`,
+  });
+}
+
+function gameGender(g, head, doneCard) {
+  let left = shuffle(g.nouns), sel = null, mistakes = 0;
+  const total = g.nouns.length;
+  $app.innerHTML = `${head("Ziehe jedes Nomen in die richtige Box, oder tippe Wort und dann Box")}
+    <div class="gender-pool" id="pool">${left.map((n) =>
+      `<button class="gender-chip" draggable="true" data-id="${n.id}" title="${esc(n.gloss)}">${esc(n.lemma)}</button>`).join("")}</div>
+    <div class="gender-boxes">${["der", "die", "das"].map((a) =>
+      `<div class="gender-box g-${a}" data-art="${a}" tabindex="0"><b class="art ${a}">${a}</b><div class="placed"></div></div>`).join("")}</div>
+    <p class="small muted" id="gmsg"></p>`;
+  const place = (chip, box) => {
+    const n = g.nouns.find((x) => String(x.id) === chip.dataset.id);
+    if (n.article === box.dataset.art) {
+      chip.remove();
+      box.querySelector(".placed").insertAdjacentHTML("beforeend", `<span class="placed-noun" title="${esc(n.gloss)}">${esc(n.lemma)}</span>`);
+      left = left.filter((x) => x !== n);
+      $app.querySelector("#gmsg").textContent = `${n.article} ${n.lemma} = ${n.gloss}`;
+      if (!left.length) setTimeout(() => doneCard(mistakes ? "Sortiert!" : "Perfekt sortiert!",
+        `${total} Nomen · ${mistakes} Fehlversuche`, Math.max(0, total - mistakes), total), 400);
+    } else {
+      mistakes += 1;
+      chip.classList.add("shake"); box.classList.add("shake");
+      setTimeout(() => { chip.classList.remove("shake"); box.classList.remove("shake"); }, 400);
+      $app.querySelector("#gmsg").textContent = `Nicht ${box.dataset.art} ${n.lemma}. Versuch's nochmal.`;
+    }
+    sel?.classList.remove("sel"); sel = null;
+  };
+  $app.querySelectorAll(".gender-chip").forEach((c) => {
+    c.addEventListener("click", () => { sel?.classList.remove("sel"); sel = c; c.classList.add("sel"); });
+    c.addEventListener("dragstart", (e) => { e.dataTransfer.setData("text/plain", c.dataset.id); sel = c; });
+  });
+  $app.querySelectorAll(".gender-box").forEach((box) => {
+    box.addEventListener("click", () => sel && place(sel, box));
+    box.addEventListener("dragover", (e) => { e.preventDefault(); box.classList.add("over"); });
+    box.addEventListener("dragleave", () => box.classList.remove("over"));
+    box.addEventListener("drop", (e) => {
+      e.preventDefault(); box.classList.remove("over");
+      const chip = $app.querySelector(`.gender-chip[data-id="${CSS.escape(e.dataTransfer.getData("text/plain"))}"]`);
+      if (chip) place(chip, box);
+    });
+  });
 }
 
 let keyHandler = null;
@@ -538,7 +726,7 @@ async function viewWords() {
   $app.innerHTML = `
     <h1>Wörter</h1>
     <div class="toolbar">
-      <input type="search" id="q" placeholder="Suchen (Deutsch, Español, English)…" aria-label="Suchen">
+      <input type="search" id="q" placeholder="Suchen (Deutsch oder English)…" aria-label="Suchen">
       <select id="lesson" aria-label="Lektion">
         <option value="">Alle</option>
         <option value="0">A1 Basis</option>
@@ -601,6 +789,12 @@ async function viewSettings() {
       <div class="field">
         <label for="cap">Neue Wörter pro Tag</label>
         <input id="cap" type="number" min="0" max="50" value="${s.daily_new_word_cap}" inputmode="numeric">
+        <span class="small muted">Neue Wörter kommen immer über einen Lesetext und steigen dann die Wortleiter hoch (empfohlen: 5).</span>
+      </div>
+      <div class="field">
+        <label for="gloss">Sprache der Übersetzungen</label>
+        <select id="gloss">${[["en", "English (empfohlen: viele Wörter sind verwandt, z. B. Haus/house)"], ["es", "Español"]].map(([v, l]) =>
+          `<option value="${v}" ${v === s.gloss_language ? "selected" : ""}>${l}</option>`).join("")}</select>
       </div>
       <div class="field">
         <label for="ret">Ziel-Behaltensrate</label>
@@ -676,7 +870,9 @@ async function viewSettings() {
       everyday_per_day: +$app.querySelector("#everyday").value,
       target_retention: +$app.querySelector("#ret").value,
       umlaut_ascii_ok: $app.querySelector("#ascii").checked,
+      gloss_language: $app.querySelector("#gloss").value,
     }});
+    glossLang = $app.querySelector("#gloss").value;
     toast("Gespeichert");
   });
 }
@@ -890,10 +1086,11 @@ async function viewText(id, opts = {}) {
       <button class="sheet-close" aria-label="Schließen">✕</button>
       <div class="flash-word small-word">${w.article ? `<span class="art ${w.article}">${w.article}</span> ` : ""}${esc(w.lemma)}</div>
       ${formsHTML(w) ? `<div class="small muted">${formsHTML(w)}</div>` : ""}
-      <div class="flash-gloss">${esc(w.gloss_es || "—")}</div>
-      <div class="small muted">${esc(w.gloss_en || "")}</div>
+      <div class="flash-gloss">${esc(gl(w) || "—")} ${cog(w)}</div>
       ${tok.note ? `<p class="small note">${esc(tok.note)}</p>` : ""}
-      ${tok.target ? `<span class="chip amber">Neues Wort dieser Lektion</span>` : `<span class="chip">${esc(w.state)}</span>`}`;
+      ${tok.target ? `<span class="chip amber">Wort dieses Texts</span>` : ""}
+      ${w.ladder_step ? `<span class="small muted">Wortleiter ${ladderDots(w.ladder_step)} Stufe ${w.ladder_step}</span>`
+        : `<span class="chip">${esc({ known: "bekannt", learning: "in Arbeit", new: "neu", unseen: "neu" }[w.state] || w.state)}</span>`}`;
     $sheet.querySelector(".sheet-close").addEventListener("click", () => { $sheet.hidden = true; });
   };
   $app.querySelectorAll(".tok").forEach((el) => {
@@ -981,9 +1178,9 @@ async function viewText(id, opts = {}) {
       const r = await api(`/texts/${id}/finish`, { method: "POST", body: { seconds } });
       $q.insertAdjacentHTML("beforeend", `<div class="card hero" style="margin-top:14px">
         <h3>Super!</h3>
-        <p class="small">${r.introduced ? `${r.introduced} neue Wörter sind jetzt in deinen Karten.` : "Alle Wörter sind schon in deinen Karten."}
+        <p class="small">${r.introduced ? `${r.introduced} neue Wörter stehen jetzt auf deiner Wortleiter (Stufe 1). Gleich übst du sie.` : "Die Wörter dieses Texts übst du schon."}
           ${r.wpm ? ` Lesetempo: ${r.wpm} Wörter/Minute.` : ""}</p>
-        ${doneButton(opts, `<a class="btn" href="#/review">Neue Wörter üben</a>`)}</div>`);
+        ${doneButton(opts, `<a class="btn" href="#/review">Wörter üben</a>`)}</div>`);
       wireDone(opts);
     });
     $q.scrollIntoView({ behavior: "smooth" });
@@ -1255,7 +1452,7 @@ async function viewWrite(opts = {}) {
       <div class="card hero">
         <p class="eyebrow">Lektion ${current.lesson_number} · ${esc(current.theme)}</p>
         <h2 class="task">${esc(current.prompt)}</h2>
-        <p class="small muted">${esc(current.prompt_es)}</p>
+        <p class="small muted">${esc(current.prompt_help || "")}</p>
         <div class="redemittel">${current.redemittel.map((r) => `<button class="chip-btn rm" type="button">${esc(r)}</button>`).join("")}</div>
         <button class="btn secondary small-btn" id="other">Andere Aufgabe</button>
       </div>
@@ -1321,61 +1518,6 @@ async function viewWrite(opts = {}) {
 
 // ---- new words: quick in-session recall before they enter spaced review ------------------
 
-async function viewNewWords(textId, onDone, rounds = 2) {
-  const [d, today] = await Promise.all([textId ? api(`/texts/${textId}`) : null, api("/review/today-new")]);
-  const fromText = d ? d.text.target_lemma_ids.map((id) => d.lemmas[id]).filter(Boolean) : [];
-  const seen = new Set(fromText.map((w) => w.id));
-  const words = [...fromText, ...today.filter((w) => !seen.has(w.id))];
-  if (!words.length) return onDone();
-  const ROUNDS = rounds;
-  let round = 1, queue = [...words], retry = [];
-  const sentence = (w) => {
-    // the sentence the word came from: today's text, else the card's source sentence
-    if (!d) return w.source_sentence || "";
-    const toks = d.tokens; let cur = [], hit = false;
-    for (const t of toks) {
-      if (t.br) { cur = []; continue; }
-      cur.push(t.t + t.ws); if (t.id === w.id) hit = true;
-      if (/[.!?]$/.test(t.t)) { if (hit) return cur.join("").trim(); cur = []; }
-    }
-    return w.source_sentence || "";
-  };
-  const show = () => {
-    if (!queue.length) {
-      if (retry.length) { queue = retry; retry = []; }
-      else if (round < ROUNDS) { round += 1; queue = [...words].sort(() => Math.random() - 0.5); }
-      else {
-        $app.innerHTML = `<div class="card hero review-done"><p class="eyebrow">Neue Wörter</p>
-          <h1>Sitzt!</h1><p class="small">${words.length} Wörter sind jetzt in deinen Karten und kommen bald wieder.</p>
-          <button class="btn session-next">Weiter →</button></div>`;
-        $app.querySelector(".session-next").addEventListener("click", onDone);
-        celebrate();
-        return;
-      }
-    }
-    const w = queue.shift();
-    $app.innerHTML = `
-      <p class="eyebrow">Neue Wörter · Runde ${round} von ${ROUNDS}</p>
-      ${flipCardHTML(w, sentence(w))}
-      <div class="review-actions">
-        <button class="btn reveal">Zeigen</button>
-        <div class="rate-row two" hidden>
-          <button class="rate again" data-ok="0">Nochmal</button><button class="rate good" data-ok="1">Gewusst</button>
-        </div>
-      </div>`;
-    $app.querySelector(".reveal").addEventListener("click", (e) => {
-      e.target.hidden = true;
-      flipOver();
-      $app.querySelector(".rate-row").hidden = false;
-    });
-    $app.querySelectorAll(".rate").forEach((b) => b.addEventListener("click", () => {
-      if (b.dataset.ok === "0") retry.push(w);
-      show();
-    }, { once: true }));
-  };
-  show();
-}
-
 // ---- daily session -----------------------------------------------------------------
 
 const $bar = document.getElementById("session-bar");
@@ -1428,13 +1570,12 @@ async function viewSession(mode) {
     window.scrollTo(0, 0);
     const st = steps[i];
     if (st.kind === "warmup") return viewText(st.text_id, { reread: true, onDone: next });
-    if (st.kind === "review") return viewReview({ newWords: (st.new || 0) > 0, newLimit: st.new || 0, limit: st.limit, onDone: next });
+    if (st.kind === "review") return viewReview({ limit: st.limit, practice: st.practice, onDone: next });
     if (st.kind === "text") {
       textId = await waitForText();
-      if (!textId) { steps.splice(i, 2); return run(); } // skip text + new words
+      if (!textId) { steps.splice(i, 1); return run(); } // no text today: go on with the words
       return viewText(textId, { onDone: next });
     }
-    if (st.kind === "newwords") return viewNewWords(textId, next, st.rounds);
     if (st.kind === "drill") return viewDrill(null, { n: st.n, onDone: next });
     if (st.kind === "write") return viewWrite({ onDone: next });
     next();
@@ -1470,7 +1611,8 @@ function activityChart(days) {
 }
 
 async function viewProgress() {
-  const p = await api("/progress");
+  const [p, lad] = await Promise.all([api("/progress"), api("/ladder")]);
+  const ladTotal = Object.values(lad.counts).reduce((x, y) => x + y, 0);
   const cur = p.lessons.find((l) => l.number === p.current_lesson);
   const speeds = p.reading_speed;
   const lastWpm = speeds.length ? speeds.at(-1).wpm : null;
@@ -1488,6 +1630,18 @@ async function viewProgress() {
       <button class="btn" id="advance">Zu Lektion ${p.current_lesson + 1} wechseln</button></div>` : ""}
     <div class="card"><h3>Aktivität · 14 Tage</h3>${activityChart(p.activity)}
       <p class="small muted">${p.review_accuracy_7d != null ? `Karten richtig (7 Tage): ${pct(p.review_accuracy_7d)} · ` : ""}${p.texts_read} ${p.texts_read === 1 ? "Text" : "Texte"} gelesen · ${p.writings} ${p.writings === 1 ? "Text" : "Texte"} geschrieben</p></div>
+    <div class="card ladder-card"><h3>Wortleiter</h3>
+      <p class="small muted">Jedes neue Wort steigt 5 Stufen hoch: 2× richtig = eine Stufe höher, ein Fehler = eine Stufe zurück.
+        ${lad.waiting ? `${lad.waiting} Alltagswörter warten auf einen Text.` : ""}</p>
+      <div class="ladder-bars">${[1, 2, 3, 4, 5].map((st) => `<div class="ladder-bar">
+        <span class="lb-num">${st}</span><span class="lb-label">${esc(STEP_LABEL[st])}</span>
+        <span class="progress"><i style="width:${pct(ladTotal ? lad.counts[st] / ladTotal : 0)}"></i></span>
+        <b>${lad.counts[st]}</b></div>`).join("")}</div>
+      ${lad.words.length ? `<details><summary class="small">Alle ${lad.words.length} Wörter auf der Leiter</summary>
+        <ul class="ladder-words">${lad.words.map((w) => `<li>${ladderDots(w.step, w.correct_at_step)}
+          <span>${nounHTML(w)} ${cog(w)}</span><span class="small muted">${esc(w.gloss)}</span></li>`).join("")}</ul></details>`
+        : `<p class="small muted">Noch keine Wörter. Lies einen Text, dann geht es los.</p>`}
+    </div>
     <div class="card"><h3>Lektionen</h3>
       <p class="small muted">Ziel vor der nächsten Lektion: 80 % der Wörter sicher und 3 Texte gelesen.
         Aktuelle Lektion: ${p.current_check.texts_read}/3 Texte · <a href="#/lesson/${p.current_lesson}">Lektions-Check</a></p>
@@ -1872,7 +2026,7 @@ async function viewSpeak(n) {
   const g = await api(`/speaking${n ? `?lesson=${n}` : ""}`);
   const L = g.lesson;
   const word = (w) => `<button class="speak-word ${w.article ? `g-${esc(w.article)}` : ""}" aria-pressed="false">
-      <b>${w.article ? `${esc(w.article)} ` : ""}${esc(w.lemma)}</b><span>${esc(w.gloss_es || w.gloss_en || "")}</span></button>`;
+      <b>${w.article ? `${esc(w.article)} ` : ""}${esc(w.lemma)}</b><span>${esc(gl(w))}</span></button>`;
   const h = g.history;
   $app.innerHTML = `
     <p class="eyebrow">Sprechen · Lektion ${L.number}</p>
@@ -1969,6 +2123,7 @@ const routes = [
   [/^#\/playlist$/, "read", viewPlaylist],
   [/^#\/drill$/, "home", () => viewDrill(null)],
   [/^#\/cases$/, "home", viewCases],
+  [/^#\/practice$/, "home", viewPractice],
   [/^#\/speak$/, "home", () => viewSpeak(null)],
   [/^#\/speak\/(\d+)$/, "home", (m) => viewSpeak(m[1])],
   [/^#\/drill\/([A-Z0-9_]+)$/, "home", (m) => viewDrill(m[1])],
@@ -2000,6 +2155,6 @@ async function route() {
 }
 
 window.addEventListener("hashchange", route);
-route();
+api("/overview").then((o) => { glossLang = o.settings.gloss_language || "en"; }).catch(() => {}).finally(route);
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});

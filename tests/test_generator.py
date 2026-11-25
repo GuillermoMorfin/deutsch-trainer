@@ -32,7 +32,10 @@ def good_body(prompt: str) -> str:
     # lesson 1 grammar: Perfekt, war/hatte, letzt-/nächst-/jed-
     grammar = ["Gestern bin ich gelaufen.", "Als Kind hatte ich einen Hund.", "Letzten Sommer war ich in Berlin.",
                "Gestern hat Marco gekocht.", "Jeden Tag war ich müde.", "Wir hatten Zeit."]
-    return " ".join(sentences + grammar + ["Marco ist heute in Berlin. Wir sind zusammen im Park."])
+    body = " ".join(sentences + grammar + ["Marco ist heute in Berlin. Wir sind zusammen im Park."])
+    while generator.word_count(body) < 270:      # reading texts are 250-450 words
+        body += " Wir sind heute zusammen im Park. Das ist sehr gut."
+    return body
 
 
 class FakeWriter:
@@ -74,8 +77,9 @@ def test_repair_loop_fixes_unknown_words_and_blocked_grammar(conn):
     assert t["title"] == "Ein Tag mit Marco" and t["summary"]
     tokens = json.loads(t["annotations"])
     targets = set(json.loads(t["target_lemma_ids"]))
-    assert len(targets) == 6
-    assert sum(1 for tok in tokens if tok.get("target")) >= 18
+    assert len(targets) == 5                     # at most 5 new words a day; nothing to repeat yet
+    assert sum(1 for tok in tokens if tok.get("target")) >= 15
+    assert 250 <= json.loads(t["report_json"])["words"] <= 450
     assert json.loads(t["report_json"])["target_grammar"] == {
         "PERFEKT_HABEN_SEIN": True, "PRAET_WAR_HATTE": True, "LETZT_NAECHST_JED": True}
     assert conn.execute("SELECT COUNT(*) FROM question WHERE text_id = ?", (result.text_id,)).fetchone()[0] == 2
@@ -142,11 +146,12 @@ def test_second_text_in_series_sees_the_first(conn):
 def test_finish_reading_puts_targets_into_srs_with_sentence(conn):
     result = generator.generate_text(conn, FakeWriter(bad_drafts=0), seed=6)
     out = generator.finish_reading(conn, result.text_id, seconds=60)
-    assert out["introduced"] == 6 and out["wpm"] > 0
-    cards = conn.execute("SELECT * FROM card WHERE source_text_id = ?", (result.text_id,)).fetchall()
-    assert len(cards) == 6 and all(c["source_sentence"].startswith("Das ist") or "möchte" in c["source_sentence"]
-                                   for c in cards)
-    # reading again doesn't duplicate cards
+    assert out["introduced"] == 5 and out["wpm"] > 0
+    words = conn.execute("SELECT * FROM known_word WHERE source_text_id = ?", (result.text_id,)).fetchall()
+    assert len(words) == 5 and all(w["ladder_step"] == 1 for w in words)
+    assert all(w["source_sentence"].startswith("Das ist") or "möchte" in w["source_sentence"] for w in words)
+    assert conn.execute("SELECT COUNT(*) FROM card").fetchone()[0] == 0      # no bare cards: the ladder starts
+    # reading again doesn't introduce them twice
     assert generator.finish_reading(conn, result.text_id)["introduced"] == 0
 
 
@@ -169,7 +174,7 @@ def test_api_flow_with_fake_writer(client):
         assert str(tid) in {str(k) for k in text["lemmas"]}
         q = text["questions"][0]
         assert client.post(f"/api/questions/{q['id']}/check", json={"answer": "Richtig"}).json()["correct"]
-        assert client.post(f"/api/texts/{r['text_id']}/finish", json={"seconds": 40}).json()["introduced"] == 6
+        assert client.post(f"/api/texts/{r['text_id']}/finish", json={"seconds": 40}).json()["introduced"] == 5
         assert len(client.get("/api/texts", params={"lesson": 1}).json()) == 1
     finally:
         app.dependency_overrides.clear()
@@ -228,3 +233,27 @@ def test_word_state_override(client):
     wid = client.get("/api/words", params={"q": "Jubiläum"}).json()["items"][0]["id"]
     assert client.put(f"/api/words/{wid}/state", json={"state": "known"}).status_code == 200
     assert client.get("/api/words", params={"q": "Jubiläum"}).json()["items"][0]["state"] == "known"
+
+
+def test_texts_must_be_250_to_450_words(conn):
+    class Short(FakeWriter):
+        def write(self, system, prompt):
+            d = super().write(system, prompt)
+            return Draft(title=d.title, body=d.body.split(" Wir sind heute zusammen im Park.")[0], summary=d.summary)
+
+    w = Short(bad_drafts=0)
+    with pytest.raises(GenerationError, match="Wörter"):
+        generator.generate_text(conn, w, seed=2)
+    assert "must have 250-450 words" in w.prompts[1]
+    assert "250-450 words" in generator.SYSTEM
+
+
+def test_new_words_per_day_and_recycled_targets(conn):
+    first = generator.select_targets(conn, 1, n=6, seed=1)
+    assert len(first) == 5
+    for t in first:
+        srs.introduce_word(conn, t["id"])
+    again = generator.select_targets(conn, 1, n=6, seed=2)       # cap used up: only words still climbing
+    assert 3 <= len(again) <= 4 and {t["id"] for t in again} <= {t["id"] for t in first}
+    listen = generator.select_targets(conn, 1, n=2, kind="listen")
+    assert {t["id"] for t in listen} <= {t["id"] for t in first}

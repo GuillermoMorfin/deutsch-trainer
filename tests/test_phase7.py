@@ -26,7 +26,7 @@ def test_quizlet_lines_are_term_tab_definition(conn):
     assert len(lines) == conn.execute("""SELECT COUNT(*) FROM lemma m JOIN lesson l ON l.id = m.lesson_id
                                          WHERE l.number = 1 AND m.pos != 'PHRASE'""").fetchone()[0]
     assert all(line.count("\t") == 1 for line in lines)
-    assert "das Jubiläum, die Jubiläen\tel aniversario · anniversary" in lines
+    assert "das Jubiläum, die Jubiläen\tanniversary" in lines
     assert any(line.startswith("klettern (ist geklettert)\t") for line in lines)
 
 
@@ -34,7 +34,7 @@ def test_quizlet_filters_by_state_and_all_lessons(conn):
     lid = conn.execute("SELECT id FROM lemma WHERE lemma = 'Panne'").fetchone()[0]
     conn.execute("INSERT INTO known_word (lemma_id, state) VALUES (?, 'learning')", (lid,))
     name, text = export.quizlet(conn, state="learning")
-    assert name == "momente-alle-lektionen-learning.txt" and text == "die Panne, die Pannen\tla avería · breakdown"
+    assert name == "momente-alle-lektionen-learning.txt" and text == "die Panne, die Pannen\tbreakdown"
 
 
 def test_quizlet_api_download(client):
@@ -92,8 +92,11 @@ def simulate_reviews(conn, n_cards=60, days=60, seed=1):
     rng = random.Random(seed)
     ids = [r[0] for r in conn.execute("SELECT id FROM lemma LIMIT ?", (n_cards,))]
     start = srs.now_utc() - timedelta(days=days)
-    for lid in ids:
+    from app import ladder
+    for lid in ids:                       # words already at the typing steps of the ladder
         srs.introduce_word(conn, lid, at=start)
+        conn.execute("UPDATE known_word SET ladder_step = 4 WHERE lemma_id = ?", (lid,))
+        ladder.ensure_card(conn, lid, start - timedelta(days=1))
     conn.commit()
     cards = [r[0] for r in conn.execute("SELECT id FROM card")]
     for cid in cards:

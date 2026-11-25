@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from . import drills, export, generator, optimize, progress, session, speaking, srs, tts, writing  # noqa: E402
+from . import drills, export, generator, ladder, optimize, practice, progress, session, speaking, srs, tts, writing  # noqa: E402
 from . import progress as progress_mod  # noqa: E402  (get_lesson has a local named 'progress')
 from .db import connect, row_to_dict, rows_to_dicts, transaction  # noqa: E402
 from .llm import GenerationError, LLMUnavailable, Writer, default_writer  # noqa: E402
@@ -160,6 +160,7 @@ class SettingsUpdate(BaseModel):
     session_minutes: Literal[20, 30, 40] | None = None
     umlaut_ascii_ok: bool | None = None
     everyday_per_day: Literal[0, 5, 10, 15] | None = None
+    gloss_language: Literal["en", "es"] | None = None
 
 
 @app.put("/api/settings")
@@ -206,21 +207,38 @@ def update_book_progress(number: int, body: BookProgressUpdate, db: sqlite3.Conn
 # ---- vocabulary review (FSRS) ----------------------------------------------------
 
 class ReviewStart(BaseModel):
-    new_words: bool = True
-    new_limit: int | None = Field(None, ge=0, le=50)   # at most this many new words now (still within the daily cap)
     everyday: bool = True                               # add today's everyday-word checks
     limit: int = Field(srs.MAX_REVIEWS_PER_SESSION, ge=1, le=100)
+    practice_words: int | None = Field(None, ge=0, le=30)   # words at ladder steps 1-3 to practise now
+
+
+def _interleave(a: list, b: list) -> list:
+    """Multiple-choice words spread between the typing cards, so repeats come back spaced out."""
+    out, i, j = [], 0, 0
+    while i < len(a) or j < len(b):
+        if i < len(a):
+            out.append(a[i]); i += 1
+        if j < len(b):
+            out.append(b[j]); j += 1
+    return out
+
+
+def _card_items(db, limit: int) -> list[dict]:
+    return [ladder.card_item(db, c) for c in srs.queue(db, limit=limit)]
 
 
 @app.post("/api/review/start")
 def review_start(body: ReviewStart, db: sqlite3.Connection = Depends(get_db)):
-    """Introduce today's new lesson words (respecting the daily cap) and return the queue."""
+    """Today's vocabulary: words at ladder steps 1-3 (multiple choice, repeated in the session) and
+    the scheduled cards (everyday checks, cloze at step 4, typing at step 5). New words never start
+    here: they come from reader texts."""
+    n_mc = body.practice_words if body.practice_words is not None else min(ladder.MC_PER_SESSION, max(3, body.limit // 4))
     with transaction(db):
-        introduced = srs.introduce_lesson_words(db, limit=body.new_limit) if body.new_words else []
         checks = srs.introduce_everyday(db) if body.everyday else []
-    return {"introduced": len(introduced), "checks": len(checks),
-            "queue": srs.queue(db, limit=body.limit), "due_count": srs.due_count(db),
-            "new_today": srs.new_cards_today(db)}
+        mc = [ladder.mc_item(db, lid) for lid in ladder.practice_words(db, n_mc)]
+        cards = _card_items(db, max(1, body.limit - len(mc)))
+    return {"items": _interleave(mc, cards), "checks": len(checks), "due_count": srs.due_count(db),
+            "new_today": srs.words_introduced_today(db), "new_room": srs.new_word_room(db)}
 
 
 @app.post("/api/review/more")
@@ -228,19 +246,37 @@ def review_more(db: sqlite3.Connection = Depends(get_db)):
     """When the queue runs dry: the next small batch of everyday checks, if today's limit allows."""
     with transaction(db):
         checks = srs.introduce_everyday(db)
-    return {"checks": len(checks), "queue": srs.queue(db), "due_count": srs.due_count(db)}
-
-
-@app.get("/api/review/today-new")
-def review_today_new(db: sqlite3.Connection = Depends(get_db)):
-    """Lesson words that entered the cards today, for the in-session recall rounds."""
-    return srs.introduced_today(db)
+        items = _card_items(db, srs.MAX_REVIEWS_PER_SESSION)
+    return {"checks": len(checks), "items": items, "due_count": srs.due_count(db)}
 
 
 @app.get("/api/review/queue")
 def review_queue(limit: int = Query(srs.MAX_REVIEWS_PER_SESSION, ge=1, le=100),
                  db: sqlite3.Connection = Depends(get_db)):
-    return {"queue": srs.queue(db, limit=limit), "due_count": srs.due_count(db)}
+    with transaction(db):
+        items = _card_items(db, limit)
+    return {"items": items, "due_count": srs.due_count(db)}
+
+
+class LadderAnswer(BaseModel):
+    step: int = Field(ge=1, le=3)
+    choice: str = Field(max_length=200)
+
+
+@app.post("/api/ladder/{lemma_id}/answer")
+def ladder_answer(lemma_id: int, body: LadderAnswer, db: sqlite3.Connection = Depends(get_db)):
+    try:
+        with transaction(db):
+            return ladder.answer_mc(db, lemma_id, body.step, body.choice)
+    except KeyError:
+        raise HTTPException(404, f"Word {lemma_id} not found")
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+
+
+@app.get("/api/ladder")
+def ladder_overview(db: sqlite3.Connection = Depends(get_db)):
+    return ladder.ladder_overview(db)
 
 
 class ReviewAnswer(BaseModel):
@@ -317,7 +353,7 @@ def get_text(text_id: int, db: sqlite3.Connection = Depends(get_db)):
     ids = sorted({tok["id"] for tok in t["annotations"] if tok.get("id")})
     lemmas = {r["id"]: r for r in rows_to_dicts(db.execute(
         f"""SELECT m.id, m.lemma, m.pos, m.article, m.plural, m.aux, m.partizip2, m.gloss_es, m.gloss_en,
-                   COALESCE(k.state, 'unseen') AS state
+                   m.cognate, COALESCE(k.state, 'unseen') AS state, k.ladder_step
             FROM lemma m LEFT JOIN known_word k ON k.lemma_id = m.id
             WHERE m.id IN ({','.join('?' * len(ids))})""", ids).fetchall())} if ids else {}
     questions = [{k: q[k] for k in ("id", "type", "prompt", "options")} for q in rows_to_dicts(
@@ -596,3 +632,24 @@ def manifest():
 def service_worker():
     # Served from the root so its scope covers the whole app.
     return FileResponse(STATIC_DIR / "sw.js", media_type="application/javascript")
+
+
+# ---- practice formats (rotate daily) ---------------------------------------------------------
+
+@app.get("/api/practice/today")
+def practice_today(db: sqlite3.Connection = Depends(get_db)):
+    with transaction(db):
+        return practice.today(db)
+
+
+class PracticeResult(BaseModel):
+    kind: Literal["match", "listen", "gender", "odd", "cloze"]
+    correct: int = Field(ge=0, le=100)
+    total: int = Field(ge=1, le=100)
+
+
+@app.post("/api/practice/result")
+def practice_result(body: PracticeResult, db: sqlite3.Connection = Depends(get_db)):
+    with transaction(db):
+        practice.log_result(db, body.kind, min(body.correct, body.total), body.total)
+    return {"ok": True}

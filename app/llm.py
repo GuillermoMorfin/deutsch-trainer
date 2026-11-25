@@ -62,8 +62,8 @@ class Gloss(BaseModel):
     plural: str = Field(description="Full plural form for nouns, '-' if none, '' for non-nouns")
     aux: Literal["haben", "sein", ""] = Field(description="Perfekt auxiliary for verbs, else ''")
     partizip2: str = Field(description="Partizip II for verbs, else ''")
-    gloss_es: str = Field(description="Short Spanish translation (Spain/LatAm neutral)")
-    gloss_en: str = Field(description="Short English translation")
+    gloss_en: str = Field(description="Short English translation (the learner's gloss language)")
+    gloss_es: str = Field("", description="Short Spanish translation (optional, Spain/LatAm neutral)")
 
 
 class GlossSet(BaseModel):
@@ -92,7 +92,8 @@ class Correction(BaseModel):
     grammar_code: str = Field(description="One code from GRAMMAR CODES that this error belongs to, or '' if none fits")
     lemma: str = Field(description="For a vocabulary, gender/article or spelling error: the dictionary form of the word "
                                    "(nouns without article). Otherwise ''")
-    explanation: str = Field(description="One short sentence in Spanish: the rule, with the correct form")
+    explanation: str = Field(description="One short English sentence: the rule, with the correct form. A brief "
+                                         "Spanish comparison in brackets only if it really helps (e.g. gefallen ≈ gustar)")
 
 
 class WritingFeedback(BaseModel):

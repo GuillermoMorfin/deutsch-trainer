@@ -40,11 +40,13 @@ Import a word list: `uv run python -m app.seed --import words.csv --lesson 3`
 ## Build phases
 
 1. ✅ Foundation: schema, seeds, lesson/word browser, design tokens, PWA shell
-2. ✅ Vocab SRS: FSRS cards, recognise (reveal + self-rate) → produce (typed, article + umlaut checked)
+2. ✅ Vocab SRS, reworked as a 5-step ladder (2026-11-25): new words only through texts → choose the meaning →
+   choose the German (gender distractors) → cloze with first letter → free typing; FSRS schedules steps 4-5;
+   2-3 rotating practice formats per day (match pairs, listen & pick, der/die/das sorting, odd one out, cloze)
 3. ✅ Reader + verifier: Claude (via Claude Code, Sonnet) writes → spaCy verifier checks coverage + blocked grammar → up to 3 repairs → Haiku glosses new words → tap-to-gloss reader, audio, comprehension questions
 4. ✅ Grammar drills + error log: gap / choice / word-order items (109 hand-written, more via Claude Code, all verifier-checked), error-weighted sessions, rule → bridge → example → warning feedback, missed book exercises boost their lesson
-5. ✅ Writing feedback: 3 tasks per lesson, Claude Code corrects minimally, max 3 points (lesson grammar first) with Spanish explanations, word diff, errors feed drills and word cards
-6. ✅ Daily session + progress + audio: one-button 20-min flow (warm-up re-read → cards → new text → new-word recall → drills → writing; the text is prepared in the background), Quick 5, progress page (streak, mastery, errors, WPM, 14-day activity), listening playlist
+5. ✅ Writing feedback: 3 tasks per lesson, Claude Code corrects minimally, max 3 points (lesson grammar first) with English explanations (optional Spanish bridge), word diff, errors feed drills and word cards
+6. ✅ Daily session + progress + audio: one-button 30-min flow (warm-up re-read → new text → vocabulary ladder + practice formats → drills → writing; the text is prepared in the background), Quick 5, progress page (streak, mastery, errors, WPM, 14-day activity), listening playlist
 7. ✅ FSRS optimisation on your own reviews, Quizlet export; ready for Momente A2.2 (see below). Speaking practice was built and later removed at the learner's request (speaks with a roommate instead).
 
 ## Adding Momente A2.2 (or another book)
@@ -72,6 +74,12 @@ The tests (`uv run pytest`) check that every Redemittel, drill and fixture only 
 starters, questions for your partner to ask, a short role play, words you're currently learning, your most
 frequent mistakes and tips for your partner. Log the conversation at the end; it counts toward the streak.
 Material: `app/seed/speaking.json` (every German sentence passes the verifier at its lesson).
+
+## Glosses
+
+Glosses are English by default (Haus/house, Wasser/water: many words are cognates and get a small *cognate*
+badge). Spanish stays available under Einstellungen and as optional bridge notes in grammar explanations.
+`uv run python -m app.glosses` fills any missing English gloss via Claude Code and refreshes the cognate flags.
 
 ## Natural voices (Piper)
 

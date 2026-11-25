@@ -17,6 +17,7 @@ import re
 import sqlite3
 from pathlib import Path
 
+from .glosses import refresh_cognates
 from .db import connect, init_schema, transaction
 
 SEED_DIR = Path(__file__).resolve().parent / "seed"
@@ -239,6 +240,7 @@ def seed_all(conn: sqlite3.Connection) -> dict[str, int]:
             "book_exercises": seed_exercises(conn),
             "drills": seed_drills(conn),
             "everyday": seed_everyday(conn),
+            "cognates": refresh_cognates(conn),
         }
 
 

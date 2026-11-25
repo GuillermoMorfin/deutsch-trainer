@@ -146,8 +146,8 @@ CREATE TABLE IF NOT EXISTS book_progress (
 
 CREATE TABLE IF NOT EXISTS settings (
     id                  INTEGER PRIMARY KEY CHECK (id = 1),
-    gloss_language      TEXT NOT NULL DEFAULT 'es',
-    daily_new_word_cap  INTEGER NOT NULL DEFAULT 12,
+    gloss_language      TEXT NOT NULL DEFAULT 'en',      -- 'en' (default: free cognates) or 'es'
+    daily_new_word_cap  INTEGER NOT NULL DEFAULT 5,       -- new words per day, introduced through texts
     target_retention    REAL NOT NULL DEFAULT 0.9,
     session_minutes     INTEGER NOT NULL DEFAULT 30,
     current_lesson      INTEGER NOT NULL DEFAULT 1,
@@ -207,4 +207,27 @@ CREATE TABLE IF NOT EXISTS speaking_log (
     minutes    INTEGER NOT NULL,
     note       TEXT,
     ts         TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Vocabulary ladder (see app/ladder.py): every answer at steps 2-5, for stats and tests.
+CREATE TABLE IF NOT EXISTS ladder_attempt (
+    id        INTEGER PRIMARY KEY,
+    lemma_id  INTEGER NOT NULL REFERENCES lemma(id) ON DELETE CASCADE,
+    step      INTEGER NOT NULL,
+    correct   INTEGER NOT NULL,
+    answer    TEXT,
+    ts        TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Practice formats (app/practice.py): which formats each day's vocab session uses, and results.
+CREATE TABLE IF NOT EXISTS practice_day (
+    day      TEXT PRIMARY KEY,                -- local date YYYY-MM-DD
+    formats  TEXT NOT NULL                    -- JSON list of format keys
+);
+CREATE TABLE IF NOT EXISTS practice_log (
+    id       INTEGER PRIMARY KEY,
+    kind     TEXT NOT NULL,
+    correct  INTEGER NOT NULL,
+    total    INTEGER NOT NULL,
+    ts       TEXT NOT NULL DEFAULT (datetime('now'))
 );

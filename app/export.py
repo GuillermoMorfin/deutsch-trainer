@@ -16,11 +16,10 @@ def term(row: sqlite3.Row) -> str:
     return row["lemma"]
 
 
-def definition(row: sqlite3.Row) -> str:
-    d = row["gloss_es"] or ""
-    if row["gloss_en"]:
-        d += f" · {row['gloss_en']}"
-    return d
+def definition(row: sqlite3.Row, lang: str = "en") -> str:
+    """The gloss in the learner's gloss language (English by default)."""
+    first, other = ("gloss_es", "gloss_en") if lang == "es" else ("gloss_en", "gloss_es")
+    return (row[first] or row[other] or "").strip()
 
 
 def quizlet(conn: sqlite3.Connection, *, lesson: int | None = None, state: str | None = None) -> tuple[str, str]:
@@ -37,7 +36,8 @@ def quizlet(conn: sqlite3.Connection, *, lesson: int | None = None, state: str |
             LEFT JOIN known_word k ON k.lemma_id = m.id
             WHERE {' AND '.join(where)} ORDER BY l.number, m.id""", args).fetchall()
     clean = lambda s: s.replace("\t", " ").replace("\n", " ").strip()  # noqa: E731
-    text = "\n".join(f"{clean(term(r))}\t{clean(definition(r))}" for r in rows)
+    lang = conn.execute("SELECT gloss_language FROM settings WHERE id = 1").fetchone()[0]
+    text = "\n".join(f"{clean(term(r))}\t{clean(definition(r, lang))}" for r in rows)
     name = f"momente-lektion-{lesson}" if lesson is not None else "momente-alle-lektionen"
     if state:
         name += f"-{state}"

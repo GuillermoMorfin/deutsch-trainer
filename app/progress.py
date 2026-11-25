@@ -20,6 +20,8 @@ UNION ALL SELECT ts FROM writing
 UNION ALL SELECT ts FROM reading_log
 UNION ALL SELECT ts FROM listen_log
 UNION ALL SELECT ts FROM speaking_log
+UNION ALL SELECT ts FROM ladder_attempt
+UNION ALL SELECT ts FROM practice_log
 """
 
 
@@ -54,7 +56,7 @@ def done_today(conn: sqlite3.Connection) -> dict[str, bool]:
     wrote = lambda kind: conn.execute(  # noqa: E731
         """SELECT 1 FROM writing WHERE kind = ? AND date(ts, 'localtime') = date('now', 'localtime')
            LIMIT 1""", (kind,)).fetchone() is not None
-    return {"warmup": reread, "review": q("review_log"), "text": read, "drill": q("drill_attempt"),
+    return {"warmup": reread, "review": q("review_log") or q("ladder_attempt") or q("practice_log"), "text": read, "drill": q("drill_attempt"),
             "write": wrote("write"), "listen": q("listen_log"), "speak": q("speaking_log")}
 
 

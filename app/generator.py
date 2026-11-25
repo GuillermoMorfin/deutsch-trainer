@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import random
+import re
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,6 +12,7 @@ from pathlib import Path
 from spacy.tokens import Doc, Token
 
 from . import srs
+from .glosses import refresh_cognates
 from .db import row_to_dict, transaction
 from .llm import Draft, GenerationError, Writer
 from .verifier import (Report, analyse, build_lexicon, candidates, grammar_presence, is_counted, separable_lemma,
@@ -33,21 +35,56 @@ class Result:
 
 # ---- selection ---------------------------------------------------------------------
 
-def select_targets(conn: sqlite3.Connection, lesson_number: int, n: int = 6, seed: int | None = None) -> list[dict]:
-    """Lesson words the learner doesn't know yet; least-read first (narrow reading recycles them)."""
-    rows = conn.execute(
+MIN_TARGETS = 3
+MAX_EVERYDAY_PER_TEXT = 2
+TEXT_WORDS = (250, 450)        # reading texts: word count range (listening texts: see LISTEN_SYSTEM)
+
+
+def select_targets(conn: sqlite3.Connection, lesson_number: int, n: int = 6, seed: int | None = None, *,
+                   new_limit: int | None = None, kind: str = "read") -> list[dict]:
+    """3-6 target words. New words first (at most today's room, default 5 a day): this lesson's words
+    not on the ladder yet, plus up to 2 everyday words waiting for a text; least-read first (narrow
+    reading recycles them). The rest are words still climbing the ladder (steps 1-4), so every text
+    also repeats recent words. Listening texts only recycle words (no new ones) when they can."""
+    rng = random.Random(seed)
+    room = srs.new_word_room(conn) if new_limit is None else new_limit
+    pos = ",".join("?" * len(TARGET_POS))
+    rows = [row_to_dict(r) for r in conn.execute(
         f"""SELECT m.*, COALESCE(k.times_seen_in_text, 0) AS seen FROM lemma m
             JOIN lesson l ON l.id = m.lesson_id AND l.number = ?
             LEFT JOIN known_word k ON k.lemma_id = m.id
-            WHERE COALESCE(k.state, 'new') != 'known' AND m.pos IN ({','.join('?' * len(TARGET_POS))})
-            ORDER BY seen, m.id""", (lesson_number, *TARGET_POS)).fetchall()
-    rows = [row_to_dict(r) for r in rows]
-    if not rows:
-        return []
-    least = min(r["seen"] for r in rows)
-    pool = [r for r in rows if r["seen"] <= least + 1]
-    random.Random(seed).shuffle(pool)
-    return pool[:n]
+            WHERE COALESCE(k.state, 'new') != 'known' AND COALESCE(k.ladder_step, 0) = 0 AND m.pos IN ({pos})
+            ORDER BY seen, m.id""", (lesson_number, *TARGET_POS)).fetchall()]
+    if rows:
+        least = min(r["seen"] for r in rows)
+        rows = [r for r in rows if r["seen"] <= least + 1]
+        rng.shuffle(rows)
+    waiting = [row_to_dict(r) for r in conn.execute(
+        f"""SELECT m.*, k.times_seen_in_text AS seen FROM lemma m JOIN known_word k ON k.lemma_id = m.id
+            WHERE k.ladder_step = 0 AND m.pos IN ({pos}) ORDER BY m.deck_order, m.id""", TARGET_POS).fetchall()]
+    climbing = [row_to_dict(r) for r in conn.execute(
+        f"""SELECT m.*, k.times_seen_in_text AS seen FROM lemma m JOIN known_word k ON k.lemma_id = m.id
+            LEFT JOIN lesson l ON l.id = m.lesson_id
+            WHERE k.ladder_step BETWEEN 1 AND 4 AND m.pos IN ({pos}) AND (l.number IS NULL OR l.number <= ?)
+            ORDER BY k.ladder_step, k.times_seen_in_text, k.ladder_since DESC""", (*TARGET_POS, lesson_number)).fetchall()]
+
+    if kind == "listen":
+        picks = climbing[:n] or (rows + waiting)[:n]
+        return picks
+    k_new = min(room, n)
+    everyday = waiting[:min(MAX_EVERYDAY_PER_TEXT, k_new)]
+    new = everyday + rows[:k_new - len(everyday)]
+    if len(new) < k_new:                         # lesson list used up: more everyday words
+        new += [w for w in waiting if w not in new][:k_new - len(new)]
+    want = n if new else max(MIN_TARGETS, min(4, n))
+    targets = new + climbing[:max(0, want - len(new))]
+    if len(targets) < MIN_TARGETS:               # nothing climbing yet and no room: still teach something
+        targets += [w for w in rows + waiting if w not in targets][:MIN_TARGETS - len(targets)]
+    return targets[:n]
+
+
+def word_count(body: str) -> int:
+    return len(re.findall(r"[^\W\d_]+(?:-[^\W\d_]+)*", body))
 
 
 def review_words(conn: sqlite3.Connection, limit: int = 8) -> list[dict]:
@@ -73,7 +110,7 @@ def fmt_word(w: dict) -> str:
 # ---- prompts -----------------------------------------------------------------------
 
 SYSTEM = """You write short graded reading texts in German for one adult learner at level A2.1 \
-(Momente A2.1). The learner's native language is Spanish; they also speak English.
+(Momente A2.1). The learner speaks Spanish and English; their glosses are in English.
 
 Hard rules, in priority order:
 1. Vocabulary: use ONLY words from the KNOWN WORDS list and the TARGET WORDS, in any inflected form. \
@@ -86,7 +123,7 @@ allowed conjunctions. Prefer short main clauses.
 3. Every TARGET WORD appears at least 3 times, naturally, in different sentences.
 4. The text practises the lesson's TARGET GRAMMAR: use each target grammar point naturally at least \
 2 times (e.g. several weil-sentences in a lesson about weil). This is what the lesson is about.
-5. Length: 200-300 words, 4-6 short paragraphs separated by a blank line.
+5. Length: 250-450 words (aim for about 330), 5-7 short paragraphs separated by a blank line.
 
 Content: an everyday story about the learner's life in Berlin, written so it is interesting to read: a small \
 problem, a plan, a conversation. Use the PERSONAL CONTEXT and keep recurring characters consistent with \
@@ -189,8 +226,13 @@ def target_grammar_points(conn: sqlite3.Connection, lesson: dict) -> list[dict]:
 
 
 def repair_prompt(base_prompt: str, draft: Draft, report: Report, targets: list[dict],
-                  missing_grammar: list[dict] | None = None) -> str:
+                  missing_grammar: list[dict] | None = None, words: tuple[int, int] | None = None) -> str:
     problems = []
+    if words:
+        n = word_count(draft.body)
+        if not words[0] <= n <= words[1]:
+            problems.append(f"The text has {n} words. It must have {words[0]}-{words[1]} words: "
+                            + ("add a paragraph with known words." if n < words[0] else "shorten it."))
     for g in missing_grammar or []:
         problems.append(f"The text does not use the lesson's target grammar '{g['name']}' yet. "
                         f"Use it naturally at least 2 times (example: {g['example']}).")
@@ -225,19 +267,19 @@ def token_note(tok: Token, lemma: dict | None) -> str | None:
         return f"{tok.text} = {CONTRACTIONS[low]}"
     if tok.tag_ in ("VVPP", "VAPP", "VMPP"):
         aux = lemma.get("aux") if lemma else None
-        return f"Partizip II de {lemma['lemma'] if lemma else tok.lemma_}" + (f" · Perfekt con {aux}" if aux else "")
+        return f"Partizip II of {lemma['lemma'] if lemma else tok.lemma_}" + (f" · Perfekt with {aux}" if aux else "")
     if tok.pos_ in ("VERB", "AUX") and tok.tag_.endswith("FIN"):
         sep = separable_lemma(tok)
         bits = []
         if sep:
-            bits.append(f"verbo separable: {sep}")
+            bits.append(f"separable verb: {sep}")
         mood, tense = tok.morph.get("Mood"), tok.morph.get("Tense")
         if "Sub" in mood:
             bits.append("Konjunktiv II")
         elif "Past" in tense:
             bits.append("Präteritum")
         elif lemma and lemma["lemma"].lower() != low:
-            bits.append(f"Präsens de {lemma['lemma']}")
+            bits.append(f"Präsens of {lemma['lemma']}")
         return " · ".join(bits) or None
     if tok.pos_ == "NOUN":
         case = tok.morph.get("Case")
@@ -245,7 +287,7 @@ def token_note(tok: Token, lemma: dict | None) -> str | None:
         parts = [CASES[c] for c in case if c in CASES][:1] + (["Plural"] if "Plur" in num else [])
         return " · ".join(parts) or None
     if tok.tag_ == "KOUS":
-        return "conjunción subordinante: el verbo va al final"
+        return "subordinating conjunction: the verb goes to the end"
     return None
 
 
@@ -285,7 +327,8 @@ def _store_glosses(conn: sqlite3.Connection, writer: Writer, words: list[str], b
             """INSERT INTO lemma (lemma, pos, article, plural, aux, partizip2, gloss_es, gloss_en, source)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'text') ON CONFLICT(lemma, pos, article) DO NOTHING""",
             (g.lemma, g.pos, g.article or None, g.plural or None, g.aux or None, g.partizip2 or None,
-             g.gloss_es, g.gloss_en))
+             g.gloss_es or None, g.gloss_en))
+    refresh_cognates(conn)
 
 
 def generate_text(conn: sqlite3.Connection, writer: Writer, *, lesson_number: int | None = None,
@@ -298,7 +341,7 @@ def generate_text(conn: sqlite3.Connection, writer: Writer, *, lesson_number: in
     if lesson_number is None:
         lesson_number = conn.execute("SELECT current_lesson FROM settings WHERE id = 1").fetchone()[0]
     lesson = row_to_dict(conn.execute("SELECT * FROM lesson WHERE number = ?", (lesson_number,)).fetchone())
-    targets = select_targets(conn, lesson_number, n_targets, seed)
+    targets = select_targets(conn, lesson_number, n_targets, seed, kind=kind)
     if not targets:
         raise GenerationError(f"Lektion {lesson_number}: alle Wörter sind schon bekannt.")
     target_ids = {t["id"] for t in targets}
@@ -313,19 +356,23 @@ def generate_text(conn: sqlite3.Connection, writer: Writer, *, lesson_number: in
     draft = writer.write(system, base)
     doc, report = analyse(draft.body, lex, unlocked)
     attempts = 1
-    while (not report.passes(min_coverage=min_coverage, min_target_uses=MIN_TARGET_USES) or missing(doc)) \
-            and attempts <= MAX_REPAIRS:
-        draft = writer.write(system, repair_prompt(base, draft, report, targets, missing(doc)))
+    words = None if listen else TEXT_WORDS
+    bad_length = lambda d: bool(words) and not words[0] <= word_count(d.body) <= words[1]  # noqa: E731
+    while (not report.passes(min_coverage=min_coverage, min_target_uses=MIN_TARGET_USES) or missing(doc)
+           or bad_length(draft)) and attempts <= MAX_REPAIRS:
+        draft = writer.write(system, repair_prompt(base, draft, report, targets, missing(doc), words))
         doc, report = analyse(draft.body, lex, unlocked)
         attempts += 1
     # Target grammar is strongly requested and repaired, but a text that is otherwise good is kept even
     # if one point is missing; the report records it.
     used = grammar_presence(doc)
-    report_extra = {"target_grammar": {g["code"]: g["code"] in used for g in wanted}}
+    report_extra = {"target_grammar": {g["code"]: g["code"] in used for g in wanted},
+                    "words": word_count(draft.body)}
 
-    if report.grammar or report.coverage < ACCEPT_COVERAGE or any(c < 2 for c in report.target_counts.values()):
+    if report.grammar or report.coverage < ACCEPT_COVERAGE or any(c < 2 for c in report.target_counts.values()) \
+            or bad_length(draft):
         raise GenerationError(
-            f"Kein Text hat die Prüfung bestanden (Abdeckung {report.coverage:.0%}, "
+            f"Kein Text hat die Prüfung bestanden (Abdeckung {report.coverage:.0%}, {word_count(draft.body)} Wörter, "
             f"Grammatik: {[g.code for g in report.grammar]}, unbekannt: {report.unknown[:8]}).")
 
     with transaction(conn):

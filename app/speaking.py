@@ -36,9 +36,8 @@ def words_to_use(conn: sqlite3.Connection, lesson_number: int, limit: int = WORD
         """SELECT m.id, m.lemma, m.pos, m.article, m.gloss_es, m.gloss_en
            FROM known_word k JOIN lemma m ON m.id = k.lemma_id
            LEFT JOIN lesson l ON l.id = m.lesson_id
-           WHERE k.state = 'learning' AND (l.number IS NULL OR l.number <= ?)
-             AND EXISTS (SELECT 1 FROM card c WHERE c.lemma_id = m.id)
-           ORDER BY k.first_seen DESC, m.id LIMIT ?""", (lesson_number, limit)).fetchall())
+           WHERE k.state = 'learning' AND k.ladder_step >= 1 AND (l.number IS NULL OR l.number <= ?)
+           ORDER BY k.ladder_since DESC, m.id LIMIT ?""", (lesson_number, limit)).fetchall())
 
 
 def guide(conn: sqlite3.Connection, lesson_number: int | None = None) -> dict:

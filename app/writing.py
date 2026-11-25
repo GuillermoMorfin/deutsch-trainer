@@ -31,7 +31,13 @@ def prompts_for(lesson_number: int, conn: sqlite3.Connection | None = None) -> l
     if not lesson:
         return []
     return [{"de": f"Schreib 3 Sätze zum Thema „{lesson['theme']}“. Benutz: „{r}“",
-             "es": f"Escribe 3 frases sobre «{lesson['theme']}». Usa: «{r}»"} for r in lesson["redemittel"][:3]]
+             "en": f"Write 3 sentences about '{lesson['theme']}'. Use: '{r}'"} for r in lesson["redemittel"][:3]]
+
+
+def _help(conn: sqlite3.Connection, p: dict) -> str:
+    """The task in the learner's gloss language (English by default)."""
+    lang = conn.execute("SELECT gloss_language FROM settings WHERE id = 1").fetchone()[0]
+    return (p.get("es") if lang == "es" else None) or p.get("en") or p.get("es", "")
 
 
 def next_prompt(conn: sqlite3.Connection, *, lesson_number: int | None = None, exclude: str | None = None,
@@ -46,12 +52,12 @@ def next_prompt(conn: sqlite3.Connection, *, lesson_number: int | None = None, e
     rng = random.Random(seed)
     options.sort(key=lambda p: (used.get(p["de"], 0), rng.random()))
     p = options[0]
-    return {"lesson_number": lesson_number, "prompt": p["de"], "prompt_es": p["es"],
+    return {"lesson_number": lesson_number, "prompt": p["de"], "prompt_help": _help(conn, p),
             "redemittel": lesson["redemittel"], "theme": lesson["theme"]}
 
 
 SYSTEM = """You are a kind, precise German teacher. Your student is an adult at level A2.1 (Momente A2.1), \
-native Spanish speaker who also speaks English. They write 2-4 sentences for a task.
+native Spanish speaker who also speaks English (feedback in English). They write 2-4 sentences for a task.
 
 Correct the text minimally: fix real errors (grammar, word order, endings, articles, spelling, wrong words); \
 keep their words, ideas and style; never rewrite to sound more advanced. If something is correct but unusual, \
@@ -59,8 +65,8 @@ leave it.
 
 List at most 3 corrections, the most useful ones. The lesson's TARGET GRAMMAR comes first whenever there is an \
 error in it, then errors that block understanding, then frequent A1/A2 errors (verb position, Perfekt with \
-haben/sein, articles and cases). Each explanation is one short Spanish sentence that states the rule and the \
-correct form. Count other corrected errors in more_errors. If the text has no errors, return no corrections \
+haben/sein, articles and cases). Each explanation is one short English sentence that states the rule and the \
+correct form (a short Spanish comparison in brackets is fine when it helps, e.g. gefallen ≈ gustar). Count other corrected errors in more_errors. If the text has no errors, return no corrections \
 and say so in the praise."""
 
 
