@@ -1,0 +1,197 @@
+{
+  "_comment": "Speaking guides per lesson (written for this app, not from the book). The learner talks with their partner; the app only gives the plan. German questions and starters must pass the verifier at their lesson.",
+  "lessons": {
+    "1": {
+      "focus": "Talk about the past: Perfekt (habe/bin + Partizip) and war/hatte.",
+      "challenge": "Tell 5 things about your childhood. Every sentence in the past. Your partner raises a hand when you slip into the present.",
+      "questions": [
+        "Was hast du als Kind gern gemacht?",
+        "Wo hast du als Kind gewohnt?",
+        "Hattest du als Kind einen Hund?",
+        "Was hast du letzten Sommer gemacht?",
+        "Wie war dein Wochenende?",
+        "Was machst du nächstes Wochenende?"
+      ],
+      "roleplay": {
+        "setup": "Old photos: your partner shows you an old photo (any photo on the phone). You ask about it, then you swap.",
+        "starter": "Wo war das? Wie alt warst du da?"
+      }
+    },
+    "2": {
+      "focus": "Give reasons with weil (the verb goes to the end).",
+      "challenge": "Answer every question with weil. Your partner listens only for one thing: is the verb at the end?",
+      "questions": [
+        "Warum lernst du Deutsch?",
+        "Warum wohnst du in Berlin?",
+        "Was ist deine Arbeit? Ist sie wichtig?",
+        "Welche Arbeit findest du gut? Warum?",
+        "Was ist ein Nachteil an deiner Arbeit?",
+        "Warum studierst du?"
+      ],
+      "roleplay": {
+        "setup": "Job interview light: your partner is the boss, you want the job. Explain why you are the right person (3 reasons with weil).",
+        "starter": "Ich möchte hier arbeiten, weil ich die Arbeit interessant finde."
+      }
+    },
+    "3": {
+      "focus": "Talk about your home: unser / euer, and what you miss (… fehlt mir).",
+      "challenge": "Describe your flat with unser and eure at least 3 times each. Then name 3 things you miss from home: … fehlt mir.",
+      "questions": [
+        "Wie ist eure Wohnung?",
+        "Was gefällt dir an unserer Straße?",
+        "Was vermisst du hier in Berlin?",
+        "Wo hast du früher gewohnt?",
+        "Gibt es einen Park in eurer Straße?",
+        "Magst du Hunde oder Katzen?"
+      ],
+      "roleplay": {
+        "setup": "Flat tour: your partner is a friend visiting Berlin for the first time. Show your flat and your area (unser Wohnzimmer, unsere Küche …).",
+        "starter": "Das ist unsere Küche. Hier kochen wir."
+      }
+    },
+    "4": {
+      "focus": "Results with deshalb (verb right after deshalb) and polite requests in the office.",
+      "challenge": "Say 5 problems from your week, each followed by a result with deshalb. Your partner checks: deshalb + verb + subject.",
+      "questions": [
+        "Was machst du heute noch?",
+        "Was machst du heute im Büro?",
+        "Kannst du mir bitte helfen?",
+        "Was findest du an der Uni schwer?",
+        "Hast du diese Woche viel Arbeit?",
+        "Bist du heute müde? Erzähl mit deshalb."
+      ],
+      "roleplay": {
+        "setup": "Office day: your partner is a colleague with too much work. They ask for help, you say yes (Ich kümmere mich um …) or explain why not (… deshalb …).",
+        "starter": "Kannst du bitte die E-Mail schreiben?"
+      }
+    },
+    "5": {
+      "focus": "Invitations: Hast du Lust …?, plus über (+ Akk), seit (+ Dat), von … bis zum.",
+      "challenge": "Plan a weekend together. Use seit once, über once and von … bis zum once.",
+      "questions": [
+        "Hast du Lust, am Samstag ins Konzert zu gehen?",
+        "Seit wann wohnst du in Berlin?",
+        "Sprichst du gern über Sport?",
+        "Was machst du von Montag bis Freitag?",
+        "Welche Party war super?",
+        "Hast du nächste Woche Zeit?"
+      ],
+      "roleplay": {
+        "setup": "Persuade me: you invite your partner to an event (a run, a concert, a party). Your partner says no twice. You don't give up: Ach, komm schon!",
+        "starter": "Hast du Lust, am Sonntag mit mir zu laufen?"
+      }
+    },
+    "6": {
+      "focus": "Give advice with du solltest / du könntest.",
+      "challenge": "Your partner names 5 problems. You give advice to each, alternating solltest and könntest.",
+      "questions": [
+        "Ich bin immer müde. Was soll ich machen?",
+        "Ich möchte mehr Sport machen. Was soll ich machen?",
+        "Welchen Sport machst du?",
+        "Wie oft läufst du in der Woche?",
+        "Ich schlafe schlecht. Was soll ich machen?",
+        "Was ist besser: laufen oder Fahrrad fahren?"
+      ],
+      "roleplay": {
+        "setup": "Coach: you are a running coach, your partner wants to run 10 km. Give a training plan with Du solltest … / Du könntest ….",
+        "starter": "Du solltest jeden Tag ein bisschen laufen."
+      }
+    },
+    "7": {
+      "focus": "Opinions with dass (verb to the end) and ordering food.",
+      "challenge": "Say 5 opinions about food or restaurants, each starting with Ich finde es super / schade, dass ….",
+      "questions": [
+        "Was isst du gern?",
+        "Was bestellst du oft?",
+        "Findest du es gut, dass man Essen bestellen kann?",
+        "Was kochst du gern?",
+        "Was hast du heute gegessen?",
+        "Welches Restaurant in Berlin magst du?"
+      ],
+      "roleplay": {
+        "setup": "Phone order: your partner works at a pizza place. You order for two, ask how long the delivery takes, and change something in the order.",
+        "starter": "Hallo, ich möchte eine Pizza bestellen."
+      }
+    },
+    "8": {
+      "focus": "Conditions with wenn (verb to the end) and -ung nouns.",
+      "challenge": "Finish 5 sentences that start with Wenn …. Example: Wenn ich Pause habe, …. Watch the verb at the end, then verb first in the second part.",
+      "questions": [
+        "Was machst du in der Pause?",
+        "Was machst du, wenn du Stress hast?",
+        "Was machst du gegen Stress?",
+        "Wenn du Zeit hast, was machst du dann?",
+        "Wie ist die Arbeit an der Uni?",
+        "Hast du heute eine Besprechung?"
+      ],
+      "roleplay": {
+        "setup": "New colleague: your partner is new in the company and asks how lunch breaks work. You explain with wenn.",
+        "starter": "Wenn du Zeit hast, gehen wir zusammen in die Kantine."
+      }
+    },
+    "9": {
+      "focus": "Where things are: legen / stellen / hängen (Wohin? + Akk) vs. liegen / stehen / hängen (Wo? + Dat).",
+      "challenge": "Tidy up together: your partner tells you where 5 things go (Leg … auf den Tisch). You answer where they are now (Es liegt auf dem Tisch).",
+      "questions": [
+        "Wo ist denn mein Schlüssel?",
+        "Wohin stellst du dein Fahrrad?",
+        "Was liegt auf deinem Tisch?",
+        "Was hängt an der Wand?",
+        "Was magst du zu Hause nicht?",
+        "Wohin legst du dein Handy in der Nacht?"
+      ],
+      "roleplay": {
+        "setup": "Not again!: your partner can't find something (keys, phone, glasses). You ask Wo? questions and give tips. Then swap, and complain: Nicht schon wieder!",
+        "starter": "Wo ist denn mein Handy? Nicht schon wieder!"
+      }
+    },
+    "10": {
+      "focus": "Getting around: zu / bei / von + Dativ (zum, zur, beim, vom).",
+      "challenge": "Describe your way to the ESMT and to your favourite running route. Use zum or zur at least 4 times.",
+      "questions": [
+        "Wie kommst du zur Uni?",
+        "Nimmst du lieber das Fahrrad oder die U-Bahn?",
+        "Wie lange brauchst du von der Wohnung zum Park?",
+        "Was findest du im Verkehr in Berlin schlecht?",
+        "Gehst du heute noch zum Supermarkt?",
+        "Kannst du ohne Auto leben?"
+      ],
+      "roleplay": {
+        "setup": "Plans for Saturday: your partner proposes things you hate (Auf keinen Fall! Ohne mich!) and one you love (Da bin ich dabei!). Then swap.",
+        "starter": "Ich fahre am Samstag mit dem Fahrrad zum See. Kommst du mit?"
+      }
+    },
+    "11": {
+      "focus": "Wishes with ich wäre gern / ich hätte gern / am liebsten würde ich.",
+      "challenge": "Dream holiday: 5 wishes, one sentence each. Mix wäre, hätte and würde.",
+      "questions": [
+        "Wo wärst du jetzt gern?",
+        "Was hättest du gern?",
+        "Was nimmst du in den Urlaub mit?",
+        "Wohin möchtest du gern reisen?",
+        "Wie war deine letzte Reise?",
+        "Möchtest du lieber ans Meer oder in die Berge?"
+      ],
+      "roleplay": {
+        "setup": "Packing: you pack for a trip together. Discuss what goes into the suitcase and where you would like to be right now.",
+        "starter": "Ich wäre jetzt gern am Meer!"
+      }
+    },
+    "12": {
+      "focus": "Polite indirect questions: Können Sie mir sagen, ob / wann / wie …? (verb to the end).",
+      "challenge": "Your partner plays an office clerk. Ask 5 indirect questions (ob, wann, wie lange, wo). Check: the verb goes to the end.",
+      "questions": [
+        "Weißt du, ob der Supermarkt heute offen ist?",
+        "Kannst du mir sagen, wann der Zug kommt?",
+        "Was brauchst du für ein Visum?",
+        "Möchtest du ein Jahr in einem anderen Land arbeiten?",
+        "Was war für dich in Berlin schwer?",
+        "Wer hilft dir, wenn du ein Problem hast?"
+      ],
+      "roleplay": {
+        "setup": "At the office (Amt): your partner is the clerk, you need a document. Ask everything politely and indirectly. The clerk is a bit grumpy. At the end your partner says: Kopf hoch!",
+        "starter": "Guten Tag! Können Sie mir sagen, ob ich hier richtig bin?"
+      }
+    }
+  }
+}

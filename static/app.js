@@ -157,7 +157,7 @@ async function viewHome() {
     <p class="section-title">Einzeln üben</p>
     <div class="tile-grid">
       ${[["#/review", "cards", "Karten"], ["#/read", "book", "Lesen"], ["#/drill", "puzzle", "Grammatik"], ["#/write", "pen", "Schreiben"],
-         ["#/listen", "headphones", "Hören"], ["#/cases", "table", "Spickzettel"]].map(([href, ic, label]) =>
+         ["#/listen", "headphones", "Hören"], ["#/speak", "mic", "Sprechen"], ["#/cases", "table", "Spickzettel"]].map(([href, ic, label]) =>
         `<a class="tile" href="${href}"><span class="tile-ico">${icon(ic)}</span>${label}</a>`).join("")}
     </div>`;
 }
@@ -1866,6 +1866,93 @@ function viewCases() {
   }));
 }
 
+// ---- Sprechen: a plan for talking with your partner (no microphone, no grading) ----------------
+
+async function viewSpeak(n) {
+  const g = await api(`/speaking${n ? `?lesson=${n}` : ""}`);
+  const L = g.lesson;
+  const word = (w) => `<button class="speak-word ${w.article ? `g-${esc(w.article)}` : ""}" aria-pressed="false">
+      <b>${w.article ? `${esc(w.article)} ` : ""}${esc(w.lemma)}</b><span>${esc(w.gloss_es || w.gloss_en || "")}</span></button>`;
+  const h = g.history;
+  $app.innerHTML = `
+    <p class="eyebrow">Sprechen · Lektion ${L.number}</p>
+    <h1>Gesprächsplan</h1>
+    <p class="muted">Für dein Gespräch mit deiner Partnerin: ca. 15–20 Minuten, nur Deutsch. ${esc(L.theme)}.</p>
+    ${g.lessons.length > 1 ? `<div class="chip-row">${g.lessons.map((k) =>
+      `<a class="chip ${k === L.number ? "on" : ""}" href="#/speak/${k}">L${k}</a>`).join("")}</div>` : ""}
+
+    <section class="card hero speak-focus">
+      <span class="tile-ico">${icon("mic")}</span>
+      <div><p class="eyebrow">Heute im Fokus</p><h2>${esc(g.focus)}</h2>
+        <p><b>Challenge:</b> ${esc(g.challenge)}</p></div>
+    </section>
+
+    <section class="card"><h2>1 · Aufwärmen <span class="muted small">2–3 Min.</span></h2>
+      <p class="small muted">Satzanfänge aus der Lektion. Sag zu jedem einen Satz über dich.</p>
+      <ul class="speak-list">${g.redemittel.map((r) => `<li>${esc(r)}</li>`).join("")}</ul>
+    </section>
+
+    ${g.questions.length ? `<section class="card"><h2>2 · Fragen <span class="muted small">5–8 Min.</span></h2>
+      <p class="small muted">Deine Partnerin stellt die Fragen, du antwortest mit 2–3 Sätzen. Dann tauscht ihr.</p>
+      <ol class="speak-list questions">${g.questions.map((q) =>
+        `<li><span>${esc(q)}</span><button class="icon-btn" data-say="${esc(q)}" aria-label="Anhören">▶</button></li>`).join("")}</ol>
+    </section>` : ""}
+
+    ${g.roleplay ? `<section class="card"><h2>3 · Rollenspiel <span class="muted small">5 Min.</span></h2>
+      <p>${esc(g.roleplay.setup)}</p>
+      <p class="example">„${esc(g.roleplay.starter)}“ <button class="icon-btn" data-say="${esc(g.roleplay.starter)}" aria-label="Anhören">▶</button></p>
+    </section>` : ""}
+
+    ${g.words.length ? `<section class="card"><h2>Diese Wörter benutzen</h2>
+      <p class="small muted">Wörter, die du gerade lernst. Tipp sie an, wenn du sie im Gespräch gesagt hast.</p>
+      <div class="speak-words">${g.words.map(word).join("")}</div>
+    </section>` : ""}
+
+    <section class="card"><h2>Grammatik für heute</h2>
+      ${g.grammar.map((x) => `<div class="speak-gram"><h3>${esc(x.name)}</h3><p>${esc(x.rule)}</p>
+        ${x.example ? `<p class="example">${esc(x.example)}</p>` : ""}
+        ${x.warning ? `<p class="small warning">${esc(x.warning)}</p>` : ""}</div>`).join("")}
+      <p class="small"><a href="#/cases">Spickzettel: der / den / dem, mich / mir →</a></p>
+    </section>
+
+    ${g.errors.length ? `<section class="card"><h2>Achte auf deine Fehler</h2>
+      <p class="small muted">Das geht beim Üben oft schief. Deine Partnerin hört besonders hier hin.</p>
+      <ul class="speak-list">${g.errors.map((e) => `<li><b>${esc(e.name || (e.article ? `${e.article} ${e.lemma}` : e.lemma))}</b>
+        ${e.example ? `<span class="muted small"> · ${esc(e.example)}</span>` : ""}</li>`).join("")}</ul>
+    </section>` : ""}
+
+    <section class="card partner"><h2>For your partner</h2>
+      <ul class="speak-list">${g.partner_tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
+    </section>
+
+    <section class="card"><h2>Gespräch erledigt?</h2>
+      <p class="small muted">Wie lange habt ihr gesprochen?</p>
+      <div class="chip-row" id="mins">${[10, 15, 20, 30].map((m) =>
+        `<button class="chip ${m === 15 ? "on" : ""}" data-min="${m}">${m} Min.</button>`).join("")}</div>
+      <textarea id="note" rows="2" maxlength="500" placeholder="Was war schwer? (optional)"></textarea>
+      <button class="btn" id="done">${icon("check")}Gespräch speichern</button>
+      <p class="small muted" id="hist">${h.sessions ? `Bisher: ${h.sessions} ${h.sessions === 1 ? "Gespräch" : "Gespräche"}, ${h.minutes} Minuten.` : ""}</p>
+      ${h.recent.filter((r) => r.note).length ? `<ul class="speak-list small">${h.recent.filter((r) => r.note).map((r) =>
+        `<li><span class="muted">${esc(r.ts.slice(0, 10))} · L${r.lesson_number}:</span> ${esc(r.note)}</li>`).join("")}</ul>` : ""}
+    </section>`;
+
+  $app.querySelectorAll("[data-say]").forEach((b) => b.addEventListener("click", () => speak(b.dataset.say)));
+  $app.querySelectorAll(".speak-word").forEach((b) => b.addEventListener("click", () =>
+    b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") === "true" ? "false" : "true")));
+  let minutes = 15;
+  $app.querySelectorAll("#mins .chip").forEach((b) => b.addEventListener("click", () => {
+    minutes = +b.dataset.min;
+    $app.querySelectorAll("#mins .chip").forEach((x) => x.classList.toggle("on", x === b));
+  }));
+  $app.querySelector("#done").addEventListener("click", async (ev) => {
+    ev.target.disabled = true;
+    await api("/speaking/log", { method: "POST", body: { lesson: L.number, minutes, note: $app.querySelector("#note").value } });
+    celebrate();
+    ev.target.innerHTML = `${icon("check")}Gespeichert`;
+    $app.querySelector("#hist").textContent = `Bisher: ${h.sessions + 1} ${h.sessions ? "Gespräche" : "Gespräch"}, ${h.minutes + minutes} Minuten. Gut gemacht!`;
+  });
+}
+
 // ---- router ----------------------------------------------------------------
 
 const routes = [
@@ -1882,6 +1969,8 @@ const routes = [
   [/^#\/playlist$/, "read", viewPlaylist],
   [/^#\/drill$/, "home", () => viewDrill(null)],
   [/^#\/cases$/, "home", viewCases],
+  [/^#\/speak$/, "home", () => viewSpeak(null)],
+  [/^#\/speak\/(\d+)$/, "home", (m) => viewSpeak(m[1])],
   [/^#\/drill\/([A-Z0-9_]+)$/, "home", (m) => viewDrill(m[1])],
   [/^#\/text\/(\d+)$/, "read", (m) => viewText(m[1])],
   [/^#\/words$/, "words", viewWords],

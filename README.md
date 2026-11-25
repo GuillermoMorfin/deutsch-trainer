@@ -66,6 +66,13 @@ The tests (`uv run pytest`) check that every Redemittel, drill and fixture only 
 - **FSRS optimisation**: after 512 reviews, *Einstellungen → Wiederholungsplan anpassen* fits the scheduler to your
   own history. Needs `uv sync --extra optimizer` (PyTorch). CLI: `uv run python -m app.optimize`.
 
+## Sprechen (speaking with a partner)
+
+*Sprechen* is a conversation plan, not a speech checker: per lesson a focus and a challenge, warm-up sentence
+starters, questions for your partner to ask, a short role play, words you're currently learning, your most
+frequent mistakes and tips for your partner. Log the conversation at the end; it counts toward the streak.
+Material: `app/seed/speaking.json` (every German sentence passes the verifier at its lesson).
+
 ## Natural voices (Piper)
 
 Read-aloud, playlists and Hören use local neural voices (Piper, open source, offline). They live in

@@ -199,3 +199,12 @@ CREATE TABLE IF NOT EXISTS listen_log (
     total    INTEGER NOT NULL,
     ts       TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Speaking with a partner (Sprechen): the app gives the plan, the conversation happens offline.
+CREATE TABLE IF NOT EXISTS speaking_log (
+    id         INTEGER PRIMARY KEY,
+    lesson_id  INTEGER REFERENCES lesson(id),
+    minutes    INTEGER NOT NULL,
+    note       TEXT,
+    ts         TEXT NOT NULL DEFAULT (datetime('now'))
+);

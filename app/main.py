@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from . import drills, export, generator, optimize, progress, session, srs, tts, writing  # noqa: E402
+from . import drills, export, generator, optimize, progress, session, speaking, srs, tts, writing  # noqa: E402
 from . import progress as progress_mod  # noqa: E402  (get_lesson has a local named 'progress')
 from .db import connect, row_to_dict, rows_to_dicts, transaction  # noqa: E402
 from .llm import GenerationError, LLMUnavailable, Writer, default_writer  # noqa: E402
@@ -471,6 +471,27 @@ def writing_submit(body: WritingSubmit, db: sqlite3.Connection = Depends(get_db)
 @app.get("/api/writing")
 def writing_history(limit: int = Query(10, ge=1, le=50), db: sqlite3.Connection = Depends(get_db)):
     return writing.history(db, limit)
+
+
+# ---- speaking (plan for practice with a partner) ------------------------------------------
+
+@app.get("/api/speaking")
+def speaking_guide(lesson: int | None = Query(None, ge=1), db: sqlite3.Connection = Depends(get_db)):
+    try:
+        return speaking.guide(db, lesson)
+    except LookupError:
+        raise HTTPException(404, "Lektion nicht gefunden")
+
+
+class SpeakingDone(BaseModel):
+    lesson: int = Field(ge=1)
+    minutes: int = Field(ge=1, le=180)
+    note: str | None = Field(None, max_length=500)
+
+
+@app.post("/api/speaking/log")
+def speaking_done(body: SpeakingDone, db: sqlite3.Connection = Depends(get_db)):
+    return speaking.log(db, lesson_number=body.lesson, minutes=body.minutes, note=body.note)
 
 
 # ---- daily session + progress -------------------------------------------------------------

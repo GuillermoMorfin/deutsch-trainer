@@ -18,6 +18,8 @@ SELECT ts FROM review_log
 UNION ALL SELECT ts FROM drill_attempt
 UNION ALL SELECT ts FROM writing
 UNION ALL SELECT ts FROM reading_log
+UNION ALL SELECT ts FROM listen_log
+UNION ALL SELECT ts FROM speaking_log
 """
 
 
@@ -53,7 +55,7 @@ def done_today(conn: sqlite3.Connection) -> dict[str, bool]:
         """SELECT 1 FROM writing WHERE kind = ? AND date(ts, 'localtime') = date('now', 'localtime')
            LIMIT 1""", (kind,)).fetchone() is not None
     return {"warmup": reread, "review": q("review_log"), "text": read, "drill": q("drill_attempt"),
-            "write": wrote("write"), "listen": q("listen_log")}
+            "write": wrote("write"), "listen": q("listen_log"), "speak": q("speaking_log")}
 
 
 def lesson_mastery(conn: sqlite3.Connection) -> list[dict]:

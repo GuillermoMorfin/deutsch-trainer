@@ -216,5 +216,35 @@ a.card:hover, a.lesson-row:hover, a.tile:hover { transform: translateY(-2px); bo
 .prep-grid p { margin: 0 0 6px; font-family: var(--font-read); }
 .tricks { padding-left: 18px; margin: 0; } .tricks li { margin-bottom: 8px; }
 .review-top { gap: 12px; } .review-top a[href="#/cases"] { margin-left: auto; }
-@media (min-width: 640px) { .tile-grid { grid-template-columns: repeat(6, 1fr); } }
+.tile-grid { grid-template-columns: repeat(4, 1fr); }
+@media (min-width: 640px) { .tile-grid { grid-template-columns: repeat(7, 1fr); } }
 .drill-fb .feedback .diff { color: var(--ink-900); font-weight: 400; }
+
+/* Sprechen: conversation plan */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
+.chip-row .chip { font-size: .85rem; padding: 6px 12px; margin: 0; border: 1px solid var(--border); background: var(--surface);
+  text-decoration: none; cursor: pointer; font-family: var(--font-ui); }
+.chip-row .chip.on { background: var(--amber-400); border-color: var(--amber-400); color: var(--ink-900); font-weight: 600; }
+.speak-focus { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; }
+.speak-focus h2 { font-size: 1.15rem; margin: 2px 0 8px; }
+.speak-focus p { margin: 0; }
+.speak-list { margin: 8px 0 0; padding-left: 20px; font-family: var(--font-read); }
+.speak-list li { margin-bottom: 8px; }
+.speak-list.questions li > span { margin-right: 6px; }
+.icon-btn { border: 1px solid var(--border); background: var(--surface); border-radius: 99px; width: 30px; height: 30px;
+  font-size: .7rem; color: var(--ink-700); cursor: pointer; vertical-align: middle; }
+.icon-btn:hover { background: var(--cream-200); }
+.card .example { font-family: var(--font-read); font-style: italic; }
+.card .warning { color: var(--ink-700); }
+.speak-words { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.speak-word { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 8px 12px; min-height: 44px;
+  border-radius: var(--r-sm); border: 1px solid var(--border); background: var(--surface); cursor: pointer; text-align: left;
+  font-family: var(--font-ui); }
+.speak-word b { font-family: var(--font-read); font-weight: 600; }
+.speak-word span { font-size: .75rem; color: var(--muted); }
+.speak-word[aria-pressed="true"] { background: var(--ok-bg); border-color: var(--ok); }
+.speak-word[aria-pressed="true"] b::after { content: " ✓"; color: var(--ok); }
+.speak-gram + .speak-gram { border-top: 1px solid var(--hairline); padding-top: 10px; }
+.speak-gram h3 { font-size: .95rem; margin: 4px 0; } .speak-gram p { margin: 0 0 6px; }
+.partner { background: var(--cream-200); }
+#note { width: 100%; margin: 4px 0 12px; font: inherit; padding: 10px; border-radius: var(--r-sm); border: 1px solid var(--border); }

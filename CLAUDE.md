@@ -45,6 +45,8 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
   right first time → known, due in 90 days (typo: 21); wrong → normal learning in both directions.
   'Leicht' on a new recognition card unlocks the typing card immediately. The learner asked not to be
   drilled on words they already know.
+- `app/speaking.py` (Sprechen): a plan for talking with the partner, no microphone or grading (the learner
+  asked for that after speech recognition was removed). Seed `app/seed/speaking.json`; `speaking_log` counts as activity.
 - `app/session.py` plans the daily flow and writes the day's text in a background thread with its own
   DB connection; `app/progress.py` computes streak (local days), mastery, errors, WPM.
 - `get_db` opens one sqlite connection per request; never share a connection across threads.
