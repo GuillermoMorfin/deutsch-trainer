@@ -349,14 +349,21 @@ def card_item(conn: sqlite3.Connection, card: dict, *, seed: int | None = None) 
 
 
 def grade_typed(conn: sqlite3.Connection, lemma_id: int, answer: str, *, ascii_ok: bool = False):
-    """Step 4 is graded against the form in the sentence; step 5 (and step 4 without a sentence)
-    against the dictionary form, article required for nouns."""
+    """Step 4 is graded against the form in the sentence. Step 5 accepts the dictionary form (nouns
+    with article) and, because the card shows the sentence with a gap, also the exact form that fills
+    the gap (letzten for letzt, gefahren for fahren). Nouns always need their article at step 5."""
     w = word(conn, lemma_id)
-    if (w["ladder_step"] or 5) == FSRS_FROM:
-        ctx = context(conn, lemma_id)
-        if ctx["blank"]:
-            return check_answer(answer, lemma=ctx["blank"], pos="FORM", article=None, ascii_ok=ascii_ok)
-    return check_answer(answer, lemma=w["lemma"], pos=w["pos"], article=w["article"], ascii_ok=ascii_ok)
+    ctx = context(conn, lemma_id)
+    if (w["ladder_step"] or 5) == FSRS_FROM and ctx["blank"]:
+        return check_answer(answer, lemma=ctx["blank"], pos="FORM", article=None, ascii_ok=ascii_ok)
+    full = check_answer(answer, lemma=w["lemma"], pos=w["pos"], article=w["article"], ascii_ok=ascii_ok)
+    if full.verdict == "exact" or w["pos"] == "NOUN" or not ctx["blank"]:
+        return full
+    in_sentence = check_answer(answer, lemma=ctx["blank"], pos="FORM", article=None, ascii_ok=ascii_ok)
+    if in_sentence.correct and (in_sentence.verdict == "exact" or not full.correct):
+        in_sentence.message = f"Richtig! Grundform: {w['lemma']}"
+        return in_sentence
+    return full
 
 
 # ---- progress ---------------------------------------------------------------------------------

@@ -258,6 +258,16 @@ def review_queue(limit: int = Query(srs.MAX_REVIEWS_PER_SESSION, ge=1, le=100),
     return {"items": items, "due_count": srs.due_count(db)}
 
 
+@app.post("/api/review/{card_id}/override")
+def review_override(card_id: int, db: sqlite3.Connection = Depends(get_db)):
+    """'Ich hatte es richtig': the last typed answer on this card counts as right after all."""
+    try:
+        with transaction(db):
+            return srs.override(db, card_id)
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+
+
 class LadderAnswer(BaseModel):
     step: int = Field(ge=1, le=3)
     choice: str = Field(max_length=200)

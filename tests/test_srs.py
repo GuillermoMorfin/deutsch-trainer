@@ -166,3 +166,40 @@ def test_review_api_roundtrip(client):
     assert r["correct"] and r["next_item"]["kind"] == "mc"
     assert client.post(f"/api/ladder/{lid}/answer", json={"step": 2, "choice": "x"}).json()["correct"] is False
     assert client.get("/api/ladder").json()["counts"]["2"] == 1
+
+
+def test_step_5_accepts_the_form_that_fills_the_gap(conn):
+    lid = lemma_id(conn, "letzt")
+    tid = add_text(conn, lid, words=("Ich", "letzten", "Samstag", "gelaufen"))
+    srs.introduce_word(conn, lid, text_id=tid, at=T0)
+    conn.execute("UPDATE known_word SET ladder_step = 5 WHERE lemma_id = ?", (lid,))
+    ladder.ensure_card(conn, lid, T0)
+    card = conn.execute("SELECT id FROM card WHERE lemma_id = ?", (lid,)).fetchone()[0]
+    r = srs.review(conn, card, answer="letzten", at=T0 + timedelta(days=2))
+    assert r["check"]["correct"] and step(conn, lid) == 5
+    assert ladder.grade_typed(conn, lid, "letzt").correct            # dictionary form still fine
+
+
+def test_nouns_at_step_5_still_need_the_article(conn, baum):
+    conn.execute("UPDATE known_word SET ladder_step = 5 WHERE lemma_id = ?", (baum,))
+    assert ladder.grade_typed(conn, baum, "Baum").verdict == "missing_article"
+    assert ladder.grade_typed(conn, baum, "der Baum").correct
+
+
+def test_ich_hatte_es_richtig_undoes_a_wrong_mark(conn, baum):
+    climb(conn, baum, 4)
+    conn.execute("UPDATE known_word SET ladder_step = 5 WHERE lemma_id = ?", (baum,))
+    card = conn.execute("SELECT id FROM card WHERE lemma_id = ?", (baum,)).fetchone()[0]
+    t = T0 + timedelta(days=2)
+    before = dict(conn.execute("SELECT * FROM card WHERE id = ?", (card,)).fetchone())
+    r = srs.review(conn, card, answer="Bäume", at=t)
+    assert not r["check"]["correct"] and step(conn, baum) == 4
+    o = srs.override(conn, card, at=t)
+    assert o["overridden"] and step(conn, baum) == 5
+    assert conn.execute("SELECT ladder_correct FROM known_word WHERE lemma_id = ?", (baum,)).fetchone()[0] == 1
+    logs = conn.execute("SELECT rating FROM review_log WHERE card_id = ?", (card,)).fetchall()
+    assert [x[0] for x in logs] == [3]                                # the wrong rating is gone
+    after = conn.execute("SELECT reps, lapses FROM card WHERE id = ?", (card,)).fetchone()
+    assert after["reps"] == before["reps"] + 1 and after["lapses"] == before["lapses"]
+    with pytest.raises(ValueError):
+        srs.override(conn, card, at=t)                                # only right after a wrong mark

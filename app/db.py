@@ -51,6 +51,7 @@ MIGRATIONS = [
     ("known_word", "source_sentence", "TEXT"),
     ("known_word", "source_text_id", "INTEGER"),
     ("lemma", "cognate", "INTEGER NOT NULL DEFAULT 0"),               # English cognate (Haus/house)
+    ("review_log", "prev_json", "TEXT"),        # card + ladder state before this review (for "Ich hatte es richtig")
 ]
 
 

@@ -393,7 +393,23 @@ async function viewReview(opts = {}) {
         <div class="flash-word small-word">${nounHTML(w)} ${cog(w)}</div>
         ${formsHTML(w) ? `<div class="small muted">${formsHTML(w)}</div>` : ""}
         ${it.sentence ? `<p class="flash-sentence small">${esc(it.sentence)}</p>` : ""}
-        ${ladderNote(r.ladder)}`;
+        <div class="ladder-line">${ladderNote(r.ladder)}</div>
+        ${ok ? (r.check.message && r.check.message.startsWith("Richtig! Grundform") ? `<div class="small muted">${esc(r.check.message.replace("Richtig! ", ""))}</div>` : "")
+          : `<button type="button" class="btn secondary small-btn" id="override">Ich hatte es richtig</button>`}`;
+      $app.querySelector("#override")?.addEventListener("click", async (e) => {
+        e.target.disabled = true;
+        try {
+          const o = await api(`/review/${it.card_id}/override`, { method: "POST" });
+          correct += 1;
+          if (o.ladder?.promoted) promoted += 1;
+          fb.className = "feedback ok";
+          fb.querySelector("strong").textContent = "✓ Als richtig gewertet";
+          fb.querySelector(".ladder-line").innerHTML = ladderNote(o.ladder);
+          $in.classList.remove("is-bad"); $in.classList.add("is-ok");
+          e.target.remove();
+        } catch (err) { e.target.disabled = false; toast("Das ging nicht: " + err.message); }
+        $app.querySelector(".produce .btn").focus();
+      });
       $app.querySelector(".umlauts").hidden = true;
       const btn = $app.querySelector(".produce .btn");
       btn.textContent = "Weiter";

@@ -223,6 +223,10 @@ def review(conn: sqlite3.Connection, card_id: int, *, rating: int | None = None,
             rating = rating_for_check(check.verdict)
     r = Rating(rating)
 
+    kw = conn.execute("SELECT ladder_step, ladder_correct FROM known_word WHERE lemma_id = ?",
+                      (row["lemma_id"],)).fetchone()
+    prev = {k: row[k] for k in _CARD_FIELDS} | ({"ladder_step": kw["ladder_step"], "ladder_correct": kw["ladder_correct"]}
+                                                if kw else {})
     card, _ = scheduler(conn).review_card(_fsrs_card(row), r, review_datetime=at)
     conn.execute(
         """UPDATE card SET stability = ?, difficulty = ?, due = ?, state = ?, step = ?,
@@ -231,8 +235,8 @@ def review(conn: sqlite3.Connection, card_id: int, *, rating: int | None = None,
          1 if r == Rating.Again and row["state"] == State.Review.value else 0, to_db(at), card_id),
     )
     conn.execute(
-        "INSERT INTO review_log (card_id, rating, answer_given, duration_ms, ts) VALUES (?, ?, ?, ?, ?)",
-        (card_id, r.value, answer, duration_ms, to_db(at)),
+        "INSERT INTO review_log (card_id, rating, answer_given, duration_ms, ts, prev_json) VALUES (?, ?, ?, ?, ?, ?)",
+        (card_id, r.value, answer, duration_ms, to_db(at), json.dumps(prev)),
     )
     step = None
     if row["ladder_step"]:
@@ -241,6 +245,30 @@ def review(conn: sqlite3.Connection, card_id: int, *, rating: int | None = None,
     return {"card_id": card_id, "rating": r.value, "check": check.to_dict() if check else None,
             "next_due": to_db(card.due), "interval_days": round((card.due - at).total_seconds() / 86400, 2),
             "ladder": step, "word_state": word_state}
+
+
+_CARD_FIELDS = ("stability", "difficulty", "due", "state", "step", "reps", "lapses", "last_review")
+
+
+def override(conn: sqlite3.Connection, card_id: int, *, at: datetime | None = None) -> dict:
+    """'Ich hatte es richtig': undo the last (wrong) typed answer on this card and count it as right.
+    Card and ladder go back to how they were before, then the answer is graded Good."""
+    log = conn.execute("SELECT * FROM review_log WHERE card_id = ? ORDER BY id DESC LIMIT 1", (card_id,)).fetchone()
+    if log is None or not log["prev_json"] or log["rating"] >= Rating.Hard:
+        raise ValueError("nothing to correct: the last answer on this card was not marked wrong")
+    prev = json.loads(log["prev_json"])
+    lemma_id = conn.execute("SELECT lemma_id FROM card WHERE id = ?", (card_id,)).fetchone()[0]
+    conn.execute(f"UPDATE card SET {', '.join(f'{k} = ?' for k in _CARD_FIELDS)} WHERE id = ?",
+                 (*(prev[k] for k in _CARD_FIELDS), card_id))
+    if "ladder_step" in prev:
+        conn.execute("UPDATE known_word SET ladder_step = ?, ladder_correct = ? WHERE lemma_id = ?",
+                     (prev["ladder_step"], prev["ladder_correct"], lemma_id))
+        conn.execute("""DELETE FROM ladder_attempt WHERE id = (SELECT MAX(id) FROM ladder_attempt WHERE lemma_id = ?)""",
+                     (lemma_id,))
+    conn.execute("DELETE FROM review_log WHERE id = ?", (log["id"],))
+    result = review(conn, card_id, rating=Rating.Good.value, answer=log["answer_given"], at=at or from_db(log["ts"]))
+    result["overridden"] = True
+    return result
 
 
 def _finish_check(conn: sqlite3.Connection, row: sqlite3.Row, r: Rating, expected: str, answer: str | None,
