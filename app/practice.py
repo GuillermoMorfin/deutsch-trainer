@@ -2,11 +2,16 @@
 
 Each day's vocab session uses 2-3 of these, never the same set as the previous session day:
 
-  match   timed match-pairs: 6 German ↔ 6 English
-  listen  listen-and-pick: the voice says a word, pick it from 4
-  gender  der/die/das sorting: drag (or tap) nouns into the gender boxes
-  odd     odd one out: 3 words from one lesson theme + 1 from elsewhere
-  cloze   gaps in yesterday's text: pick the missing word
+  match    timed match-pairs: 6 German ↔ 6 English (recall of meaning)
+  listen   hear a German word, pick its meaning (know it by ear, not just its spelling)
+  gender   der/die/das sorting: drag (or tap) nouns into the gender boxes
+  plural   der Baum → die Bäume / Baume / Bäumen / Baums (plural patterns)
+  perfekt  fahren → ist gefahren / hat gefahren / ist gefahrt / hat gefahrt (haben/sein + Partizip II)
+  cloze    gaps in yesterday's text: pick the missing word
+
+Every format has to need real German knowledge: meaning, gender, a form, or a word in context.
+(An 'odd one out' by lesson theme and a hear-the-word-pick-the-spelling game were dropped: the book's
+lesson themes aren't real categories, and matching a sound to its spelling needs no German.)
 
 They use words you have met (ladder words, known lesson words; A1 words fill gaps) and don't move
 words on the ladder: they are extra exposure, logged in practice_log for the activity stats.
@@ -23,14 +28,15 @@ from .ladder import _sentences, display, gloss_column, gloss_of, tidy_quotes
 
 FORMATS = {
     "match": "Paare finden",
-    "listen": "Hören und wählen",
+    "listen": "Hören: Was bedeutet das?",
     "gender": "der · die · das",
-    "odd": "Was passt nicht?",
+    "plural": "Der Plural",
+    "perfekt": "Perfekt: hat oder ist?",
     "cloze": "Lücken im Text von gestern",
 }
 ORDER = list(FORMATS)
 
-_WORDS = """SELECT m.id, m.lemma, m.pos, m.article, m.gloss_en, m.gloss_es, m.cognate, m.source, m.deck,
+_WORDS = """SELECT m.id, m.lemma, m.pos, m.article, m.plural, m.aux, m.partizip2, m.gloss_en, m.gloss_es, m.cognate, m.source, m.deck,
                    l.number AS lesson_number, l.theme, k.ladder_step
             FROM lemma m JOIN known_word k ON k.lemma_id = m.id LEFT JOIN lesson l ON l.id = m.lesson_id"""
 
@@ -73,17 +79,26 @@ def build_match(conn, rng, col):
 
 
 def build_listen(conn, rng, col):
-    words = met_words(conn)
+    """Hear the word (with its article), choose what it means: you have to know it by ear."""
+    words = [w for w in met_words(conn) if gloss_of(w, col)]
     rounds = []
-    for w in _take(words, 5, rng, prefer=3):
-        same = [x for x in words if x["pos"] == w["pos"] and x["lemma"].lower() != w["lemma"].lower()]
-        others = _take(same, 3, rng)
+    for w in _take(words, 6, rng, prefer=4):
+        answer = gloss_of(w, col)
+        same = [x for x in words if x["pos"] == w["pos"] and gloss_of(x, col).lower() != answer.lower()]
+        others, seen = [], {answer.lower()}
+        for o in _take(same, 12, rng):
+            g = gloss_of(o, col)
+            if g.lower() not in seen:
+                others.append(g)
+                seen.add(g.lower())
+            if len(others) == 3:
+                break
         if len(others) < 3:
             continue
-        options = [display(w), *(display(o) for o in others)]
+        options = [answer, *others]
         rng.shuffle(options)
-        rounds.append({"say": display(w), "answer": display(w), "gloss": gloss_of(w, col), "options": options})
-    return {"rounds": rounds} if len(rounds) >= 4 else None
+        rounds.append({"say": display(w), "answer": answer, "word": display(w), "options": options})
+    return {"rounds": rounds[:5]} if len(rounds) >= 4 else None
 
 
 def build_gender(conn, rng, col):
@@ -95,38 +110,99 @@ def build_gender(conn, rng, col):
                       for w in pick]}
 
 
-def build_odd(conn, rng, col):
-    current = conn.execute("SELECT current_lesson FROM settings WHERE id = 1").fetchone()[0]
-    groups: dict[int, list[dict]] = {}
-    for w in met_words(conn, "NOUN"):
-        if w["lesson_number"] and w["lesson_number"] <= current:
-            groups.setdefault(w["lesson_number"], []).append(w)
-    if not any(len(g) >= 3 for g in groups.values()):   # early on: the lesson's own word list
-        groups = {}
-        for r in conn.execute(
-                """SELECT m.id, m.lemma, m.pos, m.article, m.gloss_en, m.gloss_es, l.number AS lesson_number, l.theme
-                   FROM lemma m JOIN lesson l ON l.id = m.lesson_id WHERE m.pos = 'NOUN' AND l.number <= ?""", (current,)):
-            groups.setdefault(r["lesson_number"], []).append(dict(r))
-    themes = {r["number"]: r["theme"] for r in conn.execute("SELECT number, theme FROM lesson")}
-    outsiders = [w for w in met_words(conn, "NOUN") if not w["lesson_number"] or w["deck"] == "alltag"]
+UMLAUT = {"a": "ä", "o": "ö", "u": "ü", "au": "äu", "A": "Ä", "O": "Ö", "U": "Ü", "Au": "Äu"}
+MODALS = {"können", "müssen", "wollen", "sollen", "dürfen", "mögen", "möchten"}
+
+
+def umlauted(word: str) -> str:
+    """Umlaut on the last a/o/u/au, but only in the last part of the word (Baum → Bäum, but never
+    Hältestelle: compounds change only their last element)."""
+    import re as _re
+    stem = _re.sub(r"(e|er|el|en)$", "", word)
+    m = None
+    for m in _re.finditer(r"(?<![eE])(?:au|Au|[aouAOU])(?![iyuIY])", stem):   # never inside ai/ei/eu/ou
+        pass
+    if m is None or len(stem) - m.start() > 4:
+        return word
+    return word[:m.start()] + UMLAUT[m.group(0)] + word[m.end():]
+
+
+def wrong_plurals(lemma: str, plural: str) -> list[str]:
+    """Wrong plurals a learner would really produce, chosen by how the word ends (the endings that
+    exist for that kind of noun, umlaut only where German uses it). Words ending in other vowels
+    (Auto, Kino) only take -s, so they get no question."""
+    low = lemma.lower()
+    uml = umlauted(lemma)
+    if low.endswith(("ung", "heit", "keit", "schaft", "ion", "tät")):
+        cands = [lemma + "e", lemma + "s", lemma, lemma + "er"]
+    elif low.endswith("in"):
+        cands = [lemma + "en", lemma + "e", lemma + "s", lemma]
+    elif low.endswith(("er", "el", "en")):
+        cands = [lemma, uml, lemma + "n", lemma + "s", uml + "n"]
+    elif low.endswith("e"):
+        cands = [lemma, lemma + "s", lemma + "n", uml + "n"]
+    elif low.endswith(("au", "ei", "eu")):
+        cands = [lemma + "e", lemma + "s", lemma, lemma + "n"]
+    elif low[-1] in "aiouy":
+        return []
+    else:
+        cands = [lemma + "e", uml + "e", lemma + "er", uml + "er", lemma + "en",
+                 lemma + ("e" if low.endswith("s") else "s"), lemma]
+    out = []
+    for f in cands:
+        if f != plural and f not in out:
+            out.append(f)
+    return out
+
+
+def build_plural(conn, rng, col):
+    nouns = [w for w in met_words(conn, "NOUN")
+             if w["article"] and w["plural"] and w["plural"] not in ("-", "") and " " not in w["lemma"]]
     rounds = []
-    lessons = sorted(g for g in groups if len(groups[g]) >= 3)
-    for _ in range(8 if lessons else 0):
-        if len(rounds) == 4:
-            break
-        n = rng.choice(lessons)
-        inside = _take(groups[n], 3, rng)
-        pool = [w for k, ws in groups.items() if k != n for w in ws] + outsiders
-        odd = _take(pool, 1, rng)
-        if len(inside) < 3 or not odd:
+    for w in _take(nouns, 8, rng, prefer=4):
+        wrong = wrong_plurals(w["lemma"], w["plural"])
+        rng.shuffle(wrong)
+        if len(wrong) < 3:
             continue
-        odd = odd[0]
-        odd_theme = themes.get(odd["lesson_number"]) if odd.get("lesson_number") else ("Alltag" if odd.get("deck") == "alltag" else "A1")
-        options = [display(w) for w in inside] + [display(odd)]
+        options = [w["plural"], *wrong[:3]]
         rng.shuffle(options)
-        rounds.append({"options": options, "answer": display(odd), "theme": themes[n], "odd_theme": odd_theme,
-                       "glosses": {display(w): gloss_of(w, col) for w in [*inside, odd]}})
-    return {"rounds": rounds} if len(rounds) >= 3 else None
+        rounds.append({"prompt": f"{w['article']} {w['lemma']}", "gloss": gloss_of(w, col),
+                       "answer": w["plural"], "options": options})
+    return {"rounds": rounds[:6]} if len(rounds) >= 4 else None
+
+
+def wrong_partizip(p2: str) -> str:
+    """The typical mix-ups: strong vs weak ending (gefahren ↔ gefahrt, gelüftet → gelüften) and
+    ge- on -ieren verbs (probiert → geprobiert)."""
+    if p2.endswith("iert") and not p2.startswith("ge"):
+        return "ge" + p2
+    if p2.endswith("en"):
+        return p2[:-2] + "t"
+    if p2.endswith("et"):
+        return p2[:-2] + "en"
+    if p2.endswith("t"):
+        return p2[:-1] + "en"
+    return p2 + "t"
+
+
+def build_perfekt(conn, rng, col):
+    verbs = [w for w in met_words(conn, "VERB")
+             if w["aux"] in ("haben", "sein") and w["partizip2"] and w["lemma"] not in MODALS]
+    sein = [w for w in verbs if w["aux"] == "sein" and w["lemma"] != "sein"]
+    picks = _take(sein, 2, rng)                     # always some sein verbs, or 'hat' is a safe guess
+    picks += [w for w in _take(verbs, 10, rng, prefer=3) if w not in picks][:6 - len(picks)]
+    rng.shuffle(picks)
+    rounds = []
+    for w in picks:
+        aux = "ist" if w["aux"] == "sein" else "hat"
+        other = "hat" if aux == "ist" else "ist"
+        bad = wrong_partizip(w["partizip2"])
+        options = [f"{aux} {w['partizip2']}", f"{other} {w['partizip2']}", f"{aux} {bad}", f"{other} {bad}"]
+        answer = options[0]
+        rng.shuffle(options)
+        rounds.append({"prompt": w["lemma"], "gloss": gloss_of(w, col), "answer": answer, "options": options,
+                       "why": "Bewegung/Veränderung → sein" if aux == "ist" else "die meisten Verben → haben"})
+    return {"rounds": rounds[:6]} if len(rounds) >= 4 else None
 
 
 def build_cloze(conn, rng, col):
@@ -170,7 +246,8 @@ def build_cloze(conn, rng, col):
     return {"text_id": row["id"], "text_title": row["title"], "items": chosen} if all_forms else None
 
 
-BUILDERS = {"match": build_match, "listen": build_listen, "gender": build_gender, "odd": build_odd, "cloze": build_cloze}
+BUILDERS = {"match": build_match, "listen": build_listen, "gender": build_gender, "plural": build_plural,
+            "perfekt": build_perfekt, "cloze": build_cloze}
 
 
 def build(conn: sqlite3.Connection, kind: str, seed: int | None = None) -> dict | None:
@@ -187,7 +264,7 @@ def formats_for_day(conn: sqlite3.Connection, day: str | None = None) -> list[st
     """The day's formats: fixed once chosen; 2-3 that the previous session day didn't use."""
     day = day or _today(conn)
     row = conn.execute("SELECT formats FROM practice_day WHERE day = ?", (day,)).fetchone()
-    if row:
+    if row and all(k in FORMATS for k in json.loads(row[0])):
         return json.loads(row[0])
     prev_row = conn.execute("SELECT formats FROM practice_day WHERE day < ? ORDER BY day DESC LIMIT 1", (day,)).fetchone()
     prev = set(json.loads(prev_row[0])) if prev_row else set()

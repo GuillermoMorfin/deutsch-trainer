@@ -26,8 +26,10 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
   steps 4-5 are one FSRS card (`card.direction = 'produce'`). Known = step 5 + stability ≥ 7 days. Old
   'recognise' cards are kept but never scheduled; `migrate_to_ladder` ran once on existing DBs.
 - `app/srs.py` FSRS (py-fsrs 6) for steps 4-5 + everyday checks. A1 words are never demoted. Times in DB are UTC.
-- `app/practice.py`: rotating formats (match, listen, gender, odd, cloze on yesterday's text), 2-3 per day,
-  never the same set as the previous session day (`practice_day`). They don't move ladder steps.
+- `app/practice.py`: rotating formats (match, listen = hear word → pick meaning, gender, plural, perfekt, cloze on
+  yesterday's text), 2-3 per day, never the same set as the previous day (`practice_day`). They don't move ladder
+  steps. Every format must need real German knowledge (the learner rejected 'odd one out' by lesson theme and
+  sound-to-spelling matching); distractors must be plausible learner errors, not nonsense.
 - Glosses are English (`settings.gloss_language`, default 'en'; `gloss_es` kept, optional). Spanish only as an
   optional bridge in grammar notes/feedback. `app/glosses.py`: cognate flag (`lemma.cognate`), missing-gloss fill.
 - `app/answers.py` typed-answer checker: article required, umlaut mistakes never forgiven, small stem typos → Hard.

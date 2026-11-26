@@ -458,7 +458,7 @@ function playGame(g, onDone) {
     if (total && correct / total >= 0.8) celebrate();
   };
   const head = (sub) => `<p class="eyebrow">${esc(g.title)}${sub ? ` · ${sub}` : ""}</p>`;
-  return ({ match: gameMatch, listen: gameListen, gender: gameGender, odd: gameOdd, cloze: gameCloze }[g.kind])(g, head, doneCard);
+  return ({ match: gameMatch, listen: gameListen, gender: gameGender, plural: gamePlural, perfekt: gamePerfekt, cloze: gameCloze }[g.kind])(g, head, doneCard);
 }
 
 function gameMatch(g, head, doneCard) {
@@ -533,17 +533,27 @@ function choiceRounds(g, head, doneCard, { render, sub, after }) {
 function gameListen(g, head, doneCard) {
   choiceRounds(g, head, doneCard, {
     render: () => `<div class="flash"><button class="btn secondary listen-btn" id="play">${icon("headphones")} Nochmal hören</button>
-      <p class="small muted">Welches Wort hörst du?</p></div>`,
+      <p class="small muted">Was bedeutet das Wort, das du hörst?</p></div>`,
     sub: (r) => { speak(r.say); $app.querySelector("#play").addEventListener("click", () => speak(r.say)); },
-    after: (r) => `<div class="small muted">${esc(r.answer)} = ${esc(r.gloss)}</div>`,
+    after: (r) => `<div class="small">Du hast gehört: <b>${esc(r.word)}</b></div>`,
   });
 }
 
-function gameOdd(g, head, doneCard) {
+function gamePlural(g, head, doneCard) {
   choiceRounds(g, head, doneCard, {
-    render: () => `<div class="flash"><p class="flash-gloss">Welches Wort passt nicht zu den anderen?</p></div>`,
-    after: (r) => `<div class="small">Drei Wörter sind aus „${esc(r.theme)}“, ${esc(r.answer)} ist aus „${esc(r.odd_theme)}“.</div>
-      <div class="small muted">${Object.entries(r.glosses).map(([de, en]) => `${esc(de)} = ${esc(en)}`).join(" · ")}</div>`,
+    render: (r) => `<div class="flash"><div class="flash-word">${esc(r.prompt)}</div>
+      <p class="small muted">${esc(r.gloss)} · Wie heißt der Plural?</p>
+      <p class="flash-sentence">die ____</p></div>`,
+    after: (r) => `<div class="small">${esc(r.prompt)} → <b>die ${esc(r.answer)}</b></div>`,
+  });
+}
+
+function gamePerfekt(g, head, doneCard) {
+  choiceRounds(g, head, doneCard, {
+    render: (r) => `<div class="flash"><div class="flash-word">${esc(r.prompt)}</div>
+      <p class="small muted">${esc(r.gloss)} · Perfekt</p>
+      <p class="flash-sentence">Perfekt: er ____</p></div>`,
+    after: (r) => `<div class="small">er <b>${esc(r.answer)}</b> · ${esc(r.why)}</div>`,
   });
 }
 

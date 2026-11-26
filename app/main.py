@@ -653,7 +653,7 @@ def practice_today(db: sqlite3.Connection = Depends(get_db)):
 
 
 class PracticeResult(BaseModel):
-    kind: Literal["match", "listen", "gender", "odd", "cloze"]
+    kind: Literal["match", "listen", "gender", "plural", "perfekt", "cloze"]
     correct: int = Field(ge=0, le=100)
     total: int = Field(ge=1, le=100)
 

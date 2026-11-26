@@ -42,7 +42,8 @@ Import a word list: `uv run python -m app.seed --import words.csv --lesson 3`
 1. ✅ Foundation: schema, seeds, lesson/word browser, design tokens, PWA shell
 2. ✅ Vocab SRS, reworked as a 5-step ladder (2026-11-25): new words only through texts → choose the meaning →
    choose the German (gender distractors) → cloze with first letter → free typing; FSRS schedules steps 4-5;
-   2-3 rotating practice formats per day (match pairs, listen & pick, der/die/das sorting, odd one out, cloze)
+   2-3 rotating practice formats per day (match pairs, hear a word and pick its meaning, der/die/das sorting,
+   plural, Perfekt hat/ist + Partizip II, gaps in yesterday's text)
 3. ✅ Reader + verifier: Claude (via Claude Code, Sonnet) writes → spaCy verifier checks coverage + blocked grammar → up to 3 repairs → Haiku glosses new words → tap-to-gloss reader, audio, comprehension questions
 4. ✅ Grammar drills + error log: gap / choice / word-order items (109 hand-written, more via Claude Code, all verifier-checked), error-weighted sessions, rule → bridge → example → warning feedback, missed book exercises boost their lesson
 5. ✅ Writing feedback: 3 tasks per lesson, Claude Code corrects minimally, max 3 points (lesson grammar first) with English explanations (optional Spanish bridge), word diff, errors feed drills and word cards

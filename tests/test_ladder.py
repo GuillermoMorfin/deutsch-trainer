@@ -170,7 +170,7 @@ def test_two_consecutive_session_days_use_different_formats(conn):
     assert practice.formats_for_day(conn, "2026-11-23") == d1        # fixed for the day
 
 
-@pytest.mark.parametrize("kind", ["match", "listen", "gender", "odd"])
+@pytest.mark.parametrize("kind", ["match", "listen", "gender", "plural", "perfekt"])
 def test_practice_formats_build_from_met_words(conn, kind):
     g = practice.build(conn, kind, seed=3)
     assert g and g["kind"] == kind
@@ -178,8 +178,28 @@ def test_practice_formats_build_from_met_words(conn, kind):
         assert len(g["pairs"]) == 6 and len({p["en"] for p in g["pairs"]}) == 6
     if kind == "gender":
         assert all(n["article"] in ("der", "die", "das") for n in g["nouns"])
-    if kind in ("listen", "odd"):
+    if kind in ("listen", "plural", "perfekt"):
         assert all(r["answer"] in r["options"] and len(set(r["options"])) == 4 for r in g["rounds"])
+    if kind == "listen":   # you hear German and must know the meaning, not just match the sound
+        assert all(r["say"] not in r["options"] for r in g["rounds"])
+    if kind == "perfekt":
+        r = g["rounds"][0]
+        aux, p2 = r["answer"].split()
+        assert {o.split()[0] for o in r["options"]} == {"hat", "ist"} and sum(o.endswith(p2) for o in r["options"]) == 2
+
+
+@pytest.mark.parametrize("lemma, plural, absent", [
+    ("Baum", "Bäume", {"Baumn", "Bäum"}), ("Frau", "Frauen", {"Fräue"}), ("Mutter", "Mütter", {"Muttere"}),
+    ("Tasche", "Taschen", {"Taschee"}), ("Haus", "Häuser", {"Hauss"}),
+])
+def test_wrong_plurals_are_plausible(lemma, plural, absent):
+    wrong = practice.wrong_plurals(lemma, plural)
+    assert len(wrong) >= 3 and plural not in wrong and not (absent & set(wrong))
+
+
+def test_old_odd_one_out_days_are_replaced(conn):
+    conn.execute("INSERT INTO practice_day (day, formats) VALUES ('2026-11-26', '[\"odd\", \"match\"]')")
+    assert "odd" not in practice.formats_for_day(conn, "2026-11-26")
 
 
 def test_cloze_needs_yesterdays_text(conn):
