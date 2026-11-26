@@ -142,7 +142,7 @@ def test_items_with_unknown_words_are_not_shown(conn):
 
 class FakeDrillWriter:
     def drills(self, system, prompt):
-        assert "GRAMMAR POINT" in prompt and "ALLOWED WORDS" in prompt
+        assert "GRAMMAR POINT" in prompt and "ALLOWED WORDS" in prompt and "NEVER give the answer away" in prompt
         return [
             DrillItemModel(type="gap", prompt="Heute ___ ich sehr müde.", options=[], answers=["bin"],
                            order_answers=[], hint="sein", explanation="sein, 1st person"),
@@ -152,6 +152,9 @@ class FakeDrillWriter:
                            answers=["der"], order_answers=[], hint="", explanation="relative clause: rejected"),
             DrillItemModel(type="choice", prompt="Ich ___ müde.", options=["bin", "ist"], answers=["sind"],
                            order_answers=[], hint="", explanation="answer not in options: rejected"),
+            DrillItemModel(type="rewrite", prompt="Der Hund ist im Garten. Ich sehe ... (den Hund)", options=[],
+                           answers=["Ich sehe den Hund im Garten."], order_answers=[], hint="Schreib den Satz.",
+                           explanation="answer in brackets: rejected"),
         ]
 
 
@@ -207,3 +210,24 @@ def test_rewrite_check_and_override(conn):
     drills.override(conn, item)                                       # "Ich hatte es richtig"
     assert conn.execute("SELECT correct FROM drill_attempt ORDER BY id DESC LIMIT 1").fetchone()[0] == 1
     assert conn.execute("SELECT COUNT(*) FROM error_log WHERE grammar_code = 'KONJ_WEIL'").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("item", SEED, ids=lambda i: f"{i['code']}:{i['prompt'][:30]}")
+def test_no_seed_item_shows_its_answer_before_answering(item):
+    assert drills.leaks(item) == []
+
+
+@pytest.mark.parametrize("item, leak", [
+    ({"type": "rewrite", "prompt": "Der Hund ist im Garten. Ich sehe ... (den Hund)", "hint": "",
+      "answers": ["Ich sehe den Hund im Garten."]}, True),
+    ({"type": "rewrite", "prompt": "Der Hund ist im Garten. Ich sehe ... (der Hund)", "hint": "",
+      "answers": ["Ich sehe den Hund im Garten."]}, False),
+    ({"type": "rewrite", "prompt": "Ich bin krank. Ich bleibe zu Hause.", "hint": "Verbinde mit weil.",
+      "answers": ["Ich bleibe zu Hause, weil ich krank bin."]}, False),
+    ({"type": "order", "prompt": "Ich zeige", "hint": "dem Freund, das Foto",
+      "answers": [["dem", "Freund", "das", "Foto"]]}, True),
+    ({"type": "gap", "prompt": "Ich sehe ___ Frau. (die)", "hint": "Akkusativ", "answers": ["die"]}, True),
+    ({"type": "choice", "prompt": "Wir sprechen über ___ Festival.", "hint": "das Festival", "answers": ["das"]}, True),
+])
+def test_leak_detection(item, leak):
+    assert bool(drills.leaks(item)) is leak

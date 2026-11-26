@@ -82,11 +82,55 @@ def allowed_lemma_ids(conn: sqlite3.Connection) -> set[int]:
               OR l.number <= (SELECT current_lesson FROM settings WHERE id = 1)""")}
 
 
+def _outside_brackets(s: str) -> str:
+    return re.sub(r"\([^)]*\)", " ", s or "")
+
+
+def _bracketed(s: str) -> str:
+    return " ".join(re.findall(r"\(([^)]*)\)", s or ""))
+
+
+STRUCTURE_WORDS = {"weil", "deshalb", "dass", "wenn", "ob", "über", "seit", "von", "bis", "zum", "zur", "bei",
+                   "zu", "gern", "wäre", "hätte", "würde", "könnte", "sollte", "als"}
+
+
+def leaks(item: dict) -> list[str]:
+    """Ways the item shows its answer before you answer. Empty list = fine.
+
+    gap/choice: an accepted answer appears in the hint or in brackets in the prompt.
+    rewrite:    a word you have to produce (in the answer, not in the sentence you start from) appears
+                in the hint or in brackets: give '(der Hund)', never '(den Hund)'.
+    order:      the hint repeats the words you have to arrange."""
+    kind, hint = item["type"], item.get("hint") or ""
+    answers = item["answers"]
+    out = []
+    if kind in ("gap", "choice"):
+        for a in answers:
+            pat = rf"(?<![\wäöüß]){re.escape(_norm(a).lower())}(?![\wäöüß])"
+            if a.strip() and (re.search(pat, hint.lower()) or re.search(pat, _bracketed(item["prompt"]).lower())):
+                out.append(f"answer '{a}' is shown before answering")
+    elif kind == "rewrite":
+        # the sentence you start from and a quoted sentence start in the hint („Ich gehe …“) are given;
+        # naming the structure to use (Verbinde mit weil, bei + Dativ, wäre gern) is the task, not the answer
+        given = set(_words(_outside_brackets(item["prompt"]))) | set(_words(" ".join(re.findall(r"„([^“]*)“", hint))))
+        new = {w for a in answers for w in _words(a)} - given - STRUCTURE_WORDS
+        shown = set(_words(hint)) | set(_words(_bracketed(item["prompt"])))
+        if new & shown:
+            out.append(f"words to produce are shown: {sorted(new & shown)}")
+    elif kind == "order":
+        tokens = {w for a in answers for w in (_words(" ".join(a)) if isinstance(a, list) else _words(a))}
+        if len(tokens & set(_words(hint))) >= 2:
+            out.append("hint repeats the words to arrange")
+    return out
+
+
 def usable(items: list[dict], conn: sqlite3.Connection) -> list[dict]:
     lex = build_lexicon(conn, extra_known=allowed_lemma_ids(conn))
     unlocked = unlocked_codes(conn)
     out = []
     for it in items:
+        if leaks(it):          # never show an exercise that gives its answer away
+            continue
         _, report = analyse(it["full_sentence"], lex, unlocked)
         if report.coverage == 1.0 and not report.grammar:
             out.append(it)
@@ -334,6 +378,9 @@ Write {n} new exercises for this point. Mix the types that fit it:
   hint = the instruction in simple German (e.g. "Verbinde mit weil."); answers = the full correct sentence(s),
   including acceptable variants (2-3 at most).
 Give a one-sentence English explanation of why the answer is right.
+NEVER give the answer away before the learner answers: the hint and anything in brackets must not contain
+the answer or the forms the learner has to produce. Give base forms instead, e.g. "Ich sehe ... (der Hund)"
+→ answer "Ich sehe den Hund.", or "(mein Bruder)" → "meinem Bruder". For "order" items the hint must not list the words.
 
 FORMAT EXAMPLES (do not repeat): {json.dumps(examples, ensure_ascii=False)}
 DO NOT REPEAT THESE PROMPTS: {json.dumps(existing, ensure_ascii=False)}
@@ -358,6 +405,8 @@ ALLOWED WORDS ({len(words)}): {", ".join(words)}"""
             if d["type"] == "rewrite" and not d.get("hint"):
                 continue
             if d["type"] == "choice" and not set(d["answers"]) <= set(d.get("options") or []):
+                continue
+            if leaks(d):
                 continue
             sentence = full_sentence(d["type"], d["prompt"], d["answers"])
             _, report = analyse(sentence, lex, unlocked)

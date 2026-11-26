@@ -477,7 +477,7 @@
     "das",
     "dem"
    ],
-   "hint": "das Festival"
+   "hint": "Festival (neutrum)"
   },
   {
    "code": "PREP_UEBER_AKK",
@@ -504,7 +504,7 @@
     "die",
     "der"
    ],
-   "hint": "die Straße"
+   "hint": "Straße (feminin)"
   },
   {
    "code": "PREP_UEBER_AKK",
@@ -543,7 +543,7 @@
     "das",
     "dem"
    ],
-   "hint": "das Problem"
+   "hint": "Problem (neutrum)"
   },
   {
    "code": "PREP_SEIT_DAT",
@@ -597,7 +597,7 @@
     "wohne",
     "habe gewohnt"
    ],
-   "hint": "Ich wohne immer noch dort."
+   "hint": "seit + Präsens: es dauert noch an"
   },
   {
    "code": "PREP_SEIT_DAT",
@@ -1448,7 +1448,7 @@
     "Letzten Montag war ich krank.",
     "Ich war letzten Montag krank."
    ],
-   "hint": "Schreib mit letzt- (letzte Woche, letzten …)."
+   "hint": "Schreib mit letzt- (z. B. letzte Woche)."
   },
   {
    "code": "LETZT_NAECHST_JED",
@@ -1858,7 +1858,7 @@
    "answers": [
     "Ich hänge das Poster an die Wand."
    ],
-   "hint": "Schreib die Handlung (legen/stellen/hängen)."
+   "hint": "Was machst du? (legen/stellen/hängen)"
   },
   {
    "code": "WECHSELPRAEP",

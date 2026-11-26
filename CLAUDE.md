@@ -43,6 +43,9 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
 - `app/drills.py`: drill items are shown only if their `full_sentence` passes the verifier with the
   learner's known words + words of lessons ≤ current. Session weighting = current lesson + recent wrong
   answers + error_log + missed Grammatik exercises from book_progress. Wrong answers write `error_log`.
+- Drills never show their answer before you answer: `drills.leaks()` (answer in hint or brackets, rewrite giving
+  the forms to produce, order hint listing the words). Leaking items are skipped, rejected when generated, and
+  the seed bank is tested. Give base forms in brackets: '(der Hund)', never '(den Hund)'.
 - `app/writing.py`: tasks in `app/seed/writing_prompts.json`; feedback capped at 3 corrections; codes are
   validated against grammar_point; a word error makes that word's produce card due now.
 - Texts must practise the lesson's grammar: `verifier.grammar_presence` detects each lesson point and the
