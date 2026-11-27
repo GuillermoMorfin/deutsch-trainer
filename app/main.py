@@ -529,6 +529,21 @@ def speaking_guide(lesson: int | None = Query(None, ge=1), db: sqlite3.Connectio
         raise HTTPException(404, "Lektion nicht gefunden")
 
 
+@app.post("/api/speaking/new")
+def speaking_new(lesson: int | None = Query(None, ge=1), db: sqlite3.Connection = Depends(get_db)):
+    """Write a new conversation plan for today (in the background; poll /api/speaking/status)."""
+    number = lesson or db.execute("SELECT current_lesson FROM settings WHERE id = 1").fetchone()[0]
+    if not db.execute("SELECT 1 FROM lesson WHERE number = ?", (number,)).fetchone():
+        raise HTTPException(404, "Lektion nicht gefunden")
+    return speaking.start_generation(_writer_factory, number)
+
+
+@app.get("/api/speaking/status")
+def speaking_status(lesson: int | None = Query(None, ge=1), db: sqlite3.Connection = Depends(get_db)):
+    number = lesson or db.execute("SELECT current_lesson FROM settings WHERE id = 1").fetchone()[0]
+    return speaking.status(number)
+
+
 class SpeakingDone(BaseModel):
     lesson: int = Field(ge=1)
     minutes: int = Field(ge=1, le=180)

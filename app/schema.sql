@@ -231,3 +231,13 @@ CREATE TABLE IF NOT EXISTS practice_log (
     total    INTEGER NOT NULL,
     ts       TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Speaking plans (app/speaking.py): the hand-written one first, then a new Claude-written set each day.
+CREATE TABLE IF NOT EXISTS speaking_set (
+    id         INTEGER PRIMARY KEY,
+    lesson_id  INTEGER NOT NULL REFERENCES lesson(id),
+    day        TEXT NOT NULL,                  -- local date the set is for
+    source     TEXT NOT NULL CHECK (source IN ('seed', 'generated')),
+    data       TEXT NOT NULL,                  -- JSON: topic, focus, challenge, questions, roleplay, phrases
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

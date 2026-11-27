@@ -104,12 +104,23 @@ class WritingFeedback(BaseModel):
     praise: str = Field(description="One short, specific, encouraging sentence in simple German")
 
 
+class SpeakingSetModel(BaseModel):
+    topic: str = Field(description="Short German title of today's conversation situation (3-6 words)")
+    focus: str = Field(description="One English sentence: what to practise today (situation + grammar)")
+    challenge: str = Field(description="One concrete, countable English task that forces the lesson grammar")
+    questions: list[str] = Field(description="6 short German questions the partner asks the learner (du-form)")
+    roleplay_setup: str = Field(description="2-3 English sentences: the role play, who plays whom, the goal")
+    roleplay_starter: str = Field(description="The first German line of the role play")
+    phrases: list[str] = Field(description="3-4 extra German sentence starters for today's situation, ending in …")
+
+
 class Writer(Protocol):
     def write(self, system: str, prompt: str) -> Draft: ...
     def questions(self, system: str, prompt: str) -> list[Question]: ...
     def gloss(self, prompt: str) -> list[Gloss]: ...
     def drills(self, system: str, prompt: str) -> list[DrillItemModel]: ...
     def feedback(self, system: str, prompt: str) -> WritingFeedback: ...
+    def speaking(self, system: str, prompt: str) -> SpeakingSetModel: ...
 
 
 # ---- Claude implementation -----------------------------------------------------------
@@ -159,6 +170,9 @@ class ClaudeWriter:
 
     def feedback(self, system: str, prompt: str) -> WritingFeedback:
         return self._parse_gen(system, prompt, WritingFeedback)
+
+    def speaking(self, system: str, prompt: str) -> SpeakingSetModel:
+        return self._parse_gen(system, prompt, SpeakingSetModel)
 
     def gloss(self, prompt: str) -> list[Gloss]:
         try:
@@ -231,6 +245,10 @@ class ClaudeCodeWriter:
     def feedback(self, system: str, prompt: str) -> WritingFeedback:
         data = self._run(prompt, WritingFeedback.model_json_schema(), model=CC_GEN_MODEL, system=system)
         return WritingFeedback.model_validate(data)
+
+    def speaking(self, system: str, prompt: str) -> SpeakingSetModel:
+        data = self._run(prompt, SpeakingSetModel.model_json_schema(), model=CC_GEN_MODEL, system=system)
+        return SpeakingSetModel.model_validate(data)
 
     def gloss(self, prompt: str) -> list[Gloss]:
         try:

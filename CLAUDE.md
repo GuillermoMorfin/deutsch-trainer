@@ -58,8 +58,10 @@ Spec: `docs/PLAN.md` (summary of the original plan). Build one phase at a time.
   The learner asked not to be drilled on words they already know.
 - Reading texts: 250-450 words (`generator.TEXT_WORDS`, enforced by the repair loop), 3-6 targets: new words
   first (within the daily cap), then words still climbing.
-- `app/speaking.py` (Sprechen): a plan for talking with the partner, no microphone or grading (the learner
-  asked for that after speech recognition was removed). Seed `app/seed/speaking.json`; `speaking_log` counts as activity.
+- `app/speaking.py` (Sprechen): a plan for talking with the partner, no microphone or grading. A new plan every
+  day per lesson (`speaking_set`): the seed (`app/seed/speaking.json`) first, then Claude Code writes one (new
+  situation, lesson grammar, 2 recycled questions, verified lines, earlier sets passed in so nothing repeats);
+  'Neue Themen' writes another. `speaking_log` counts as activity.
 - `app/session.py` plans the daily flow and writes the day's text in a background thread with its own
   DB connection; `app/progress.py` computes streak (local days), mastery, errors, WPM.
 - `get_db` opens one sqlite connection per request; never share a connection across threads.

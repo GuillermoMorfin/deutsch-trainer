@@ -2074,15 +2074,23 @@ function viewCases() {
 // ---- Sprechen: a plan for talking with your partner (no microphone, no grading) ----------------
 
 async function viewSpeak(n) {
-  const g = await api(`/speaking${n ? `?lesson=${n}` : ""}`);
+  const q = n ? `?lesson=${n}` : "";
+  let g = await api(`/speaking${q}`);
+  // a new plan is written for every day: wait for it (Claude Code takes about a minute)
+  if (g.pending || g.generating) {
+    const ready = await waitForSpeakingSet(g, q);
+    if (!ready) return;
+    g = await api(`/speaking${q}`);
+  }
   const L = g.lesson;
   const word = (w) => `<button class="speak-word ${w.article ? `g-${esc(w.article)}` : ""}" aria-pressed="false">
       <b>${w.article ? `${esc(w.article)} ` : ""}${esc(w.lemma)}</b><span>${esc(gl(w))}</span></button>`;
   const h = g.history;
   $app.innerHTML = `
     <p class="eyebrow">Sprechen · Lektion ${L.number}</p>
-    <h1>Gesprächsplan</h1>
-    <p class="muted">Für dein Gespräch mit deiner Partnerin: ca. 15–20 Minuten, nur Deutsch. ${esc(L.theme)}.</p>
+    <h1>${g.topic ? esc(g.topic) : "Gesprächsplan"}</h1>
+    <p class="muted">Für dein Gespräch mit deiner Partnerin: ca. 15–20 Minuten, nur Deutsch. ${esc(L.theme)}
+      · Plan ${g.set.number} für diese Lektion, neu für heute.</p>
     ${g.lessons.length > 1 ? `<div class="chip-row">${g.lessons.map((k) =>
       `<a class="chip ${k === L.number ? "on" : ""}" href="#/speak/${k}">L${k}</a>`).join("")}</div>` : ""}
 
@@ -2094,7 +2102,7 @@ async function viewSpeak(n) {
 
     <section class="card"><h2>1 · Aufwärmen <span class="muted small">2–3 Min.</span></h2>
       <p class="small muted">Satzanfänge aus der Lektion. Sag zu jedem einen Satz über dich.</p>
-      <ul class="speak-list">${g.redemittel.map((r) => `<li>${esc(r)}</li>`).join("")}</ul>
+      <ul class="speak-list">${[...g.redemittel, ...g.phrases].map((r) => `<li>${esc(r)}</li>`).join("")}</ul>
     </section>
 
     ${g.questions.length ? `<section class="card"><h2>2 · Fragen <span class="muted small">5–8 Min.</span></h2>
@@ -2105,7 +2113,7 @@ async function viewSpeak(n) {
 
     ${g.roleplay ? `<section class="card"><h2>3 · Rollenspiel <span class="muted small">5 Min.</span></h2>
       <p>${esc(g.roleplay.setup)}</p>
-      <p class="example">„${esc(g.roleplay.starter)}“ <button class="icon-btn" data-say="${esc(g.roleplay.starter)}" aria-label="Anhören">▶</button></p>
+      ${g.roleplay.starter ? `<p class="example">„${esc(g.roleplay.starter)}“ <button class="icon-btn" data-say="${esc(g.roleplay.starter)}" aria-label="Anhören">▶</button></p>` : ""}
     </section>` : ""}
 
     ${g.words.length ? `<section class="card"><h2>Diese Wörter benutzen</h2>
@@ -2130,6 +2138,11 @@ async function viewSpeak(n) {
       <ul class="speak-list">${g.partner_tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
     </section>
 
+    <section class="card"><h2>Andere Themen?</h2>
+      <p class="small muted">Schon besprochen oder keine Lust auf das Thema? Claude schreibt dir einen neuen Plan zu dieser Lektion.</p>
+      <button class="btn secondary" id="new-set">${icon("sparkle")}Neue Themen</button>
+    </section>
+
     <section class="card"><h2>Gespräch erledigt?</h2>
       <p class="small muted">Wie lange habt ihr gesprochen?</p>
       <div class="chip-row" id="mins">${[10, 15, 20, 30].map((m) =>
@@ -2142,6 +2155,11 @@ async function viewSpeak(n) {
     </section>`;
 
   $app.querySelectorAll("[data-say]").forEach((b) => b.addEventListener("click", () => speak(b.dataset.say)));
+  $app.querySelector("#new-set").addEventListener("click", async (e) => {
+    e.target.disabled = true;
+    await api(`/speaking/new${q}`, { method: "POST" });
+    if (await waitForSpeakingSet({ lesson: L, generating: true }, q)) viewSpeak(n);
+  });
   $app.querySelectorAll(".speak-word").forEach((b) => b.addEventListener("click", () =>
     b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") === "true" ? "false" : "true")));
   let minutes = 15;
@@ -2156,6 +2174,29 @@ async function viewSpeak(n) {
     ev.target.innerHTML = `${icon("check")}Gespeichert`;
     $app.querySelector("#hist").textContent = `Bisher: ${h.sessions + 1} ${h.sessions ? "Gespräche" : "Gespräch"}, ${h.minutes + minutes} Minuten. Gut gemacht!`;
   });
+}
+
+async function waitForSpeakingSet(g, q) {
+  $app.innerHTML = `<div class="card hero"><p class="eyebrow">Sprechen · Lektion ${g.lesson.number}</p>
+    <h2>Neue Gesprächsthemen werden geschrieben…</h2>
+    <p class="small muted" id="sp-msg">Claude plant ein neues Gespräch zu „${esc(g.lesson.theme)}“ mit deiner Grammatik und deinen Wörtern
+      und prüft jeden Satz auf dein Niveau. Das dauert meist ungefähr eine Minute.</p>
+    <div class="toolbar" id="sp-actions" hidden><button class="btn secondary" id="sp-retry">Nochmal versuchen</button></div></div>`;
+  let started = g.generating;
+  for (;;) {
+    if (!document.body.contains($app.querySelector("#sp-msg"))) return false;   // user left the page
+    if (!started) { await api(`/speaking/new${q}`, { method: "POST" }); started = true; }
+    const st = await api(`/speaking/status${q}`);
+    if (!st.generating) {
+      if (!st.error) return true;
+      $app.querySelector("#sp-msg").textContent = `Das hat nicht geklappt: ${st.error}`;
+      $app.querySelector("#sp-actions").hidden = false;
+      return await new Promise((resolve) => {
+        $app.querySelector("#sp-retry").onclick = async () => resolve(await waitForSpeakingSet({ ...g, generating: false }, q));
+      });
+    }
+    await new Promise((r) => setTimeout(r, 3000));
+  }
 }
 
 // ---- router ----------------------------------------------------------------
