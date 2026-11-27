@@ -175,7 +175,12 @@ def test_practice_formats_build_from_met_words(conn, kind):
     g = practice.build(conn, kind, seed=3)
     assert g and g["kind"] == kind
     if kind == "match":
-        assert len(g["pairs"]) == 6 and len({p["en"] for p in g["pairs"]}) == 6
+        assert len(g["pairs"]) == 12 and len({p["en"] for p in g["pairs"]}) == 12     # two boards of 6
+        assert [len(b) for b in g["boards"]] == [6, 6]
+    if kind == "gender":
+        assert len(g["nouns"]) == practice.GENDER_NOUNS
+    if kind == "plural":
+        assert len(g["rounds"]) == practice.PLURAL_ROUNDS
     if kind == "gender":
         assert all(n["article"] in ("der", "die", "das") for n in g["nouns"])
     if kind in ("listen", "plural", "perfekt"):

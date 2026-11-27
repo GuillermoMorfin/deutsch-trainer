@@ -69,13 +69,27 @@ def _take(words: list[dict], n: int, rng: random.Random, *, prefer: int = 0) -> 
     return out
 
 
+MATCH_ROUNDS, MATCH_PAIRS = 2, 6     # two boards of 6 pairs (12 words), 60 s each
+GENDER_NOUNS = 14                    # sorted in two batches of 7
+PLURAL_ROUNDS = 10
+
+
 def build_match(conn, rng, col):
     words = [w for w in met_words(conn) if gloss_of(w, col)]
-    pick = _take(words, 6, rng, prefer=3)
-    glosses = {gloss_of(w, col).lower() for w in pick}
-    if len(pick) < 6 or len(glosses) < 6:
+    pick, seen = [], set()
+    for w in _take(words, 40, rng, prefer=6):        # distinct English meanings, or two cards would match
+        g = gloss_of(w, col).lower()
+        if g not in seen:
+            pick.append(w)
+            seen.add(g)
+        if len(pick) == MATCH_ROUNDS * MATCH_PAIRS:
+            break
+    if len(pick) < MATCH_PAIRS:
         return None
-    return {"seconds": 60, "pairs": [{"id": w["id"], "de": display(w), "en": gloss_of(w, col)} for w in pick]}
+    n = len(pick) // MATCH_PAIRS * MATCH_PAIRS
+    pairs = [{"id": w["id"], "de": display(w), "en": gloss_of(w, col)} for w in pick[:n]]
+    return {"seconds": 60, "pairs": pairs,
+            "boards": [pairs[i:i + MATCH_PAIRS] for i in range(0, n, MATCH_PAIRS)]}
 
 
 def build_listen(conn, rng, col):
@@ -103,7 +117,7 @@ def build_listen(conn, rng, col):
 
 def build_gender(conn, rng, col):
     nouns = [w for w in met_words(conn, "NOUN") if w["article"]]
-    pick = _take(nouns, 8, rng, prefer=4)
+    pick = _take(nouns, GENDER_NOUNS, rng, prefer=6)
     if len(pick) < 6:
         return None
     return {"nouns": [{"id": w["id"], "lemma": w["lemma"], "article": w["article"], "gloss": gloss_of(w, col)}
@@ -159,7 +173,7 @@ def build_plural(conn, rng, col):
     nouns = [w for w in met_words(conn, "NOUN")
              if w["article"] and w["plural"] and w["plural"] not in ("-", "") and " " not in w["lemma"]]
     rounds = []
-    for w in _take(nouns, 8, rng, prefer=4):
+    for w in _take(nouns, PLURAL_ROUNDS + 6, rng, prefer=5):
         wrong = wrong_plurals(w["lemma"], w["plural"])
         rng.shuffle(wrong)
         if len(wrong) < 3:
@@ -168,7 +182,7 @@ def build_plural(conn, rng, col):
         rng.shuffle(options)
         rounds.append({"prompt": f"{w['article']} {w['lemma']}", "gloss": gloss_of(w, col),
                        "answer": w["plural"], "options": options})
-    return {"rounds": rounds[:6]} if len(rounds) >= 4 else None
+    return {"rounds": rounds[:PLURAL_ROUNDS]} if len(rounds) >= 4 else None
 
 
 def wrong_partizip(p2: str) -> str:

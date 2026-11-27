@@ -461,7 +461,7 @@ function playGame(g, onDone) {
   return ({ match: gameMatch, listen: gameListen, gender: gameGender, plural: gamePlural, perfekt: gamePerfekt, cloze: gameCloze }[g.kind])(g, head, doneCard);
 }
 
-function gameMatch(g, head, doneCard) {
+function matchBoard(g, head, doneCard) {
   const left = shuffle(g.pairs), right = shuffle(g.pairs);
   let sel = null, matched = 0, mistakes = 0, timeLeft = g.seconds, over = false;
   $app.innerHTML = `${head("Tippe Deutsch und Englisch nacheinander an")}
@@ -496,6 +496,31 @@ function gameMatch(g, head, doneCard) {
       sel = null;
     }
   }));
+}
+
+// Longer games come in batches (one screen each); the score is added up over all batches.
+function inBatches(batches, playOne, head, doneCard, summary) {
+  let k = 0, correct = 0, total = 0, extra = 0;
+  const next = () => {
+    if (k >= batches.length) return doneCard(...summary(correct, total, extra));
+    const n = k++;
+    const sub = (txt) => head(`${batches.length > 1 ? `Runde ${n + 1} / ${batches.length} · ` : ""}${txt || ""}`);
+    playOne(batches[n], sub, (title, line, c, t, x = 0) => { correct += c; total += t; extra += x; next(); });
+  };
+  next();
+}
+
+function gameMatch(g, head, doneCard) {
+  const boards = g.boards || [g.pairs];
+  inBatches(boards.map((pairs) => ({ ...g, pairs })), (b, h, done) => matchBoard(b, h, (t, l, c, tot) => done(t, l, c, tot)),
+    head, doneCard, (c, t) => [c >= t ? "Alle Paare!" : "Geschafft!", `${Math.round(c)} von ${t} Paaren richtig`, c, t]);
+}
+
+function gameGender(g, head, doneCard) {
+  const nouns = shuffle(g.nouns), half = Math.ceil(nouns.length / 2);
+  const batches = nouns.length > 8 ? [nouns.slice(0, half), nouns.slice(half)] : [nouns];
+  inBatches(batches.map((ns) => ({ ...g, nouns: ns })), genderBatch, head, doneCard,
+    (c, t) => [c >= t ? "Perfekt sortiert!" : "Sortiert!", `${t} Nomen · ${Math.round(t - c)} Fehlversuche`, c, t]);
 }
 
 function choiceRounds(g, head, doneCard, { render, sub, after }) {
@@ -564,7 +589,7 @@ function gameCloze(g, head, doneCard) {
   });
 }
 
-function gameGender(g, head, doneCard) {
+function genderBatch(g, head, doneCard) {
   let left = shuffle(g.nouns), sel = null, mistakes = 0;
   const total = g.nouns.length;
   $app.innerHTML = `${head("Ziehe jedes Nomen in die richtige Box, oder tippe Wort und dann Box")}
