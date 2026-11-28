@@ -11,9 +11,6 @@ uv run uvicorn app.main:app --port 8000          # http://localhost:8000
 uv run pytest
 ```
 
-To open it on your phone on home Wi-Fi, start it with `--host 0.0.0.0` and visit
-`http://<laptop-ip>:8000`, then "Add to Home Screen".
-
 ## Who writes the texts
 
 By default the app calls the local **Claude Code** CLI (`claude -p`, headless, no tools, run from an empty
